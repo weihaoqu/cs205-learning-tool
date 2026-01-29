@@ -2,6 +2,7 @@ import { ExerciseCard } from '@/components/exercises';
 import { allExercises } from '@/content/exercises/arrays';
 import { allListExercises } from '@/content/exercises/lists';
 
+// Note: Complexity exercises are multiple-choice and appear in the Quiz section
 const combinedExercises = [...allExercises, ...allListExercises];
 
 export default function ExercisesPage() {

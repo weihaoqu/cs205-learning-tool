@@ -1,8 +1,9 @@
 import { QuizSelector } from '@/components/quiz';
 import { allQuizzes } from '@/content/quizzes/arrays';
 import { listQuizzes } from '@/content/quizzes/lists';
+import { complexityQuizzes } from '@/content/quizzes/complexity';
 
-const combinedQuizzes = [...allQuizzes, ...listQuizzes];
+const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...complexityQuizzes];
 
 export default function QuizPage() {
   return (

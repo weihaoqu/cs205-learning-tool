@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { QuizContainer } from '@/components/quiz';
 import { getQuizById } from '@/content/quizzes/arrays';
 import { getListQuizById } from '@/content/quizzes/lists';
+import { getComplexityQuizById } from '@/content/quizzes/complexity';
 import { Button } from '@/components/ui/button';
 import { useProgressStore } from '@/stores/progressStore';
 import type { QuizResult } from '@/types/exercise';
@@ -15,7 +16,7 @@ interface QuizPageProps {
 
 export default function QuizDetailPage({ params }: QuizPageProps) {
   const { quizId } = use(params);
-  const quiz = getQuizById(quizId) || getListQuizById(quizId);
+  const quiz = getQuizById(quizId) || getListQuizById(quizId) || getComplexityQuizById(quizId);
   const { addQuizResult, getBestScore } = useProgressStore();
 
   const bestScore = quiz ? getBestScore(quiz.id) : null;

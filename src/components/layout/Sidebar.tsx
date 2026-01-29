@@ -33,6 +33,15 @@ const modules: Module[] = [
       { id: 'comparison', title: 'Comparison' },
     ],
   },
+  {
+    id: 'complexity',
+    title: 'Algorithm Complexity',
+    topics: [
+      { id: 'visualization', title: 'Growth Visualization' },
+      { id: 'patterns', title: 'Code Patterns' },
+      { id: 'practice', title: 'Practice & Reference' },
+    ],
+  },
 ];
 
 export function Sidebar() {

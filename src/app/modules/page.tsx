@@ -52,6 +52,28 @@ export default function ModulesPage() {
             </CardContent>
           </Card>
         </Link>
+
+        <Link href="/modules/complexity">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-purple-500" />
+                Algorithm Complexity
+              </CardTitle>
+              <CardDescription>
+                Master Big O notation and complexity analysis
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Big O Fundamentals</li>
+                <li>• Growth Rate Visualization</li>
+                <li>• Code Pattern Recognition</li>
+                <li>• Common Mistakes to Avoid</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </Link>
       </div>
     </div>
   );
