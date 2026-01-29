@@ -23,6 +23,16 @@ const modules: Module[] = [
       { id: '2d-arrays', title: '2D Arrays' },
     ],
   },
+  {
+    id: 'lists',
+    title: 'Lists',
+    topics: [
+      { id: 'arraylist', title: 'ArrayList' },
+      { id: 'singly-linked', title: 'Singly Linked List' },
+      { id: 'doubly-linked', title: 'Doubly Linked List' },
+      { id: 'comparison', title: 'Comparison' },
+    ],
+  },
 ];
 
 export function Sidebar() {

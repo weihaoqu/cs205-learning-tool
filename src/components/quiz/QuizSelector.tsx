@@ -15,11 +15,12 @@ const difficultyColors = {
   advanced: 'bg-red-500',
 };
 
-const topicLabels = {
+const topicLabels: Record<string, string> = {
   arrays: 'Arrays',
   sorting: 'Sorting',
   '2d-arrays': '2D Arrays',
   complexity: 'Complexity',
+  lists: 'Lists',
 };
 
 export function QuizSelector({ quizzes }: QuizSelectorProps) {

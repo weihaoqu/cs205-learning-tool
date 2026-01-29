@@ -4,6 +4,7 @@ import { use } from 'react';
 import Link from 'next/link';
 import { GuidedExercise } from '@/components/exercises';
 import { getExerciseById } from '@/content/exercises/arrays';
+import { getListExerciseById } from '@/content/exercises/lists';
 import { Button } from '@/components/ui/button';
 
 interface ExercisePageProps {
@@ -12,7 +13,7 @@ interface ExercisePageProps {
 
 export default function ExerciseDetailPage({ params }: ExercisePageProps) {
   const { exerciseId } = use(params);
-  const exercise = getExerciseById(exerciseId);
+  const exercise = getExerciseById(exerciseId) || getListExerciseById(exerciseId);
 
   if (!exercise) {
     return (

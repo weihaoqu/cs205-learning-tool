@@ -13,16 +13,41 @@ export default function ModulesPage() {
         <Link href="/modules/arrays/basic-arrays">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
             <CardHeader>
-              <CardTitle>Arrays</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-blue-500" />
+                Arrays
+              </CardTitle>
               <CardDescription>
                 Master 1D and 2D arrays with interactive visualizations
               </CardDescription>
             </CardHeader>
             <CardContent>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>Basic Array Operations</li>
-                <li>Sorting Algorithms</li>
-                <li>2D Arrays and Matrices</li>
+                <li>• Basic Array Operations</li>
+                <li>• Sorting Algorithms</li>
+                <li>• 2D Arrays and Matrices</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </Link>
+
+        <Link href="/modules/lists">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-green-500" />
+                Lists
+              </CardTitle>
+              <CardDescription>
+                Understand ArrayList and LinkedList implementations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• ArrayList (Dynamic Arrays)</li>
+                <li>• Singly Linked Lists</li>
+                <li>• Doubly Linked Lists</li>
+                <li>• Performance Comparison</li>
               </ul>
             </CardContent>
           </Card>

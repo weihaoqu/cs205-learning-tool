@@ -1,10 +1,13 @@
 import { ExerciseCard } from '@/components/exercises';
 import { allExercises } from '@/content/exercises/arrays';
+import { allListExercises } from '@/content/exercises/lists';
+
+const combinedExercises = [...allExercises, ...allListExercises];
 
 export default function ExercisesPage() {
-  const beginnerExercises = allExercises.filter((ex) => ex.difficulty === 'beginner');
-  const intermediateExercises = allExercises.filter((ex) => ex.difficulty === 'intermediate');
-  const advancedExercises = allExercises.filter((ex) => ex.difficulty === 'advanced');
+  const beginnerExercises = combinedExercises.filter((ex) => ex.difficulty === 'beginner');
+  const intermediateExercises = combinedExercises.filter((ex) => ex.difficulty === 'intermediate');
+  const advancedExercises = combinedExercises.filter((ex) => ex.difficulty === 'advanced');
 
   return (
     <div className="container py-8">

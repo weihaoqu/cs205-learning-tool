@@ -1,6 +1,6 @@
 export type ExerciseType = 'multiple-choice' | 'code-completion' | 'tracing' | 'interactive';
 export type Difficulty = 'beginner' | 'intermediate' | 'advanced';
-export type Topic = 'arrays' | 'sorting' | '2d-arrays' | 'complexity';
+export type Topic = 'arrays' | 'sorting' | '2d-arrays' | 'complexity' | 'lists';
 
 export interface Exercise {
   id: string;

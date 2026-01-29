@@ -1,5 +1,8 @@
 import { QuizSelector } from '@/components/quiz';
 import { allQuizzes } from '@/content/quizzes/arrays';
+import { listQuizzes } from '@/content/quizzes/lists';
+
+const combinedQuizzes = [...allQuizzes, ...listQuizzes];
 
 export default function QuizPage() {
   return (
@@ -12,7 +15,7 @@ export default function QuizPage() {
         </p>
       </div>
 
-      <QuizSelector quizzes={allQuizzes} />
+      <QuizSelector quizzes={combinedQuizzes} />
 
       <div className="mt-8 p-4 rounded-lg bg-muted">
         <h2 className="text-xl font-semibold mb-4">Quiz Tips</h2>
