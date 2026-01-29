@@ -53,6 +53,28 @@ export default function ModulesPage() {
           </Card>
         </Link>
 
+        <Link href="/modules/recursion">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-orange-500" />
+                Recursion
+              </CardTitle>
+              <CardDescription>
+                Understand recursive algorithms with interactive visualizations
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Factorial & Array Sum</li>
+                <li>• Fibonacci Call Tree</li>
+                <li>• Recursion vs Iteration</li>
+                <li>• Common Pitfalls</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </Link>
+
         <Link href="/modules/complexity">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
             <CardHeader>

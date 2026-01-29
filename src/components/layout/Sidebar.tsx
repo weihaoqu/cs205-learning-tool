@@ -34,6 +34,15 @@ const modules: Module[] = [
     ],
   },
   {
+    id: 'recursion',
+    title: 'Recursion',
+    topics: [
+      { id: 'factorial', title: 'Factorial & Sum' },
+      { id: 'fibonacci', title: 'Fibonacci' },
+      { id: 'comparison', title: 'Recursion vs Iteration' },
+    ],
+  },
+  {
     id: 'complexity',
     title: 'Algorithm Complexity',
     topics: [
