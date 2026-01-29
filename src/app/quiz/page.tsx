@@ -2,9 +2,10 @@ import { QuizSelector } from '@/components/quiz';
 import { allQuizzes } from '@/content/quizzes/arrays';
 import { listQuizzes } from '@/content/quizzes/lists';
 import { recursionQuizzes } from '@/content/quizzes/recursion';
+import { stackQueueQuizzes } from '@/content/quizzes/stack-queue';
 import { complexityQuizzes } from '@/content/quizzes/complexity';
 
-const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...complexityQuizzes];
+const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes];
 
 export default function QuizPage() {
   return (

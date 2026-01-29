@@ -75,6 +75,28 @@ export default function ModulesPage() {
           </Card>
         </Link>
 
+        <Link href="/modules/stack-queue">
+          <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <span className="w-3 h-3 rounded-full bg-cyan-500" />
+                Stacks & Queues
+              </CardTitle>
+              <CardDescription>
+                Master LIFO and FIFO data structures with drag-and-drop
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ul className="text-sm text-muted-foreground space-y-1">
+                <li>• Stack Operations (LIFO)</li>
+                <li>• Queue Operations (FIFO)</li>
+                <li>• Balanced Parentheses</li>
+                <li>• Priority Queue</li>
+              </ul>
+            </CardContent>
+          </Card>
+        </Link>
+
         <Link href="/modules/complexity">
           <Card className="hover:shadow-lg transition-shadow cursor-pointer h-full">
             <CardHeader>

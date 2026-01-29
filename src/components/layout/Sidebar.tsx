@@ -43,6 +43,15 @@ const modules: Module[] = [
     ],
   },
   {
+    id: 'stack-queue',
+    title: 'Stacks & Queues',
+    topics: [
+      { id: 'stack', title: 'Stack' },
+      { id: 'queue', title: 'Queue' },
+      { id: 'comparison', title: 'Comparison' },
+    ],
+  },
+  {
     id: 'complexity',
     title: 'Algorithm Complexity',
     topics: [
