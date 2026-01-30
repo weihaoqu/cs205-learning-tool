@@ -35,6 +35,7 @@ const algorithmColors: Record<SortingAlgorithm, string> = {
   insertion: '#ec4899',
   merge: '#10b981',
   quick: '#f59e0b',
+  heap: '#06b6d4',
 };
 
 export function SortingRace() {
@@ -143,7 +144,7 @@ export function SortingRace() {
     });
   };
 
-  const allAlgorithms: SortingAlgorithm[] = ['bubble', 'selection', 'insertion', 'merge', 'quick'];
+  const allAlgorithms: SortingAlgorithm[] = ['bubble', 'selection', 'insertion', 'merge', 'quick', 'heap'];
 
   // Sort racers by completion for ranking
   const sortedRacers = [...racers].sort((a, b) => {

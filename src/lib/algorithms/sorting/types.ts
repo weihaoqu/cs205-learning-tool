@@ -26,7 +26,7 @@ export interface SortingStep {
   };
 }
 
-export type SortingAlgorithm = 'bubble' | 'selection' | 'insertion' | 'merge' | 'quick';
+export type SortingAlgorithm = 'bubble' | 'selection' | 'insertion' | 'merge' | 'quick' | 'heap';
 
 export interface AlgorithmInfo {
   id: SortingAlgorithm;
@@ -81,5 +81,13 @@ export const ALGORITHM_INFO: Record<SortingAlgorithm, AlgorithmInfo> = {
     spaceComplexity: 'O(log n)',
     stable: false,
     description: 'Picks a pivot element and partitions the array around it.',
+  },
+  heap: {
+    id: 'heap',
+    name: 'Heap Sort',
+    timeComplexity: { best: 'O(n log n)', average: 'O(n log n)', worst: 'O(n log n)' },
+    spaceComplexity: 'O(1)',
+    stable: false,
+    description: 'Builds a max-heap and repeatedly extracts the maximum element.',
   },
 };

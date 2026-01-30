@@ -4,8 +4,9 @@ import { listQuizzes } from '@/content/quizzes/lists';
 import { recursionQuizzes } from '@/content/quizzes/recursion';
 import { stackQueueQuizzes } from '@/content/quizzes/stack-queue';
 import { complexityQuizzes } from '@/content/quizzes/complexity';
+import { sortingQuizzes } from '@/content/quizzes/sorting';
 
-const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes];
+const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes, ...sortingQuizzes];
 
 export default function QuizPage() {
   return (

@@ -4,12 +4,14 @@ export { selectionSortGenerator, selectionSortCode } from './selectionSort';
 export { insertionSortGenerator, insertionSortCode } from './insertionSort';
 export { mergeSortGenerator, mergeSortCode } from './mergeSort';
 export { quickSortGenerator, quickSortCode } from './quickSort';
+export { heapSortGenerator, heapSortCode } from './heapSort';
 
 import { bubbleSortGenerator, bubbleSortCode } from './bubbleSort';
 import { selectionSortGenerator, selectionSortCode } from './selectionSort';
 import { insertionSortGenerator, insertionSortCode } from './insertionSort';
 import { mergeSortGenerator, mergeSortCode } from './mergeSort';
 import { quickSortGenerator, quickSortCode } from './quickSort';
+import { heapSortGenerator, heapSortCode } from './heapSort';
 import type { SortingAlgorithm, SortingStep } from './types';
 
 type SortingGenerator = (arr: number[]) => Generator<SortingStep>;
@@ -20,6 +22,7 @@ export const sortingGenerators: Record<SortingAlgorithm, SortingGenerator> = {
   insertion: insertionSortGenerator,
   merge: mergeSortGenerator,
   quick: quickSortGenerator,
+  heap: heapSortGenerator,
 };
 
 export const sortingCode: Record<SortingAlgorithm, string> = {
@@ -28,6 +31,7 @@ export const sortingCode: Record<SortingAlgorithm, string> = {
   insertion: insertionSortCode,
   merge: mergeSortCode,
   quick: quickSortCode,
+  heap: heapSortCode,
 };
 
 export function generateSortingSteps(

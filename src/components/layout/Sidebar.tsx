@@ -19,8 +19,22 @@ const modules: Module[] = [
     title: 'Arrays',
     topics: [
       { id: 'basic-arrays', title: 'Basic Arrays' },
-      { id: 'sorting', title: 'Sorting Algorithms' },
+      { id: 'sorting', title: 'Sorting (Quick)' },
       { id: '2d-arrays', title: '2D Arrays' },
+    ],
+  },
+  {
+    id: 'sorting',
+    title: 'Sorting Algorithms',
+    topics: [
+      { id: '', title: 'Overview' },
+      { id: 'bubble', title: 'Bubble Sort' },
+      { id: 'selection', title: 'Selection Sort' },
+      { id: 'insertion', title: 'Insertion Sort' },
+      { id: 'merge', title: 'Merge Sort' },
+      { id: 'quick', title: 'Quick Sort' },
+      { id: 'heap', title: 'Heap Sort' },
+      { id: 'comparison', title: 'Race & Compare' },
     ],
   },
   {
@@ -75,11 +89,13 @@ export function Sidebar() {
             </h3>
             <ul className="space-y-1">
               {module.topics.map((topic) => {
-                const href = `/modules/${module.id}/${topic.id}`;
+                const href = topic.id
+                  ? `/modules/${module.id}/${topic.id}`
+                  : `/modules/${module.id}`;
                 const isActive = pathname === href;
 
                 return (
-                  <li key={topic.id}>
+                  <li key={topic.id || 'overview'}>
                     <Link
                       href={href}
                       className={cn(

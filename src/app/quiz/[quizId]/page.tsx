@@ -8,6 +8,7 @@ import { getListQuizById } from '@/content/quizzes/lists';
 import { getRecursionQuizById } from '@/content/quizzes/recursion';
 import { getStackQueueQuizById } from '@/content/quizzes/stack-queue';
 import { getComplexityQuizById } from '@/content/quizzes/complexity';
+import { getSortingQuizById } from '@/content/quizzes/sorting';
 import { Button } from '@/components/ui/button';
 import { useProgressStore } from '@/stores/progressStore';
 import type { QuizResult } from '@/types/exercise';
@@ -18,7 +19,7 @@ interface QuizPageProps {
 
 export default function QuizDetailPage({ params }: QuizPageProps) {
   const { quizId } = use(params);
-  const quiz = getQuizById(quizId) || getListQuizById(quizId) || getRecursionQuizById(quizId) || getStackQueueQuizById(quizId) || getComplexityQuizById(quizId);
+  const quiz = getQuizById(quizId) || getListQuizById(quizId) || getRecursionQuizById(quizId) || getStackQueueQuizById(quizId) || getComplexityQuizById(quizId) || getSortingQuizById(quizId);
   const { addQuizResult, getBestScore } = useProgressStore();
 
   const bestScore = quiz ? getBestScore(quiz.id) : null;
