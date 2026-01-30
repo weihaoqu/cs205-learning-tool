@@ -5,8 +5,9 @@ import { recursionQuizzes } from '@/content/quizzes/recursion';
 import { stackQueueQuizzes } from '@/content/quizzes/stack-queue';
 import { complexityQuizzes } from '@/content/quizzes/complexity';
 import { sortingQuizzes } from '@/content/quizzes/sorting';
+import { mapsQuizzes } from '@/content/quizzes/maps';
 
-const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes, ...sortingQuizzes];
+const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes, ...sortingQuizzes, ...mapsQuizzes];
 
 export default function QuizPage() {
   return (

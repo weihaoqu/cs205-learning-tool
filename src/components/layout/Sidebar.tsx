@@ -66,6 +66,18 @@ const modules: Module[] = [
     ],
   },
   {
+    id: 'maps',
+    title: 'Maps & HashTables',
+    topics: [
+      { id: '', title: 'Overview' },
+      { id: 'hashing', title: 'Hashing Basics' },
+      { id: 'hashmap', title: 'HashMap' },
+      { id: 'hashset', title: 'HashSet' },
+      { id: 'rehashing', title: 'Load Factor & Rehashing' },
+      { id: 'practice', title: 'Practice' },
+    ],
+  },
+  {
     id: 'complexity',
     title: 'Algorithm Complexity',
     topics: [
