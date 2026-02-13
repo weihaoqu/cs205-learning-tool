@@ -25,13 +25,14 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma needs the generated client, schema, config, and dotenv at runtime
+# Prisma runtime: generated client for the app, schema + config + CLI for migrations
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
+# Install prisma CLI globally (handles all transitive deps like valibot, @prisma/dev, etc.)
+RUN npm install -g prisma@7.4.0
 
 USER nextjs
 EXPOSE 3000
@@ -39,4 +40,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Run migrations then start the server
-CMD ["sh", "-c", "node ./node_modules/prisma/build/index.js migrate deploy && node server.js"]
+CMD ["sh", "-c", "prisma migrate deploy && node server.js"]
