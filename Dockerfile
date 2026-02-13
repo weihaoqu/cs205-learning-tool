@@ -33,8 +33,9 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
 COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
 # Install prisma CLI globally (handles all transitive deps like valibot, @prisma/dev, etc.)
-# Local node_modules/prisma is kept for prisma.config.ts to resolve "prisma/config" import
+# Local prisma + @prisma kept for prisma.config.ts imports; NODE_PATH bridges module resolution
 RUN npm install -g prisma@7.4.0
+ENV NODE_PATH=/usr/local/lib/node_modules
 
 USER nextjs
 EXPOSE 3000
