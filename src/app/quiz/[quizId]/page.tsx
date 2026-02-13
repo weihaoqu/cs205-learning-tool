@@ -10,6 +10,11 @@ import { getStackQueueQuizById } from '@/content/quizzes/stack-queue';
 import { getComplexityQuizById } from '@/content/quizzes/complexity';
 import { getSortingQuizById } from '@/content/quizzes/sorting';
 import { getMapsQuizById } from '@/content/quizzes/maps';
+import { getSearchingQuizById } from '@/content/quizzes/searching';
+import { getTreesQuizById } from '@/content/quizzes/trees';
+import { getHeapsQuizById } from '@/content/quizzes/heaps';
+import { getGraphsQuizById } from '@/content/quizzes/graphs';
+import { getDPQuizById } from '@/content/quizzes/dynamic-programming';
 import { Button } from '@/components/ui/button';
 import { useProgressStore } from '@/stores/progressStore';
 import type { QuizResult } from '@/types/exercise';
@@ -20,13 +25,27 @@ interface QuizPageProps {
 
 export default function QuizDetailPage({ params }: QuizPageProps) {
   const { quizId } = use(params);
-  const quiz = getQuizById(quizId) || getListQuizById(quizId) || getRecursionQuizById(quizId) || getStackQueueQuizById(quizId) || getComplexityQuizById(quizId) || getSortingQuizById(quizId) || getMapsQuizById(quizId);
+  const quiz = getQuizById(quizId) || getListQuizById(quizId) || getRecursionQuizById(quizId) || getStackQueueQuizById(quizId) || getComplexityQuizById(quizId) || getSortingQuizById(quizId) || getMapsQuizById(quizId) || getSearchingQuizById(quizId) || getTreesQuizById(quizId) || getHeapsQuizById(quizId) || getGraphsQuizById(quizId) || getDPQuizById(quizId);
   const { addQuizResult, getBestScore } = useProgressStore();
 
   const bestScore = quiz ? getBestScore(quiz.id) : null;
 
   const handleComplete = (result: QuizResult) => {
+    // Keep localStorage as fallback
     addQuizResult(result);
+
+    // Also persist to server
+    fetch('/cs205/api/tracking/quiz', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        quizId: result.quizId,
+        score: result.score,
+        totalPoints: result.totalPoints,
+        percentage: result.totalPoints > 0 ? (result.score / result.totalPoints) * 100 : 0,
+        answers: result.answers,
+      }),
+    }).catch(() => {}); // silent failure
   };
 
   if (!quiz) {

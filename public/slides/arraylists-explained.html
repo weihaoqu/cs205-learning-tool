@@ -1,0 +1,1244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ArrayLists & Node Lists - CS205 Data Structures</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* Slide system */
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  .slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+
+  /* Navigation */
+  .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+  .nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .nav button:hover { background: #475569; }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+
+  /* Typography */
+  h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+  h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+  h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+  p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+  .subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+
+  /* Layout helpers */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .center { text-align: center; }
+  .mt { margin-top: 20px; }
+
+  /* Code / diagram blocks */
+  .diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+  .diagram.small { font-size: 0.85em; }
+
+  /* Highlight boxes */
+  .key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .key-idea h3 { margin-bottom: 8px; }
+  .warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .warning h3 { color: #fbbf24; }
+  .analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .analogy h3 { color: #34d399; }
+
+  /* Table */
+  table { border-collapse: collapse; margin: 16px 0; width: auto; }
+  th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+  th { background: #334155; color: #93c5fd; font-weight: 600; }
+  td { background: #1e293b; color: #e2e8f0; }
+  tr.highlight td { background: rgba(59,130,246,0.2); }
+
+  /* Animations */
+  .fade-in { animation: fadeIn 0.5s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* Step-by-step reveal */
+  .step { opacity: 0.25; transition: opacity 0.4s; margin: 8px 0; padding: 8px 12px; border-radius: 8px; }
+  .step.revealed { opacity: 1; background: rgba(59,130,246,0.08); }
+
+  ul { padding-left: 24px; }
+  ul li { margin-bottom: 8px; }
+
+  code { font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; background: #1e293b; padding: 2px 8px; border-radius: 4px; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide active" id="s1">
+  <div class="center">
+    <h1>ArrayLists & Node Lists</h1>
+    <p class="subtitle">Array List ADT, Dynamic Resizing, Position-Based Lists, and Iterators</p>
+    <div style="margin-top: 40px; color: #64748b;">
+      CS205 Data Structures &mdash; Use arrow keys or buttons to navigate
+    </div>
+    <div class="diagram" style="display: inline-block; margin-top: 30px; text-align: left; font-size: 0.9em;">
+  ArrayList (index-based)        Node List (position-based)
+
+  +---+---+---+---+---+         +---+    +---+    +---+
+  | A | B | C | D |   |         | A |&lt;--&gt;| B |&lt;--&gt;| C |
+  +---+---+---+---+---+         +---+    +---+    +---+
+    0   1   2   3                 p1       p2       p3
+    ^                             ^
+    index access O(1)             position access O(1)</div>
+  </div>
+  <div class="slide-number">1 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 2: THE LIST ADT ==================== -->
+<div class="slide" id="s2">
+  <h2>The List ADT</h2>
+  <p class="subtitle">An abstract, ordered collection of elements</p>
+
+  <div class="two-col">
+    <div>
+      <p>A <strong>List</strong> stores elements in a <em>linear sequence</em>. Each element has an index (rank) from <code>0</code> to <code>n-1</code>.</p>
+
+      <h3 class="mt">Core Operations</h3>
+      <div class="diagram small">
+get(i)      - return element at index i
+set(i, e)   - replace element at index i with e
+add(i, e)   - insert e at index i, shift others right
+remove(i)   - remove element at index i, shift left
+size()      - return number of elements</div>
+
+      <h3 class="mt">Additional Operations</h3>
+      <div class="diagram small">
+isEmpty()   - is the list empty?
+addFirst(e) - same as add(0, e)
+addLast(e)  - same as add(size(), e)</div>
+    </div>
+
+    <div>
+      <div class="analogy">
+        <h3>Analogy: A Numbered Lineup</h3>
+        <p>Think of people standing in a numbered line. You can tell someone to stand at position 3, and everyone behind them scoots back one spot.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The List ADT is <em>abstract</em> -- it defines <strong>what</strong> operations are available, not <strong>how</strong> they are implemented. An ArrayList and a LinkedList both implement the same List ADT!</p>
+      </div>
+
+      <div class="diagram small">
+  List ADT (interface)
+       /            \
+  ArrayList      LinkedList
+  (array)        (nodes + pointers)</div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 3: ARRAY-BASED LIST ==================== -->
+<div class="slide" id="s3">
+  <h2>Array-Based List (ArrayList)</h2>
+  <p class="subtitle">A dynamic array that grows as needed</p>
+
+  <div class="two-col">
+    <div>
+      <p>An ArrayList stores elements in a contiguous <strong>backing array</strong>. Two key values track its state:</p>
+      <ul>
+        <li><strong>size</strong> -- number of elements actually stored</li>
+        <li><strong>capacity</strong> -- total slots available in backing array</li>
+      </ul>
+
+      <div class="diagram">
+  capacity = 8
+  size = 5
+        ______________________________
+       |    |    |    |    |    |    |    |    |
+  arr: | 10 | 20 | 30 | 40 | 50 |    |    |    |
+       |____|____|____|____|____|____|____|____|
+  idx:   0    1    2    3    4    5    6    7
+         &lt;--- used (size=5) ---&gt; &lt;- empty -&gt;</div>
+    </div>
+
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p><strong>size &le; capacity</strong> always. When <code>size == capacity</code>, the array is full and must be resized before adding more elements.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Warning: Index Bounds</h3>
+        <p>Valid indices are <code>0</code> to <code>size - 1</code>. Accessing index <code>5</code> in the diagram above throws <code>IndexOutOfBoundsException</code> even though the backing array has slots 5-7!</p>
+      </div>
+
+      <div class="diagram small">
+  public class ArrayList&lt;E&gt; {
+      E[] data;       // backing array
+      int size;       // # of real elements
+
+      ArrayList(int capacity) {
+          data = (E[]) new Object[capacity];
+          size = 0;
+      }
+  }</div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 4: GET AND SET ==================== -->
+<div class="slide" id="s4">
+  <h2>Get and Set -- O(1) Random Access</h2>
+  <p class="subtitle">The superpower of array-based lists</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Direct Index Access</h3>
+      <div class="diagram">
+  get(2):  go directly to arr[2]
+           no searching needed!
+
+       +----+----+----+----+----+
+  arr: | 10 | 20 | 30 | 40 | 50 |
+       +----+----+----+----+----+
+         0    1    2    3    4
+                   ^
+                   |
+            return 30  --  O(1)!</div>
+
+      <div class="diagram small mt">
+  set(2, 99): replace arr[2] in-place
+
+       +----+----+----+----+----+
+  arr: | 10 | 20 | 99 | 40 | 50 |
+       +----+----+----+----+----+
+         0    1    2    3    4
+                   ^
+              was 30, now 99  -- O(1)!</div>
+    </div>
+
+    <div>
+      <h3>Code</h3>
+      <div class="diagram small">
+  // O(1) -- constant time
+  public E get(int i) {
+      if (i &lt; 0 || i &gt;= size)
+          throw new IndexOutOfBoundsException();
+      return data[i];
+  }
+
+  // O(1) -- constant time
+  public E set(int i, E element) {
+      if (i &lt; 0 || i &gt;= size)
+          throw new IndexOutOfBoundsException();
+      E old = data[i];
+      data[i] = element;
+      return old;
+  }</div>
+
+      <div class="analogy">
+        <h3>Analogy: Hotel Rooms</h3>
+        <p>Like going directly to Room 302 in a hotel. You don't check rooms 1, 2, 3... You just walk straight there. That's what array indexing does -- <strong>address arithmetic</strong> computes the memory location instantly.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>O(1) random access is the main reason to use an ArrayList. If your workload is read-heavy, ArrayList is likely the best choice.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 5: ADD AT INDEX ==================== -->
+<div class="slide" id="s5">
+  <h2>Add at Index -- Shifting Right</h2>
+  <p class="subtitle">Making room costs O(n) in the worst case</p>
+
+  <div class="diagram">
+  add(2, 99):  Insert 99 at index 2
+
+  BEFORE:
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 | 30 | 40 | 50 |    |     size = 5, capacity = 6
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+
+  STEP 1: Shift elements at indices 2..4 one position RIGHT (start from the back!)
+
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 |    | 30 | 40 | 50 |     shifted 30,40,50 right
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+                   ^
+              gap opened up
+
+  STEP 2: Place new element at index 2, increment size
+
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 | 99 | 30 | 40 | 50 |     size = 6
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+                   ^
+                 inserted!</div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+  public void add(int i, E element) {
+      if (size == data.length)
+          resize(2 * data.length);
+      // shift right from back
+      for (int k = size - 1; k &gt;= i; k--)
+          data[k + 1] = data[k];
+      data[i] = element;
+      size++;
+  }</div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>O(n) Worst Case</h3>
+        <p><code>add(0, e)</code> shifts ALL n elements. On average, add at a random index shifts n/2 elements. Only <code>add(size, e)</code> (append) avoids shifting entirely.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 6: REMOVE AT INDEX ==================== -->
+<div class="slide" id="s6">
+  <h2>Remove at Index -- Shifting Left</h2>
+  <p class="subtitle">Filling the gap costs O(n) in the worst case</p>
+
+  <div class="diagram">
+  remove(2):  Remove element at index 2 (value 99)
+
+  BEFORE:
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 | 99 | 30 | 40 | 50 |     size = 6
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+                   ^
+              remove this
+
+  STEP 1: Save removed element, then shift indices 3..5 one position LEFT
+
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 | 30 | 40 | 50 |    |     shifted 30,40,50 left
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+                                  ^
+                            now unused
+
+  STEP 2: Decrement size, null out old last slot
+
+       +----+----+----+----+----+----+
+  arr: | 10 | 20 | 30 | 40 | 50 |null|     size = 5
+       +----+----+----+----+----+----+
+         0    1    2    3    4    5
+
+  return 99 (the removed element)</div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+  public E remove(int i) {
+      E removed = data[i];
+      // shift left
+      for (int k = i; k &lt; size - 1; k++)
+          data[k] = data[k + 1];
+      data[size - 1] = null; // help GC
+      size--;
+      return removed;
+  }</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Setting the old last slot to <code>null</code> prevents <strong>memory leaks</strong> -- otherwise the array still references an object the user thinks was removed.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 7: ADD AT END (APPEND) ==================== -->
+<div class="slide" id="s7">
+  <h2>Add at End (Append)</h2>
+  <p class="subtitle">Usually O(1), but occasionally O(n) -- amortized O(1)</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Case 1: Array has room</h3>
+      <div class="diagram small">
+  addLast(60):   size=5, capacity=8
+
+  BEFORE:
+  +----+----+----+----+----+----+----+----+
+  | 10 | 20 | 30 | 40 | 50 |    |    |    |
+  +----+----+----+----+----+----+----+----+
+    0    1    2    3    4    5    6    7
+
+  AFTER:   just place at data[size], size++
+  +----+----+----+----+----+----+----+----+
+  | 10 | 20 | 30 | 40 | 50 | 60 |    |    |
+  +----+----+----+----+----+----+----+----+
+    0    1    2    3    4    5    6    7
+
+  Cost: O(1)  -- no shifting, no copying!</div>
+
+      <h3 class="mt">Case 2: Array is full</h3>
+      <div class="diagram small">
+  addLast(60):   size=5, capacity=5  (FULL!)
+
+  +----+----+----+----+----+
+  | 10 | 20 | 30 | 40 | 50 |   &lt;-- no room!
+  +----+----+----+----+----+
+
+  Must RESIZE first (see next slide),
+  then place 60 at the end.
+
+  Cost: O(n) for this one insertion</div>
+    </div>
+
+    <div>
+      <div class="diagram small">
+  public void addLast(E element) {
+      if (size == data.length)
+          resize(2 * data.length);
+      data[size] = element;
+      size++;
+  }
+
+  // Equivalent to:
+  //   add(size, element)
+  // but avoids the shifting loop</div>
+
+      <div class="analogy">
+        <h3>Analogy: A Notebook</h3>
+        <p>Writing on the next blank line is instant. But when the notebook is full, you need to buy a bigger one and copy all your old notes -- that takes a while. However, the bigger notebook means many quick writes before the next copy.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea: Amortized O(1)</h3>
+        <p>Resizing is rare and gets rarer as the array grows. Averaged over many operations, each <code>addLast</code> costs only O(1). This is called <strong>amortized analysis</strong>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 8: DYNAMIC RESIZING ==================== -->
+<div class="slide" id="s8">
+  <h2>Dynamic Resizing -- The Doubling Strategy</h2>
+  <p class="subtitle">Why doubling the capacity gives amortized O(1) appends</p>
+
+  <div class="diagram">
+  When array is full, allocate 2x capacity and copy everything:
+
+  FULL (capacity = 4):
+  +----+----+----+----+
+  | 10 | 20 | 30 | 40 |    size = 4, capacity = 4
+  +----+----+----+----+
+    |    |    |    |
+    v    v    v    v         copy all 4 elements
+  +----+----+----+----+----+----+----+----+
+  | 10 | 20 | 30 | 40 |    |    |    |    |    new capacity = 8
+  +----+----+----+----+----+----+----+----+
+
+  Now insert new element:
+  +----+----+----+----+----+----+----+----+
+  | 10 | 20 | 30 | 40 | 50 |    |    |    |    size = 5
+  +----+----+----+----+----+----+----+----+
+
+  Next 3 appends are FREE (no resize needed)!</div>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Amortized Analysis (Accounting Method)</h3>
+      <div class="diagram small">
+  Growth history (starting capacity = 1):
+
+  Op#  Size  Capacity  Resize?  Copy cost
+  ---  ----  --------  -------  ---------
+   1    1      1         --         0
+   2    2      2        yes!        1
+   3    3      4        yes!        2
+   4    4      4         --         0
+   5    5      8        yes!        4
+  6-8  6-8    8          --         0
+   9    9     16        yes!        8
+  10-16 ...   16         --         0
+
+  Total copies after n inserts:
+    1 + 2 + 4 + 8 + ... + n  =  2n - 1
+
+  Amortized cost per insert = (2n-1)/n ~ O(1)</div>
+    </div>
+
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea: Why doubling, not +1?</h3>
+        <p>If we grew by +1 each time, every append copies all elements: total cost = 1+2+3+...+n = O(n^2). Doubling makes total copies = O(n), giving <strong>amortized O(1)</strong> per append.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Warning: Memory Waste</h3>
+        <p>Doubling can waste up to 50% of memory (size = n, capacity = 2n). This is the <strong>time-space tradeoff</strong>. Growth factor 1.5 wastes less memory but still achieves amortized O(1).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 9: SHRINKING STRATEGY ==================== -->
+<div class="slide" id="s9">
+  <h2>Shrinking Strategy</h2>
+  <p class="subtitle">When and how to reclaim unused memory</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Naive approach: shrink at 1/2 full</h3>
+      <div class="diagram small">
+  THRASHING -- worst-case scenario!
+
+  capacity = 8, size = 4 (half full)
+  +--+--+--+--+--+--+--+--+
+  |##|##|##|##|  |  |  |  |   size/cap = 1/2
+  +--+--+--+--+--+--+--+--+
+
+  add() --&gt; size=5, need resize to 8
+  +--+--+--+--+--+--+--+--+
+  |##|##|##|##|##|  |  |  |   grew!
+  +--+--+--+--+--+--+--+--+
+
+  remove() --&gt; size=4, shrink to 4
+  +--+--+--+--+
+  |##|##|##|##|                shrank!
+  +--+--+--+--+
+
+  add() --&gt; size=5, resize to 8 AGAIN!
+
+  Every add/remove pair = O(n) copies!</div>
+
+      <div class="warning">
+        <h3>Warning: Thrashing</h3>
+        <p>If you grow at 2x and shrink at 1/2, alternating add/remove near the boundary triggers resize every single operation. This destroys amortized performance!</p>
+      </div>
+    </div>
+
+    <div>
+      <h3>Smart approach: shrink at 1/4 full</h3>
+      <div class="diagram small">
+  Rule: shrink to HALF when size = capacity/4
+
+  capacity = 16, size = 4 (quarter full)
+  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+  |##|##|##|##|  |  |  |  |  |  |  |  |  |  |  |  |
+  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
+                              trigger: size = cap/4
+
+  Shrink to capacity/2 = 8:
+  +--+--+--+--+--+--+--+--+
+  |##|##|##|##|  |  |  |  |   half full, not at boundary
+  +--+--+--+--+--+--+--+--+
+
+  Now you need 4 more removes to trigger
+  another shrink, or 4 adds to reach capacity.
+  Either way: many operations between resizes!</div>
+
+      <div class="key-idea">
+        <h3>Key Idea: Hysteresis</h3>
+        <p>By leaving a <strong>buffer zone</strong> between the grow threshold (full) and shrink threshold (1/4 full), we guarantee enough operations between resizes to amortize the copy cost.</p>
+      </div>
+
+      <div class="diagram small">
+  Summary of thresholds:
+  GROW:   when size == capacity
+          new capacity = 2 * old capacity
+
+  SHRINK: when size == capacity / 4
+          new capacity = capacity / 2</div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 10: THE POSITION ADT ==================== -->
+<div class="slide" id="s10">
+  <h2>The Position ADT</h2>
+  <p class="subtitle">A stable handle to an element, immune to shifting</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Problem with Indices</h3>
+      <div class="diagram small">
+  You're tracking element "C" at index 2.
+
+  BEFORE insert:
+  +---+---+---+---+---+
+  | A | B | C | D | E |     "C" is at index 2
+  +---+---+---+---+---+
+    0   1   2   3   4
+
+  AFTER add(1, "X"):
+  +---+---+---+---+---+---+
+  | A | X | B | C | D | E |  "C" is now at index 3!
+  +---+---+---+---+---+---+
+    0   1   2   3   4   5
+                ^
+    Your stored index 2 now points to "B"!</div>
+
+      <div class="warning">
+        <h3>Indices Are Fragile</h3>
+        <p>Every insertion or deletion can invalidate stored indices. If you save "the element at index 2", that reference breaks after any modification before it.</p>
+      </div>
+    </div>
+
+    <div>
+      <h3>The Solution: Positions</h3>
+      <p>A <strong>Position</strong> is an object that holds onto an element, regardless of where it sits in the sequence. Insertions and deletions don't break other positions.</p>
+
+      <div class="diagram small">
+  Position interface:
+  +------------------------+
+  |  Position&lt;E&gt;           |
+  |  ----------------------|
+  |  getElement() : E      |
+  +------------------------+
+
+  You hold position p for "C".
+  No matter how many inserts/deletes
+  happen around it, p.getElement()
+  always returns "C".</div>
+
+      <div class="analogy">
+        <h3>Analogy: Name Tags vs Seat Numbers</h3>
+        <p><strong>Index</strong> = "person in seat #3" -- changes when people move. <strong>Position</strong> = "the person wearing the Alice name tag" -- always refers to Alice no matter where she sits.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The Position ADT decouples <em>identity</em> from <em>location</em>. This is the foundation for positional (node) lists.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 11: NODE LIST ==================== -->
+<div class="slide" id="s11">
+  <h2>Node List (Positional Linked List)</h2>
+  <p class="subtitle">A doubly-linked list where each node IS a position</p>
+
+  <div class="diagram">
+  Doubly-Linked List with Sentinel Nodes:
+
+     header                                               trailer
+    (dummy)                                               (dummy)
+   +------+     +------+     +------+     +------+     +------+
+   |      |----&gt;|      |----&gt;|      |----&gt;|      |----&gt;|      |
+   | null |     |  A   |     |  B   |     |  C   |     | null |
+   |      |&lt;----|      |&lt;----|      |&lt;----|      |&lt;----|      |
+   +------+     +------+     +------+     +------+     +------+
+                  p1           p2           p3
+              (position)   (position)   (position)
+
+  Each node has:
+  +-----------+
+  |  element  |    the stored data
+  |   prev  ----&gt;  pointer to previous node
+  |   next  ----&gt;  pointer to next node
+  +-----------+</div>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Positional List Operations</h3>
+      <div class="diagram small">
+  first()         : Position of first element
+  last()          : Position of last element
+  before(p)       : Position before p
+  after(p)        : Position after p
+  addBefore(p, e) : Insert e before p
+  addAfter(p, e)  : Insert e after p
+  set(p, e)       : Replace element at p
+  remove(p)       : Remove element at p</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea: Sentinels</h3>
+        <p><strong>Header</strong> and <strong>trailer</strong> are dummy nodes that simplify edge cases. We never insert before header or after trailer. This eliminates null-checking for first/last operations.</p>
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Train Cars</h3>
+        <p>Each car (node) is coupled to the car in front and behind. To add a new car, you just recouple the links. The engine (header) and caboose (trailer) never change.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 12: NODE LIST OPERATIONS ==================== -->
+<div class="slide" id="s12">
+  <h2>Node List Operations -- O(1) Each!</h2>
+  <p class="subtitle">Pointer rewiring instead of element shifting</p>
+
+  <div class="diagram" style="font-size: 0.82em;">
+  addAfter(p2, "X"):  Insert "X" after position p2 (which holds "B")
+
+  BEFORE:
+       +---+         +---+         +---+
+  ...  | A | &lt;----&gt;  | B | &lt;----&gt;  | C |  ...
+       +---+   p1    +---+   p2    +---+   p3
+
+  STEP 1: Create new node holding "X"
+                               +---+
+                               | X |  new
+                               +---+
+
+  STEP 2: Rewire 4 pointers
+       +---+         +---+         +---+         +---+
+  ...  | A | &lt;----&gt;  | B | &lt;----&gt;  | X | &lt;----&gt;  | C |  ...
+       +---+   p1    +---+   p2    +---+  pNew   +---+   p3
+
+  Only 4 pointer assignments -- O(1)!</div>
+
+  <div class="two-col mt">
+    <div>
+      <h3>remove(p2): Remove node at position p2</h3>
+      <div class="diagram small">
+  BEFORE:
+  +---+     +---+     +---+
+  | A |&lt;--&gt; | B |&lt;--&gt; | C |
+  +---+ p1  +---+ p2  +---+ p3
+
+  Rewire: A.next = C,  C.prev = A
+
+  AFTER:
+  +---+               +---+
+  | A |&lt;------------&gt; | C |
+  +---+  p1           +---+  p3
+           +---+
+           | B | (garbage collected)
+           +---+
+
+  O(1) -- no shifting!</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  // Java-style pseudocode
+  void addAfter(Position p, E element) {
+      Node node = (Node) p;
+      Node newNode = new Node(element,
+                       node, node.next);
+      node.next.prev = newNode;
+      node.next = newNode;
+      size++;
+  }
+
+  E remove(Position p) {
+      Node node = (Node) p;
+      node.prev.next = node.next;
+      node.next.prev = node.prev;
+      size--;
+      return node.element;
+  }</div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>All positional insert/remove operations are <strong>O(1)</strong> because we only rewire a constant number of pointers. No elements are shifted. This is the fundamental advantage over ArrayList.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 13: ITERATORS ==================== -->
+<div class="slide" id="s13">
+  <h2>Iterators</h2>
+  <p class="subtitle">Traversing a collection without knowing its implementation</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Iterator Interface</h3>
+      <div class="diagram small">
+  +---------------------+
+  |  Iterator&lt;E&gt;        |
+  |  -------------------|
+  |  hasNext() : boolean|
+  |  next()    : E      |
+  +---------------------+
+
+  Usage pattern:
+  Iterator&lt;String&gt; it = list.iterator();
+  while (it.hasNext()) {
+      String s = it.next();
+      System.out.println(s);
+  }
+
+  // Or with for-each (syntactic sugar):
+  for (String s : list) {
+      System.out.println(s);
+  }</div>
+
+      <div class="diagram small mt">
+  How the iterator walks through a list:
+
+  +---+---+---+---+---+
+  | A | B | C | D | E |
+  +---+---+---+---+---+
+    ^
+    cursor
+
+  next() returns "A", advances cursor:
+  +---+---+---+---+---+
+  | A | B | C | D | E |
+  +---+---+---+---+---+
+        ^
+        cursor
+
+  hasNext()? YES (cursor != end)</div>
+    </div>
+
+    <div>
+      <h3>Why Iterators?</h3>
+      <div class="analogy">
+        <h3>Analogy: TV Remote</h3>
+        <p>You press "next channel" without knowing if signals come via cable, satellite, or streaming. The remote is the iterator -- it gives you a uniform way to move through content regardless of the source.</p>
+      </div>
+
+      <h3 class="mt">Iterator on ArrayList vs Node List</h3>
+      <div class="diagram small">
+  ArrayList iterator:
+    cursor = index (int)
+    next() returns data[cursor++]
+
+  Node List iterator:
+    cursor = node reference
+    next() {
+        E val = cursor.element;
+        cursor = cursor.next;
+        return val;
+    }
+
+  SAME interface, DIFFERENT internals!</div>
+
+      <div class="key-idea">
+        <h3>Key Idea: Abstraction</h3>
+        <p>Iterators decouple <em>traversal logic</em> from <em>data structure details</em>. Code using iterators works with ANY Iterable collection without modification.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 14: COMPARISON TABLE ==================== -->
+<div class="slide" id="s14">
+  <h2>ArrayList vs Node List -- Comparison</h2>
+  <p class="subtitle">Choosing the right implementation for your workload</p>
+
+  <div class="center">
+    <table style="margin: 20px auto;">
+      <tr>
+        <th>Operation</th>
+        <th>ArrayList</th>
+        <th>Node List (Doubly Linked)</th>
+      </tr>
+      <tr>
+        <td><code>get(i)</code> / Access by index</td>
+        <td style="color: #4ade80;"><strong>O(1)</strong></td>
+        <td style="color: #f87171;">O(n)</td>
+      </tr>
+      <tr>
+        <td><code>set(i, e)</code></td>
+        <td style="color: #4ade80;"><strong>O(1)</strong></td>
+        <td style="color: #f87171;">O(n)</td>
+      </tr>
+      <tr>
+        <td><code>add(0, e)</code> / Insert at front</td>
+        <td style="color: #f87171;">O(n)</td>
+        <td style="color: #4ade80;"><strong>O(1)</strong></td>
+      </tr>
+      <tr>
+        <td><code>add(n, e)</code> / Append at end</td>
+        <td style="color: #4ade80;"><strong>O(1)*</strong> amortized</td>
+        <td style="color: #4ade80;"><strong>O(1)</strong></td>
+      </tr>
+      <tr>
+        <td><code>add(i, e)</code> / Insert at middle</td>
+        <td style="color: #f87171;">O(n)</td>
+        <td style="color: #fbbf24;">O(1) if you have position, O(n) to find it</td>
+      </tr>
+      <tr>
+        <td><code>remove(i)</code> / Delete at middle</td>
+        <td style="color: #f87171;">O(n)</td>
+        <td style="color: #fbbf24;">O(1) if you have position, O(n) to find it</td>
+      </tr>
+      <tr>
+        <td>Memory per element</td>
+        <td style="color: #4ade80;"><strong>1 reference</strong></td>
+        <td style="color: #f87171;">3 references (elem + prev + next)</td>
+      </tr>
+      <tr>
+        <td>Cache performance</td>
+        <td style="color: #4ade80;"><strong>Excellent</strong> (contiguous)</td>
+        <td style="color: #f87171;">Poor (scattered in memory)</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Node List insert/delete is O(1) <em>only if you already have the position</em>. Finding a position by value or index still costs O(n). The advantage comes when you hold positions from prior operations.</p>
+      </div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p><strong>ArrayList</strong> = a numbered bookshelf. Finding book #47 is instant, but inserting a book in the middle means sliding everything over. <strong>Node List</strong> = a chain of paperclips. Easy to add/remove a clip anywhere, but finding the 47th clip means counting from the start.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 15: JAVA COLLECTIONS FRAMEWORK ==================== -->
+<div class="slide" id="s15">
+  <h2>Java Collections Framework</h2>
+  <p class="subtitle">How ArrayList and LinkedList fit into the bigger picture</p>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+          Iterable&lt;E&gt;
+              |
+         Collection&lt;E&gt;
+           /        \
+        List&lt;E&gt;    Set&lt;E&gt;   ...
+        /    \
+  ArrayList  LinkedList
+  (array)    (doubly-linked list)
+
+  Both implement the same List&lt;E&gt; interface!</div>
+
+      <h3 class="mt">java.util.ArrayList</h3>
+      <ul>
+        <li>Backed by <code>Object[]</code> array</li>
+        <li>Default initial capacity: <strong>10</strong></li>
+        <li>Growth factor: roughly <strong>1.5x</strong> (not 2x)</li>
+        <li>Implements <code>List</code>, <code>RandomAccess</code></li>
+      </ul>
+
+      <h3 class="mt">java.util.LinkedList</h3>
+      <ul>
+        <li>Doubly-linked list with header/trailer</li>
+        <li>Also implements <code>Deque</code> (double-ended queue)</li>
+        <li>No <code>RandomAccess</code> marker -- indexing is O(n)</li>
+      </ul>
+    </div>
+
+    <div>
+      <h3>Common Methods (both share via List interface)</h3>
+      <div class="diagram small">
+  List&lt;String&gt; list = new ArrayList&lt;&gt;();
+  // or: new LinkedList&lt;&gt;();
+
+  list.add("hello");         // append
+  list.add(0, "world");      // insert at index
+  list.get(1);               // "hello"
+  list.set(0, "hi");         // replace
+  list.remove(0);            // remove by index
+  list.remove("hello");      // remove by value
+  list.size();               // number of elements
+  list.contains("hi");       // search
+  list.indexOf("hi");        // find index
+
+  // Iterate
+  for (String s : list) { ... }</div>
+
+      <div class="warning">
+        <h3>Warning: LinkedList Indexing</h3>
+        <p>Java's <code>LinkedList.get(i)</code> walks from the head (or tail if i > n/2). Using <code>get(i)</code> in a loop on a LinkedList is O(n^2)! Use an iterator or for-each instead.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Java's LinkedList does NOT expose Position objects. The positional list ADT from lecture is more powerful than <code>java.util.LinkedList</code> because positions let you do O(1) insert/delete at known locations.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 16: CHOOSING THE RIGHT LIST ==================== -->
+<div class="slide" id="s16">
+  <h2>Choosing the Right List</h2>
+  <p class="subtitle">Match the data structure to your workload</p>
+
+  <div class="two-col">
+    <div>
+      <h3 style="color: #4ade80;">Use ArrayList when...</h3>
+      <ul>
+        <li>Frequent <strong>random access</strong> by index (read-heavy)</li>
+        <li>Mostly <strong>appending</strong> to the end</li>
+        <li>Memory efficiency matters (less overhead per element)</li>
+        <li>You need good <strong>cache locality</strong> (iteration speed)</li>
+        <li>The list size is relatively stable</li>
+      </ul>
+
+      <div class="diagram small mt">
+  Good for ArrayList:
+  - Database result caching
+  - Lookup tables
+  - Buffers where you mostly append
+  - Any read-heavy, write-rare pattern</div>
+
+      <div class="key-idea">
+        <h3>Rule of Thumb</h3>
+        <p><strong>When in doubt, use ArrayList.</strong> It is the better default in nearly all practical scenarios due to cache performance and lower memory overhead.</p>
+      </div>
+    </div>
+
+    <div>
+      <h3 style="color: #60a5fa;">Use LinkedList / Node List when...</h3>
+      <ul>
+        <li>Frequent <strong>insertion/deletion at both ends</strong> (deque pattern)</li>
+        <li>You hold <strong>position references</strong> and need O(1) insert/delete at those positions</li>
+        <li>Elements are frequently <strong>reordered</strong> or <strong>spliced</strong></li>
+        <li>No random access needed</li>
+      </ul>
+
+      <div class="diagram small mt">
+  Good for LinkedList / Node List:
+  - Implementing undo/redo (position-based)
+  - LRU cache (move to front on access)
+  - Music playlist with reordering
+  - Any insert/delete-heavy pattern
+    at known positions</div>
+
+      <div class="warning">
+        <h3>Beware</h3>
+        <p>In practice, ArrayList often beats LinkedList even for middle insertions on modern hardware, because <strong>CPU cache effects</strong> dominate. Profile before assuming LinkedList is faster!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 17: COMMON PITFALLS ==================== -->
+<div class="slide" id="s17">
+  <h2>Common Pitfalls</h2>
+  <p class="subtitle">Mistakes that bite data structures students</p>
+
+  <div class="two-col">
+    <div>
+      <h3 style="color: #f87171;">1. ConcurrentModificationException</h3>
+      <div class="diagram small">
+  // WRONG: modifying list while iterating
+  for (String s : list) {
+      if (s.equals("bad"))
+          list.remove(s);   // CRASH!
+  }
+
+  // RIGHT: use iterator's remove()
+  Iterator&lt;String&gt; it = list.iterator();
+  while (it.hasNext()) {
+      if (it.next().equals("bad"))
+          it.remove();      // safe!
+  }</div>
+
+      <h3 class="mt" style="color: #f87171;">2. IndexOutOfBoundsException</h3>
+      <div class="diagram small">
+  List has size 5 (indices 0-4)
+
+  list.get(5);    // CRASH! Off by one
+  list.get(-1);   // CRASH! Negative index
+
+  // Remember: valid range is [0, size-1]
+  // add() valid range is [0, size]</div>
+
+      <h3 class="mt" style="color: #f87171;">3. Forgetting add() Shifts Elements</h3>
+      <div class="diagram small">
+  list = [A, B, C, D, E]
+
+  // Removing at indices 1 and 3...
+  list.remove(1);  // removes B
+  // Now list = [A, C, D, E]
+  list.remove(3);  // removes E, not D!
+
+  // After first remove, indices shifted!</div>
+    </div>
+
+    <div>
+      <h3 style="color: #f87171;">4. O(n^2) Loop on LinkedList</h3>
+      <div class="diagram small">
+  // TERRIBLE on LinkedList: O(n^2)
+  for (int i = 0; i &lt; list.size(); i++) {
+      process(list.get(i));
+      // get(i) walks from head each time!
+  }
+
+  // GOOD: O(n) with iterator
+  for (String s : list) {
+      process(s);
+  }</div>
+
+      <h3 class="mt" style="color: #f87171;">5. Confusing size() with capacity</h3>
+      <div class="diagram small">
+  ArrayList list = new ArrayList(100);
+  // capacity = 100, but size = 0!
+
+  list.get(0);   // CRASH!
+  // The list is EMPTY despite having
+  // 100 slots in the backing array.</div>
+
+      <div class="warning">
+        <h3>Warning: Remove-While-Iterating</h3>
+        <p>This is the #1 most common bug with collections. If you need to remove elements during traversal, always use the iterator's own <code>remove()</code> method, or build a separate "to-remove" list first.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea: Think About Indices</h3>
+        <p>When removing multiple elements by index, work <strong>backwards</strong> (from high to low) so earlier removals don't shift the positions of elements you haven't removed yet.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 18: SUMMARY & CHEAT SHEET ==================== -->
+<div class="slide" id="s18">
+  <h2>Summary & Cheat Sheet</h2>
+  <p class="subtitle">Everything on one slide</p>
+
+  <div class="two-col">
+    <div>
+      <h3>ArrayList</h3>
+      <div class="diagram small">
+  +---+---+---+---+---+---+
+  | A | B | C | D |   |   |  contiguous array
+  +---+---+---+---+---+---+
+    0   1   2   3
+
+  get/set(i)     : O(1)
+  add(i, e)      : O(n)  shift right
+  remove(i)      : O(n)  shift left
+  addLast(e)     : O(1)* amortized
+  size()         : O(1)
+
+  Resize: double when full
+  Shrink: halve when 1/4 full</div>
+
+      <h3 class="mt">Node List (Positional)</h3>
+      <div class="diagram small">
+  H &lt;-&gt; [A] &lt;-&gt; [B] &lt;-&gt; [C] &lt;-&gt; T
+        p1       p2       p3
+
+  addBefore/After(p, e) : O(1)
+  remove(p)             : O(1)
+  Access by index       : O(n)
+  Sentinels: header (H) + trailer (T)</div>
+    </div>
+
+    <div>
+      <h3>Complexity Quick Reference</h3>
+      <table style="font-size: 0.9em;">
+        <tr>
+          <th>Operation</th>
+          <th>ArrayList</th>
+          <th>Node List</th>
+        </tr>
+        <tr>
+          <td>Index access</td>
+          <td style="color: #4ade80;">O(1)</td>
+          <td style="color: #f87171;">O(n)</td>
+        </tr>
+        <tr>
+          <td>Insert/delete at ends</td>
+          <td style="color: #fbbf24;">O(1)* / O(n)</td>
+          <td style="color: #4ade80;">O(1)</td>
+        </tr>
+        <tr>
+          <td>Insert/delete at position</td>
+          <td style="color: #f87171;">O(n)</td>
+          <td style="color: #4ade80;">O(1)</td>
+        </tr>
+        <tr>
+          <td>Memory / element</td>
+          <td style="color: #4ade80;">Low</td>
+          <td style="color: #f87171;">High</td>
+        </tr>
+        <tr>
+          <td>Cache locality</td>
+          <td style="color: #4ade80;">Great</td>
+          <td style="color: #f87171;">Poor</td>
+        </tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Core Takeaways</h3>
+        <ul>
+          <li><strong>ArrayList</strong>: fast random access, slow middle insert/delete, great cache locality</li>
+          <li><strong>Node List</strong>: O(1) insert/delete at known positions, O(n) to find a position</li>
+          <li><strong>Positions</strong> are stable references; indices are fragile</li>
+          <li><strong>Iterators</strong> abstract traversal from structure</li>
+          <li>Doubling + shrink-at-quarter = amortized O(1)</li>
+          <li>When in doubt, <strong>use ArrayList</strong></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 18</div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#9654;</button>
+</div>
+
+<script>
+const totalSlides = 18;
+let current = 1;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const slide = document.getElementById('s' + n);
+  if (slide) {
+    slide.classList.add('active');
+    slide.classList.add('fade-in');
+  }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  document.getElementById('progress').style.width = ((n / totalSlides) * 100) + '%';
+}
+
+function changeSlide(delta) {
+  const next = current + delta;
+  if (next >= 1 && next <= totalSlides) {
+    current = next;
+    showSlide(current);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 's' || e.key === 'S') {
+    // Reveal next step on current slide
+    const slide = document.getElementById('s' + current);
+    const steps = slide.querySelectorAll('.step:not(.revealed)');
+    if (steps.length > 0) steps[0].classList.add('revealed');
+  }
+});
+
+showSlide(1);
+</script>
+</body>
+</html>

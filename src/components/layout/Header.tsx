@@ -1,8 +1,40 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { LogOut, LayoutDashboard } from 'lucide-react';
+
+const API = '/cs205';
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: 'STUDENT' | 'ADMIN';
+}
 
 export function Header() {
+  const router = useRouter();
+  const [user, setUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    fetch(`${API}/api/auth/me`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data?.user) setUser(data.user);
+      })
+      .catch(() => {});
+  }, []);
+
+  async function handleLogout() {
+    await fetch(`${API}/api/auth/logout`, { method: 'POST' });
+    setUser(null);
+    router.push('/login');
+    router.refresh();
+  }
+
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
       <div className="container flex h-14 items-center">
@@ -23,6 +55,12 @@ export function Header() {
             Modules
           </Link>
           <Link
+            href="/slides"
+            className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
+          >
+            Slides
+          </Link>
+          <Link
             href="/sandbox"
             className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors"
           >
@@ -34,6 +72,33 @@ export function Header() {
           >
             Quiz
           </Link>
+
+          {user && (
+            <>
+              {user.role === 'ADMIN' && (
+                <Link
+                  href="/admin"
+                  className="text-sm font-medium text-muted-foreground hover:text-foreground transition-colors flex items-center gap-1"
+                >
+                  <LayoutDashboard className="h-4 w-4" />
+                  Dashboard
+                </Link>
+              )}
+
+              <span className="text-sm text-muted-foreground hidden md:inline">
+                {user.name}
+              </span>
+
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={handleLogout}
+                title="Sign out"
+              >
+                <LogOut className="h-4 w-4" />
+              </Button>
+            </>
+          )}
         </nav>
       </div>
     </header>

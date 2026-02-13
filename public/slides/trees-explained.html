@@ -1,0 +1,1207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CS205 — Trees Explained</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide active" id="slide-1">
+  <div class="center" style="width:100%">
+    <h1 style="font-size:3.4em; margin-bottom:10px;">Trees</h1>
+    <p class="subtitle" style="font-size:1.6em; margin-bottom:10px;">Hierarchical Data Structures</p>
+    <p class="subtitle" style="font-size:1.2em; margin-bottom:40px;">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:0.95em;">
+            ┌───┐
+            │ A │  &lt;── root
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+       │ B │     │ C │
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      │
+    ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+    │ D │ │ E │ │ F │  &lt;── leaves
+    └───┘ └───┘ └───┘</div>
+    <p style="color:#64748b; margin-top:30px; font-size:1em;">Use arrow keys or buttons to navigate</p>
+  </div>
+  <div class="slide-number">1 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 2: WHAT IS A TREE? ==================== -->
+<div class="slide" id="slide-2">
+  <h2>What Is a Tree?</h2>
+  <div class="two-col">
+    <div>
+      <p>A <strong>tree</strong> is a hierarchical data structure consisting of <strong>nodes</strong> connected by <strong>edges</strong>.</p>
+      <ul class="mt">
+        <li><strong>Root</strong> &mdash; the topmost node (no parent)</li>
+        <li><strong>Children</strong> &mdash; nodes directly below a node</li>
+        <li><strong>Parent</strong> &mdash; the node directly above</li>
+        <li><strong>Leaves</strong> &mdash; nodes with no children</li>
+        <li><strong>Edge</strong> &mdash; connection between parent and child</li>
+      </ul>
+      <div class="analogy">
+        <h3>Analogy: Family Tree</h3>
+        <p>Like a family tree: one ancestor at the top, descendants branching down. Or a <strong>file system</strong>: root folder containing subfolders and files.</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram">
+  root ──▶  ┌───┐
+            │ A │  parent of B, C
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+       │ B │     │ C │  children of A
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      │
+    ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+    │ D │ │ E │ │ F │  leaves
+    └───┘ └───┘ └───┘
+             (no children)
+
+  Edges: A─B, A─C, B─D, B─E, C─F
+  Nodes: 6    Edges: 5
+  (always: edges = nodes - 1)</div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 3: TREE TERMINOLOGY ==================== -->
+<div class="slide" id="slide-3">
+  <h2>Tree Terminology</h2>
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+depth 0 ──▶     ┌───┐  &lt;── root
+                │ A │
+                └─┬─┘
+           ┌─────┼─────┐
+depth 1 ──▶ ┌─┴─┐ ┌─┴─┐ ┌─┴─┐
+           │ B │ │ C │ │ D │  siblings
+           └─┬─┘ └───┘ └─┬─┘
+          ┌──┴──┐      ┌──┴──┐
+depth 2 ──▶┌┴─┐ ┌─┴┐  ┌─┴┐ ┌─┴┐
+          │E │ │ F│  │ G│ │ H│  leaves
+          └──┘ └──┘  └──┘ └──┘
+
+  height of tree = 2
+  (max depth of any node)</div>
+    </div>
+    <div>
+      <ul>
+        <li><strong>Root</strong> &mdash; node with no parent (A)</li>
+        <li><strong>Parent</strong> of E &mdash; B</li>
+        <li><strong>Children</strong> of A &mdash; B, C, D</li>
+        <li><strong>Siblings</strong> &mdash; B, C, D (same parent)</li>
+        <li><strong>Ancestor</strong> of E &mdash; B, A</li>
+        <li><strong>Descendant</strong> of B &mdash; E, F</li>
+        <li><strong>Leaf / External</strong> &mdash; no children (C, E, F, G, H)</li>
+        <li><strong>Internal node</strong> &mdash; has children (A, B, D)</li>
+        <li><strong>Depth</strong> of node &mdash; edges from root to node</li>
+        <li><strong>Height</strong> of tree &mdash; max depth</li>
+        <li><strong>Subtree</strong> rooted at B &mdash; B, E, F</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">3 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 4: FORMAL DEFINITION ==================== -->
+<div class="slide" id="slide-4">
+  <h2>Formal Definition of a Tree</h2>
+  <div class="two-col">
+    <div>
+      <div class="key-idea">
+        <h3>Recursive Definition</h3>
+        <p>A <strong>tree T</strong> is either:</p>
+        <ul>
+          <li><strong>Empty</strong> (null / no nodes), OR</li>
+          <li>A <strong>root node r</strong> with zero or more <strong>subtrees</strong> T<sub>1</sub>, T<sub>2</sub>, ..., T<sub>k</sub></li>
+        </ul>
+      </div>
+      <p class="mt">Each subtree is itself a tree! This recursive structure is why many tree algorithms are naturally recursive.</p>
+      <div class="warning">
+        <h3>Key Property</h3>
+        <p>A tree with <strong>n</strong> nodes always has exactly <strong>n - 1</strong> edges. There is exactly <strong>one path</strong> between any two nodes (no cycles!).</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram">
+  Tree T rooted at A:
+
+       ┌───┐
+       │ A │ ── root of T
+       └─┬─┘
+    ┌────┴────┐
+  ┌─┴─┐    ┌─┴─┐
+  │ B │    │ C │
+  └─┬─┘    └─┬─┘
+  ┌─┴─┐   ┌──┴──┐
+  │ D │   │  E  │
+  └───┘   └─────┘
+
+  T = { A,
+         subtree T₁ = { B,
+                          subtree = {D} },
+         subtree T₂ = { C,
+                          subtree = {E} }
+      }</div>
+      <div class="analogy">
+        <h3>Think Recursively</h3>
+        <p>Every node is the root of its own subtree. "Zoom in" on any node and you see a smaller tree.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 5: TREE ADT ==================== -->
+<div class="slide" id="slide-5">
+  <h2>Tree ADT (Abstract Data Type)</h2>
+  <div class="two-col">
+    <div>
+      <h3>Accessor Methods</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td><code>root()</code></td><td>Return the root node</td></tr>
+        <tr><td><code>parent(v)</code></td><td>Return parent of v</td></tr>
+        <tr><td><code>children(v)</code></td><td>Return children of v</td></tr>
+        <tr><td><code>size()</code></td><td>Number of nodes</td></tr>
+      </table>
+      <h3 class="mt">Query Methods</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td><code>isInternal(v)</code></td><td>Does v have children?</td></tr>
+        <tr><td><code>isExternal(v)</code></td><td>Is v a leaf?</td></tr>
+        <tr><td><code>isRoot(v)</code></td><td>Is v the root?</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Computed Properties</h3>
+      <div class="diagram small">
+  depth(v):
+    if isRoot(v):
+        return 0
+    else:
+        return 1 + depth(parent(v))
+
+  height(T):
+    if isExternal(T):
+        return 0
+    else:
+        h = 0
+        for each child c of T:
+            h = max(h, height(c))
+        return 1 + h</div>
+      <div class="key-idea">
+        <h3>Notice</h3>
+        <p><code>depth()</code> goes <strong>up</strong> toward root. <code>height()</code> goes <strong>down</strong> toward leaves. Both are recursive!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 6: DEPTH AND HEIGHT ==================== -->
+<div class="slide" id="slide-6">
+  <h2>Depth and Height</h2>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  depth=0, height=3 ──▶  ┌───┐
+                         │ A │
+                         └─┬─┘
+                      ┌────┴────┐
+  depth=1, h=2 ──▶ ┌─┴─┐     ┌─┴─┐ ◀── depth=1, h=0
+                   │ B │     │ C │     (leaf)
+                   └─┬─┘     └───┘
+                ┌────┴────┐
+  depth=2 ──▶┌─┴─┐     ┌─┴─┐ ◀── depth=2, h=0
+             │ D │     │ E │
+             └─┬─┘     └───┘
+               │
+  depth=3 ──▶┌─┴─┐ ◀── deepest leaf
+             │ F │     h=0
+             └───┘</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Depth of a Node</h3>
+        <p><strong>Depth(v)</strong> = number of edges from root to v.<br>
+        Root has depth 0. Goes <strong>top-down</strong>.</p>
+      </div>
+      <div class="key-idea">
+        <h3>Height of a Node</h3>
+        <p><strong>Height(v)</strong> = number of edges on the longest path from v down to a leaf.<br>
+        Leaves have height 0. Goes <strong>bottom-up</strong>.</p>
+      </div>
+      <div class="key-idea">
+        <h3>Height of Tree</h3>
+        <p><strong>Height(T)</strong> = height of the root = max depth of any leaf.</p>
+        <p>Here: height(A) = 3, because the longest path is A &rarr; B &rarr; D &rarr; F.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 7: BINARY TREES ==================== -->
+<div class="slide" id="slide-7">
+  <h2>Binary Trees</h2>
+  <div class="two-col">
+    <div>
+      <p>A <strong>binary tree</strong> is a tree where each node has <strong>at most 2 children</strong>: a <strong>left child</strong> and a <strong>right child</strong>.</p>
+      <div class="diagram">
+          ┌───┐
+          │ 8 │
+          └─┬─┘
+       ┌────┴────┐
+     ┌─┴─┐     ┌─┴─┐
+     │ 3 │     │ 10│
+     └─┬─┘     └─┬─┘
+    ┌──┴──┐      └──┐
+  ┌─┴─┐ ┌─┴─┐    ┌─┴─┐
+  │ 1 │ │ 6 │    │ 14│
+  └───┘ └───┘    └───┘
+  left   right    right
+  child  child    child only</div>
+    </div>
+    <div>
+      <h3>Properties of Binary Trees</h3>
+      <table>
+        <tr><th>Property</th><th>Value</th></tr>
+        <tr><td>Max nodes at depth d</td><td>2<sup>d</sup></td></tr>
+        <tr><td>Max leaves (height h)</td><td>2<sup>h</sup></td></tr>
+        <tr><td>Max total nodes</td><td>2<sup>h+1</sup> - 1</td></tr>
+        <tr><td>Min height (n nodes)</td><td>&lfloor;log<sub>2</sub> n&rfloor;</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Why Binary?</h3>
+        <p>Binary trees are the most common tree structure in CS. They enable <strong>efficient searching</strong>, <strong>sorting</strong>, and <strong>expression evaluation</strong>.</p>
+      </div>
+      <div class="warning">
+        <h3>Left vs Right Matters!</h3>
+        <p>In a binary tree, a node with only one child &mdash; it matters whether it's the <strong>left</strong> or <strong>right</strong> child. They are structurally different.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 8: FULL vs COMPLETE vs PERFECT ==================== -->
+<div class="slide" id="slide-8">
+  <h2>Full vs Complete vs Perfect Binary Trees</h2>
+  <div class="diagram small" style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;">
+<span style="color:#93c5fd; font-weight:bold;">  FULL Binary Tree         COMPLETE Binary Tree     PERFECT Binary Tree</span>
+<span style="color:#94a3b8;">  Every node has            All levels full except   All internal nodes have</span>
+<span style="color:#94a3b8;">  0 or 2 children          last; last filled L→R     2 children; all leaves</span>
+<span style="color:#94a3b8;">  (no single-child nodes)                            at the same depth</span>
+
+        ┌───┐                    ┌───┐                    ┌───┐
+        │ A │                    │ A │                    │ A │
+        └─┬─┘                    └─┬─┘                    └─┬─┘
+      ┌───┴───┐               ┌───┴───┐               ┌───┴───┐
+    ┌─┴─┐   ┌─┴─┐          ┌─┴─┐   ┌─┴─┐          ┌─┴─┐   ┌─┴─┐
+    │ B │   │ C │          │ B │   │ C │          │ B │   │ C │
+    └─┬─┘   └───┘          └─┬─┘   └─┬─┘          └─┬─┘   └─┬─┘
+   ┌──┴──┐  (leaf)        ┌──┴──┐    │            ┌──┴──┐ ┌──┴──┐
+ ┌─┴─┐ ┌─┴─┐           ┌─┴─┐ ┌─┴─┐┌─┴─┐       ┌─┴─┐┌─┴─┐┌─┴┐┌─┴┐
+ │ D │ │ E │           │ D │ │ E ││ F │       │ D ││ E ││ F││ G│
+ └───┘ └───┘           └───┘ └───┘└───┘       └───┘└───┘└──┘└──┘</div>
+  <table style="margin:16px auto;">
+    <tr><th>Type</th><th>Rule</th><th>Relationship</th></tr>
+    <tr><td>Full</td><td>Every node: 0 or 2 children</td><td>Not necessarily complete</td></tr>
+    <tr><td>Complete</td><td>All levels full; last level left-filled</td><td>Used in heaps!</td></tr>
+    <tr class="highlight"><td>Perfect</td><td>All leaves at same depth, all internals have 2 children</td><td>Both full AND complete</td></tr>
+  </table>
+  <div class="key-idea">
+    <h3>Perfect binary tree has exactly 2<sup>h+1</sup> - 1 nodes (all slots filled)</h3>
+  </div>
+  <div class="slide-number">8 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 9: TRAVERSALS OVERVIEW ==================== -->
+<div class="slide" id="slide-9">
+  <h2>Binary Tree Traversals Overview</h2>
+  <div class="two-col">
+    <div>
+      <p>Traversal = visiting every node exactly once in a specific order.</p>
+      <table>
+        <tr><th>Traversal</th><th>Order</th><th>Mnemonic</th></tr>
+        <tr><td>Preorder</td><td>Node, Left, Right</td><td><strong>N</strong>LR</td></tr>
+        <tr><td>Inorder</td><td>Left, Node, Right</td><td>L<strong>N</strong>R</td></tr>
+        <tr><td>Postorder</td><td>Left, Right, Node</td><td>LR<strong>N</strong></td></tr>
+        <tr><td>Level-order</td><td>Top to bottom, L to R</td><td>BFS</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Why Different Orders?</h3>
+        <ul>
+          <li><strong>Preorder</strong> &mdash; copy/serialize a tree</li>
+          <li><strong>Inorder</strong> &mdash; sorted output from BST</li>
+          <li><strong>Postorder</strong> &mdash; delete tree, evaluate expressions</li>
+          <li><strong>Level-order</strong> &mdash; find shortest path, BFS</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <p>Reference tree for next slides:</p>
+      <div class="diagram">
+            ┌───┐
+            │ A │
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+       │ B │     │ C │
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      └──┐
+    ┌─┴─┐ ┌─┴─┐     ┌─┴─┐
+    │ D │ │ E │     │ F │
+    └───┘ └───┘     └───┘</div>
+      <div class="analogy">
+        <h3>The "N" Position</h3>
+        <p>The mnemonic tells you <strong>when you visit the node</strong>: before children (pre), between children (in), or after children (post).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 10: PREORDER TRAVERSAL ==================== -->
+<div class="slide" id="slide-10">
+  <h2>Preorder Traversal (NLR)</h2>
+  <p><strong>Visit node FIRST</strong>, then recurse left, then recurse right.</p>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Visit order:  A  B  D  E  C  F
+
+            ┌───┐
+         ①  │ A │
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+    ②  │ B │  ⑤  │ C │
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      └──┐
+    ┌─┴─┐ ┌─┴─┐     ┌─┴─┐
+ ③  │ D │ │ E │ ④ ⑥ │ F │
+    └───┘ └───┘     └───┘
+
+  Process: Visit A → go left
+    Visit B → go left
+      Visit D → (leaf, backtrack)
+      Visit E → (leaf, backtrack)
+    Visit C → go left (null) → go right
+      Visit F → (leaf, done)</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  preorder(node):
+      if node == null:
+          return
+      <span style="color:#fbbf24;">visit(node)        // process FIRST</span>
+      preorder(node.left)
+      preorder(node.right)</div>
+      <div class="key-idea mt">
+        <h3>Use Cases</h3>
+        <ul>
+          <li>Create a <strong>copy</strong> of the tree</li>
+          <li><strong>Serialize</strong> a tree to a string</li>
+          <li>Print a <strong>prefix expression</strong></li>
+          <li>Generate <strong>table of contents</strong> from document tree</li>
+        </ul>
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Reading a Book</h3>
+        <p>Read chapter title first (node), then read sections in order (left to right children).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 11: INORDER TRAVERSAL ==================== -->
+<div class="slide" id="slide-11">
+  <h2>Inorder Traversal (LNR)</h2>
+  <p>Recurse left, <strong>visit node IN THE MIDDLE</strong>, then recurse right.</p>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Visit order:  D  B  E  A  C  F
+
+            ┌───┐
+         ④  │ A │
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+    ②  │ B │  ⑤  │ C │
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      └──┐
+    ┌─┴─┐ ┌─┴─┐     ┌─┴─┐
+ ①  │ D │ │ E │ ③ ⑥ │ F │
+    └───┘ └───┘     └───┘
+
+  Process: Go left from A → left from B
+    Visit D (leaf) → back to B
+    Visit B → go right
+    Visit E (leaf) → back to A
+    Visit A → go right
+    Visit C → go right
+    Visit F</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  inorder(node):
+      if node == null:
+          return
+      inorder(node.left)
+      <span style="color:#fbbf24;">visit(node)        // process MIDDLE</span>
+      inorder(node.right)</div>
+      <div class="key-idea mt">
+        <h3>Sorted Output from BST!</h3>
+        <p>Inorder traversal of a <strong>Binary Search Tree</strong> visits nodes in <strong>ascending sorted order</strong>. This is the most important traversal for BSTs.</p>
+      </div>
+      <div class="diagram small mt">
+  BST inorder example:
+        ┌──┐
+        │8 │
+        └┬─┘
+      ┌──┴──┐
+    ┌─┴┐  ┌─┴┐
+    │3 │  │10│
+    └┬─┘  └──┘
+   ┌─┴─┐
+  ┌┴┐ ┌┴┐
+  │1│ │6│
+  └─┘ └─┘
+  Output: 1, 3, 6, 8, 10  ✓ sorted!</div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 12: POSTORDER TRAVERSAL ==================== -->
+<div class="slide" id="slide-12">
+  <h2>Postorder Traversal (LRN)</h2>
+  <p>Recurse left, recurse right, <strong>visit node LAST</strong>.</p>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Visit order:  D  E  B  F  C  A
+
+            ┌───┐
+         ⑥  │ A │
+            └─┬─┘
+         ┌────┴────┐
+       ┌─┴─┐     ┌─┴─┐
+    ③  │ B │  ⑤  │ C │
+       └─┬─┘     └─┬─┘
+      ┌──┴──┐      └──┐
+    ┌─┴─┐ ┌─┴─┐     ┌─┴─┐
+ ①  │ D │ │ E │ ② ④ │ F │
+    └───┘ └───┘     └───┘
+
+  Process: Go left from A → left from B
+    Visit D (leaf) → right of B
+    Visit E (leaf) → back to B
+    Visit B → right of A → right of C
+    Visit F (leaf) → back to C
+    Visit C → back to A
+    Visit A (last!)</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  postorder(node):
+      if node == null:
+          return
+      postorder(node.left)
+      postorder(node.right)
+      <span style="color:#fbbf24;">visit(node)        // process LAST</span></div>
+      <div class="key-idea mt">
+        <h3>Use Cases</h3>
+        <ul>
+          <li><strong>Delete/free</strong> a tree (children before parent)</li>
+          <li><strong>Evaluate expression trees</strong> (compute children before combining)</li>
+          <li>Calculate <strong>directory sizes</strong> (files before folder totals)</li>
+        </ul>
+      </div>
+      <div class="warning mt">
+        <h3>Why "Post"?</h3>
+        <p>The root is always visited <strong>last</strong>. You must finish all descendants before processing a node. Think: "clean up children before yourself."</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 13: LEVEL-ORDER TRAVERSAL ==================== -->
+<div class="slide" id="slide-13">
+  <h2>Level-Order Traversal (BFS)</h2>
+  <p>Visit nodes <strong>level by level</strong>, left to right. Uses a <strong>queue</strong> (not recursion).</p>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Visit order:  A  B  C  D  E  F
+
+  Level 0:      ┌───┐
+             ①  │ A │
+                └─┬─┘
+           ┌─────┴─────┐
+  Level 1: ┌─┴─┐     ┌─┴─┐
+        ②  │ B │  ③  │ C │
+           └─┬─┘     └─┬─┘
+          ┌──┴──┐      └──┐
+  Level 2:┌─┴─┐ ┌─┴─┐   ┌─┴─┐
+       ④  │ D │ │ E │⑤⑥ │ F │
+          └───┘ └───┘   └───┘
+
+  → Read like a book: left to right,
+    top to bottom.</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  levelOrder(root):
+      queue Q
+      Q.enqueue(root)
+      while Q is not empty:
+          node = Q.dequeue()
+          <span style="color:#fbbf24;">visit(node)</span>
+          if node.left != null:
+              Q.enqueue(node.left)
+          if node.right != null:
+              Q.enqueue(node.right)</div>
+      <div class="diagram small mt">
+  Queue trace:
+  Step 1: Q=[A]     → visit A, enqueue B,C
+  Step 2: Q=[B,C]   → visit B, enqueue D,E
+  Step 3: Q=[C,D,E] → visit C, enqueue F
+  Step 4: Q=[D,E,F] → visit D
+  Step 5: Q=[E,F]   → visit E
+  Step 6: Q=[F]     → visit F
+  Step 7: Q=[]      → done!</div>
+      <div class="key-idea mt">
+        <h3>Not Recursive!</h3>
+        <p>This is the only standard traversal that uses a <strong>queue</strong> instead of recursion (or a stack).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 14: BINARY SEARCH TREE ==================== -->
+<div class="slide" id="slide-14">
+  <h2>Binary Search Tree (BST)</h2>
+  <div class="two-col">
+    <div>
+      <div class="key-idea">
+        <h3>BST Property</h3>
+        <p>For <strong>every</strong> node v in the tree:</p>
+        <ul>
+          <li>All keys in v's <strong>left subtree</strong> &lt; v's key</li>
+          <li>All keys in v's <strong>right subtree</strong> &gt; v's key</li>
+        </ul>
+        <p>This must hold for <strong>every</strong> node, not just the root!</p>
+      </div>
+      <div class="diagram">
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴─┐       ┌─┴──┐
+       │ 8 │       │ 22 │
+       └─┬─┘       └──┬─┘
+     ┌───┴───┐    ┌───┴───┐
+   ┌─┴─┐  ┌─┴──┐ ┌┴──┐ ┌─┴──┐
+   │ 4 │  │ 12 │ │18 │ │ 25 │
+   └───┘  └────┘ └───┘ └────┘
+
+  All left of 15: {4,8,12} &lt; 15  ✓
+  All right of 15: {18,22,25} &gt; 15  ✓
+  All left of 8: {4} &lt; 8  ✓
+  All right of 8: {12} &gt; 8  ✓</div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Phone Book</h3>
+        <p>Like binary search on a sorted array, but stored as a tree. At each node you decide: go left (smaller) or go right (larger).</p>
+      </div>
+      <h3 class="mt">Why BST?</h3>
+      <table>
+        <tr><th>Operation</th><th>BST (balanced)</th><th>Array</th><th>Linked List</th></tr>
+        <tr class="highlight"><td>Search</td><td>O(log n)</td><td>O(log n)*</td><td>O(n)</td></tr>
+        <tr class="highlight"><td>Insert</td><td>O(log n)</td><td>O(n)</td><td>O(1)**</td></tr>
+        <tr class="highlight"><td>Delete</td><td>O(log n)</td><td>O(n)</td><td>O(n)</td></tr>
+      </table>
+      <p style="font-size:0.9em; color:#64748b;">* sorted array with binary search<br>** insert at head, but finding position is O(n)</p>
+      <div class="key-idea mt">
+        <h3>BST gives O(log n) for ALL three operations when balanced!</h3>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 15: BST SEARCH ==================== -->
+<div class="slide" id="slide-15">
+  <h2>BST Search</h2>
+  <p>Compare target with current node. Go left if smaller, right if larger.</p>
+  <div class="two-col">
+    <div>
+      <h3>Search for 12:</h3>
+      <div class="diagram">
+  Step 1: Compare 12 with 15
+          12 &lt; 15 → go LEFT
+
+            ┌────┐
+            │ 15 │ ◀── start here
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴─┐       ┌─┴──┐
+   ──▶ │ 8 │       │ 22 │
+       └─┬─┘       └──┬─┘
+     ┌───┴───┐    ┌───┴───┐
+   ┌─┴─┐  ┌─┴──┐ ┌┴──┐ ┌─┴──┐
+   │ 4 │  │ 12 │ │18 │ │ 25 │
+   └───┘  └────┘ └───┘ └────┘
+
+  Step 2: Compare 12 with 8
+          12 &gt; 8 → go RIGHT
+
+  Step 3: Compare 12 with 12
+          12 == 12 → FOUND! ✓
+
+  Path: 15 → 8 → 12  (3 comparisons)</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  search(node, key):
+      if node == null:
+          return null        // not found
+      if key == node.key:
+          return node        // found!
+      else if key &lt; node.key:
+          return search(node.left, key)
+      else:
+          return search(node.right, key)</div>
+      <div class="key-idea mt">
+        <h3>Each comparison eliminates half the tree</h3>
+        <p>Like binary search on an array! Each step goes down one level, so the number of comparisons equals the <strong>depth of the target node</strong>.</p>
+      </div>
+      <h3 class="mt">Search for 9 (not in tree):</h3>
+      <div class="diagram small">
+  15 → 8 → 12 → left of 12 is NULL
+  → return null (not found)
+
+  We always end at a null child when
+  the key doesn't exist.</div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 16: BST INSERT ==================== -->
+<div class="slide" id="slide-16">
+  <h2>BST Insert</h2>
+  <p>Search for the key. When you reach <code>null</code>, that is where the new node goes.</p>
+  <div class="two-col">
+    <div>
+      <h3>Insert 10 into BST:</h3>
+      <div class="diagram small">
+  BEFORE:
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴─┐       ┌─┴──┐
+       │ 8 │       │ 22 │
+       └─┬─┘       └────┘
+     ┌───┴───┐
+   ┌─┴─┐  ┌─┴──┐
+   │ 4 │  │ 12 │
+   └───┘  └────┘
+
+  Search path for 10:
+  15 → (10&lt;15) left → 8 → (10&gt;8) right
+  → 12 → (10&lt;12) left → NULL!
+
+  AFTER:  insert 10 as left child of 12
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴─┐       ┌─┴──┐
+       │ 8 │       │ 22 │
+       └─┬─┘       └────┘
+     ┌───┴───┐
+   ┌─┴─┐  ┌─┴──┐
+   │ 4 │  │ 12 │
+   └───┘  └──┬─┘
+           ┌─┴──┐
+           │ 10 │ ◀── NEW!
+           └────┘</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  insert(node, key):
+      if node == null:
+          return new Node(key)  // create leaf
+      if key &lt; node.key:
+          node.left = insert(node.left, key)
+      else if key &gt; node.key:
+          node.right = insert(node.right, key)
+      // if key == node.key: duplicate, skip
+      return node</div>
+      <div class="key-idea mt">
+        <h3>New nodes are always leaves!</h3>
+        <p>Insert never modifies existing nodes. It simply creates a new leaf at the correct position.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Insertion Order Matters</h3>
+        <p>Inserting 1, 2, 3, 4, 5 in order creates a <strong>skewed tree</strong> (linked list!). Different insertion orders create different tree shapes.</p>
+      </div>
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Like filing a paper: walk through the file cabinet making left/right decisions until you find the empty slot.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 17: BST DELETE OVERVIEW ==================== -->
+<div class="slide" id="slide-17">
+  <h2>BST Delete: Three Cases</h2>
+  <div class="diagram small" style="display:block;">
+<span style="color:#93c5fd; font-weight:bold;">  CASE 1: Leaf Node                CASE 2: One Child              CASE 3: Two Children</span>
+<span style="color:#94a3b8;">  (Just remove it)                 (Replace with child)            (Find inorder successor)</span>
+
+  Delete 4:                       Delete 22:                     Delete 8:
+
+  BEFORE:     AFTER:              BEFORE:      AFTER:            BEFORE:       AFTER:
+    ┌──┐       ┌──┐                ┌──┐        ┌──┐              ┌──┐          ┌──┐
+    │15│       │15│                │15│        │15│              │15│          │15│
+    └┬─┘       └┬─┘                └┬─┘        └┬─┘              └┬─┘          └┬─┘
+   ┌─┴──┐     ┌─┴──┐             ┌─┴──┐      ┌─┴──┐           ┌──┴──┐       ┌──┴──┐
+  ┌┴┐ ┌─┴┐   ┌┴┐ ┌─┴┐          ┌┴┐ ┌─┴─┐   ┌┴┐ ┌─┴┐        ┌┴─┐ ┌─┴─┐   ┌┴──┐┌─┴─┐
+  │8│ │22│   │8│ │22│          │8│ │ 22 │   │8│ │25│        │ 8│ │ 22│   │ 10││ 22│
+  └┬┘ └──┘   └┬┘ └──┘          └─┘ └──┬─┘   └─┘ └──┘        └┬─┘ └───┘   └┬──┘└───┘
+ ┌─┴─┐       ┌┴┐                   ┌─┴─┐                   ┌──┴──┐       ┌─┴─┐
+┌┴┐┌─┴┐     ┌┴─┐               ┌─┴─┐                    ┌─┴┐ ┌─┴─┐    ┌┴┐┌─┴─┐
+│4││12│     │12│               │ 25│                    │ 4│ │ 12│    │4││ 12│
+└─┘└──┘     └──┘               └───┘                    └──┘ └─┬─┘   └─┘ └───┘
+  ↑                              ↑                            ┌─┴┐
+  simply                         child 25                     │10│
+  removed                        moves up                     └──┘
+                                                              ↑ successor</div>
+  <div class="key-idea">
+    <h3>The Difficulty Increases with Each Case</h3>
+    <p><strong>Case 1</strong> (leaf): trivial. <strong>Case 2</strong> (one child): just bypass. <strong>Case 3</strong> (two children): most complex &mdash; next slide!</p>
+  </div>
+  <div class="slide-number">17 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 18: BST DELETE TWO CHILDREN ==================== -->
+<div class="slide" id="slide-18">
+  <h2>BST Delete: Two Children Case (Detail)</h2>
+  <p>Delete <strong>8</strong> from the BST. Node 8 has two children, so we cannot simply remove it.</p>
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  Step 1: Find the INORDER SUCCESSOR
+  (smallest value in right subtree)
+
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴─┐       ┌─┴──┐
+       │<span style="color:#f87171;"> 8 </span>│ ◀─ delete  │ 22 │
+       └─┬─┘ this   └────┘
+     ┌───┴───┐
+   ┌─┴─┐  ┌─┴──┐
+   │ 4 │  │ 12 │
+   └───┘  └──┬─┘
+           ┌─┴──┐
+           │ 10 │ ◀─ inorder successor!
+           └────┘    (leftmost in right subtree)
+
+  Inorder successor of 8:
+  Go right to 12, then keep going left.
+  12 has no left child → but 10 is left of 12
+  10 has no left child → 10 is the successor!</div>
+    </div>
+    <div>
+      <div class="diagram small">
+  Step 2: COPY successor's value
+  into the node being deleted
+
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴──┐      ┌─┴──┐
+       │<span style="color:#34d399;"> 10 </span>│ ◀─ was 8  │ 22 │
+       └──┬─┘ now 10  └────┘
+     ┌────┴───┐
+   ┌─┴─┐  ┌──┴─┐
+   │ 4 │  │ 12 │
+   └───┘  └──┬─┘
+           ┌─┴──┐
+           │ 10 │ ◀─ duplicate! delete this
+           └────┘
+
+  Step 3: DELETE the successor (10)
+  from its original position.
+  Successor is a leaf → Case 1 (easy!)
+
+            ┌────┐
+            │ 15 │
+            └──┬─┘
+         ┌─────┴─────┐
+       ┌─┴──┐      ┌─┴──┐
+       │<span style="color:#34d399;"> 10 </span>│      │ 22 │
+       └──┬─┘      └────┘
+     ┌────┴───┐
+   ┌─┴─┐  ┌──┴─┐
+   │ 4 │  │ 12 │  ✓ BST property intact!
+   └───┘  └────┘</div>
+    </div>
+  </div>
+  <div class="warning">
+    <h3>Why Inorder Successor?</h3>
+    <p>The inorder successor is the <strong>smallest value larger than the deleted node</strong>. It always has <strong>at most one child</strong> (right only), so deleting it is Case 1 or Case 2. You could also use the <strong>inorder predecessor</strong> (largest in left subtree).</p>
+  </div>
+  <div class="slide-number">18 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 19: BST PERFORMANCE ==================== -->
+<div class="slide" id="slide-19">
+  <h2>BST Performance</h2>
+  <div class="two-col">
+    <div>
+      <h3>Balanced BST: O(log n)</h3>
+      <div class="diagram small">
+  Insert order: 8, 4, 12, 2, 6, 10, 14
+
+          ┌───┐
+          │ 8 │  height = 2
+          └─┬─┘
+       ┌────┴────┐
+     ┌─┴─┐    ┌──┴─┐
+     │ 4 │    │ 12 │
+     └─┬─┘    └──┬─┘
+    ┌──┴──┐   ┌──┴──┐
+  ┌─┴─┐┌─┴┐ ┌┴──┐┌─┴┐
+  │ 2 ││ 6│ │ 10││14│
+  └───┘└──┘ └───┘└──┘
+
+  n = 7 nodes
+  height = 2 ≈ log₂(7)
+  Search/Insert/Delete: O(log n)</div>
+      <div class="key-idea mt">
+        <h3>Best Case</h3>
+        <p>Height ~ log<sub>2</sub>(n). Each operation touches at most <strong>h + 1</strong> nodes.</p>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:#fbbf24;">Skewed BST: O(n)</h3>
+      <div class="diagram small">
+  Insert order: 2, 4, 6, 8, 10, 12, 14
+
+  ┌───┐
+  │ 2 │  height = 6
+  └─┬─┘
+    └──┐
+     ┌─┴─┐
+     │ 4 │
+     └─┬─┘
+       └──┐
+        ┌─┴─┐
+        │ 6 │
+        └─┬─┘
+          └──┐       This is just a
+           ┌─┴─┐    linked list!
+           │ 8 │
+           └─┬─┘
+             └──┐
+              ┌─┴──┐
+              │ 10 │
+              └──┬─┘
+                 └──┐
+                  ┌─┴──┐
+                  │ 12 │
+                  └──┬─┘
+                     └──┐
+                      ┌─┴──┐
+                      │ 14 │
+                      └────┘</div>
+      <div class="warning mt">
+        <h3>Worst Case</h3>
+        <p>Sorted input creates a <strong>degenerate tree</strong> (linked list). Height = n - 1. All operations become <strong>O(n)</strong>!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">19 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 20: BALANCED BST PREVIEW ==================== -->
+<div class="slide" id="slide-20">
+  <h2>Balanced BSTs (Preview)</h2>
+  <p>How do we <strong>guarantee</strong> O(log n) performance? Self-balancing trees!</p>
+  <div class="two-col">
+    <div>
+      <h3>AVL Trees</h3>
+      <div class="diagram small">
+  Rule: For every node, the heights of
+  left and right subtrees differ by at
+  most 1.
+
+  Balance Factor = height(left) - height(right)
+  Must be in {-1, 0, +1}
+
+       ┌───┐
+       │ 8 │  BF = 0
+       └─┬─┘
+    ┌────┴────┐
+  ┌─┴─┐    ┌─┴──┐
+  │ 4 │    │ 12 │  BF = 0
+  └─┬─┘    └──┬─┘
+    │       ┌──┴──┐
+  ┌─┴─┐  ┌─┴──┐┌─┴┐
+  │ 2 │  │ 10 ││14│
+  └───┘  └────┘└──┘
+
+  When unbalanced → ROTATE to fix!</div>
+    </div>
+    <div>
+      <h3>Red-Black Trees</h3>
+      <div class="diagram small">
+  Rules:
+  1. Every node is red or black
+  2. Root is black
+  3. Red node's children must be black
+  4. All paths from node to null have
+     same number of black nodes
+
+       ┌────┐
+       │ 8B │  (B = black)
+       └──┬─┘
+    ┌─────┴─────┐
+  ┌─┴──┐     ┌──┴──┐
+  │ 4R │     │ 12R │  (R = red)
+  └──┬─┘     └──┬──┘
+  ┌──┴──┐    ┌──┴──┐
+ ┌┴──┐┌─┴┐ ┌┴──┐┌─┴┐
+ │2B ││6B│ │10B││14B│
+ └───┘└──┘ └───┘└──┘</div>
+      <div class="key-idea mt">
+        <h3>Both Guarantee O(log n)</h3>
+        <p>AVL trees are more strictly balanced (faster lookup). Red-Black trees do fewer rotations (faster insert/delete). Java's <code>TreeMap</code> uses Red-Black.</p>
+      </div>
+    </div>
+  </div>
+  <div class="analogy">
+    <h3>Coming Attraction</h3>
+    <p>These will be covered in detail in a future lecture. For now, know they exist and <strong>why</strong> they're needed: to prevent the O(n) worst case.</p>
+  </div>
+  <div class="slide-number">20 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 21: EXPRESSION TREES ==================== -->
+<div class="slide" id="slide-21">
+  <h2>Application: Expression Trees</h2>
+  <p>Arithmetic expressions can be represented as binary trees. Operators are internal nodes; operands are leaves.</p>
+  <div class="two-col">
+    <div>
+      <h3>Expression: (3 + 4) * 2</h3>
+      <div class="diagram">
+          ┌───┐
+          │ * │  ◀── root = final op
+          └─┬─┘
+       ┌────┴────┐
+     ┌─┴─┐     ┌─┴─┐
+     │ + │     │ 2 │  ◀── leaf (operand)
+     └─┬─┘     └───┘
+    ┌──┴──┐
+  ┌─┴─┐ ┌─┴─┐
+  │ 3 │ │ 4 │  ◀── leaves (operands)
+  └───┘ └───┘</div>
+      <div class="key-idea">
+        <h3>Evaluate with Postorder!</h3>
+        <p>Process children (operands) before parent (operator). Naturally computes the result bottom-up.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Postorder Evaluation Trace:</h3>
+      <div class="diagram small">
+  Step 1: Visit 3 → push 3
+  Step 2: Visit 4 → push 4
+  Step 3: Visit + → pop 4,3 → 3+4=7 → push 7
+  Step 4: Visit 2 → push 2
+  Step 5: Visit * → pop 2,7 → 7*2=14 → push 14
+
+  Result: 14  ✓</div>
+      <h3 class="mt">Three Traversals = Three Notations:</h3>
+      <table>
+        <tr><th>Traversal</th><th>Output</th><th>Notation</th></tr>
+        <tr><td>Preorder</td><td><code>* + 3 4 2</code></td><td>Prefix (Polish)</td></tr>
+        <tr><td>Inorder</td><td><code>3 + 4 * 2</code></td><td>Infix (needs parens!)</td></tr>
+        <tr><td>Postorder</td><td><code>3 4 + 2 *</code></td><td>Postfix (RPN)</td></tr>
+      </table>
+      <div class="warning mt">
+        <h3>Infix Needs Parentheses</h3>
+        <p><code>3 + 4 * 2</code> is ambiguous without parentheses. Prefix and postfix are <strong>unambiguous</strong> &mdash; no parens needed.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">21 / 22</div>
+</div>
+
+<!-- ==================== SLIDE 22: SUMMARY & CHEAT SHEET ==================== -->
+<div class="slide" id="slide-22">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <div class="two-col">
+    <div>
+      <h3>Tree Fundamentals</h3>
+      <div class="diagram small">
+  Tree: hierarchical, n nodes, n-1 edges
+  Binary Tree: at most 2 children per node
+  BST: left &lt; node &lt; right (all subtrees!)
+
+  Full:     every node has 0 or 2 children
+  Complete: all levels filled, last L→R
+  Perfect:  all leaves same depth (full slots)</div>
+      <h3 class="mt">Traversals</h3>
+      <table style="font-size:0.9em;">
+        <tr><th>Name</th><th>Order</th><th>Use For</th></tr>
+        <tr><td>Preorder</td><td>NLR</td><td>Copy/serialize</td></tr>
+        <tr><td>Inorder</td><td>LNR</td><td>Sorted output (BST)</td></tr>
+        <tr><td>Postorder</td><td>LRN</td><td>Delete / eval expr</td></tr>
+        <tr><td>Level-order</td><td>BFS</td><td>Level-by-level</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>BST Operations</h3>
+      <div class="diagram small">
+  Search: compare, go left/right → O(h)
+  Insert: search + add leaf     → O(h)
+  Delete:
+    Case 1 (leaf):       remove
+    Case 2 (one child):  bypass
+    Case 3 (two children):
+      → find inorder successor
+      → copy value, delete successor</div>
+      <h3 class="mt">Complexity</h3>
+      <table style="font-size:0.9em;">
+        <tr><th>BST Type</th><th>Height</th><th>Ops</th></tr>
+        <tr class="highlight"><td>Balanced</td><td>O(log n)</td><td>O(log n)</td></tr>
+        <tr><td>Skewed</td><td>O(n)</td><td>O(n)</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Takeaway</h3>
+        <p>Trees let us organize data <strong>hierarchically</strong>. BSTs give us <strong>O(log n) search, insert, and delete</strong> &mdash; but only when <strong>balanced</strong>. Self-balancing trees (AVL, Red-Black) guarantee this.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">22 / 22</div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#9654;</button>
+</div>
+
+<script>
+let current = 1;
+const total = 22;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('slide-' + n);
+  if (target) {
+    target.classList.add('active');
+    target.classList.add('fade-in');
+    setTimeout(() => target.classList.remove('fade-in'), 500);
+  }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === total);
+  document.getElementById('progress').style.width = ((n / total) * 100) + '%';
+}
+
+function changeSlide(d) {
+  const next = current + d;
+  if (next >= 1 && next <= total) {
+    current = next;
+    showSlide(current);
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    current = 1;
+    showSlide(current);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    current = total;
+    showSlide(current);
+  }
+});
+
+showSlide(1);
+</script>
+
+</body>
+</html>

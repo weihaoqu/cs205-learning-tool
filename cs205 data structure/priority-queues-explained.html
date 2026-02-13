@@ -1,0 +1,1102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Priority Queues — CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+.tag { display: inline-block; background: #334155; color: #93c5fd; padding: 2px 10px; border-radius: 6px; font-size: 0.85em; margin-right: 6px; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active fade-in">
+  <div class="center" style="width:100%;">
+    <h1 style="font-size:3.4em;">Priority Queues</h1>
+    <p class="subtitle">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:0.9em;">
+   Urgent ──┐
+  Medium ───┤   ┌─────────────┐
+     Low ───┼──►│ Priority PQ  │──► Highest priority out first
+  Medium ───┤   └─────────────┘
+  Urgent ───┘
+    </div>
+    <p style="margin-top:30px; color:#64748b; font-size:0.95em;">Use arrow keys or buttons to navigate &middot; Press <code>Home</code>/<code>End</code> to jump</p>
+  </div>
+  <div class="slide-number">1 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 2: What is a Priority Queue? ==================== -->
+<div class="slide fade-in">
+  <h2>What is a Priority Queue?</h2>
+  <p>A collection where each element has a <strong style="color:#a5f3fc;">priority</strong>. The element with the highest priority (lowest key) is served first -- <strong>not</strong> the one that arrived first.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Regular Queue (FIFO)</h3>
+      <div class="diagram small">
+  enqueue ──►┌───┬───┬───┬───┐──► dequeue
+             │ D │ C │ B │ A │
+             └───┴───┴───┴───┘
+  First in ─────────────────────► First out
+      </div>
+      <p>Whoever arrives first, leaves first.</p>
+
+      <h3 class="mt">Priority Queue</h3>
+      <div class="diagram small">
+  insert ──► ┌───┬───┬───┬───┐──► removeMin
+             │ 7 │ 2 │ 9 │ 4 │
+             └───┴───┴───┴───┘
+  Any order ──────────────────► Lowest key out
+      </div>
+      <p>Lowest key (highest priority) leaves first, regardless of arrival.</p>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Hospital ER Triage</h3>
+        <div class="diagram small" style="margin-bottom:8px;">
+  Waiting Room:
+  ┌────────────────────────────────┐
+  │  Patient A  (sprained ankle) 3 │
+  │  Patient B  (chest pain)     1 │  ◄── seen FIRST
+  │  Patient C  (mild fever)     4 │
+  │  Patient D  (broken arm)     2 │
+  └────────────────────────────────┘
+  Priority: 1 = critical ... 5 = minor
+        </div>
+        <p>Patients are not seen in arrival order. The most critical case (lowest priority number) is treated first.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>A priority queue is an ADT that supports inserting elements with keys and removing the element whose key is minimal (or maximal, depending on convention).</p>
+  </div>
+  <div class="slide-number">2 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 3: The Priority Queue ADT ==================== -->
+<div class="slide fade-in">
+  <h2>The Priority Queue ADT</h2>
+  <p>A priority queue stores a collection of <strong style="color:#a5f3fc;">entries</strong>, each a (key, value) pair.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Core Operations</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td style="text-align:left;"><code>insert(k, v)</code></td><td style="text-align:left;">Insert entry with key <em>k</em> and value <em>v</em></td></tr>
+        <tr><td style="text-align:left;"><code>removeMin()</code></td><td style="text-align:left;">Remove &amp; return entry with smallest key</td></tr>
+        <tr><td style="text-align:left;"><code>min()</code></td><td style="text-align:left;">Return (but don't remove) entry with smallest key</td></tr>
+        <tr><td style="text-align:left;"><code>size()</code></td><td style="text-align:left;">Return number of entries</td></tr>
+        <tr><td style="text-align:left;"><code>isEmpty()</code></td><td style="text-align:left;">Is the PQ empty?</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Trace Example</h3>
+      <div class="diagram small">
+Operation          PQ contents       Return
+─────────────────  ────────────────  ──────
+insert(5, "A")     {(5,A)}           entry
+insert(9, "C")     {(5,A),(9,C)}     entry
+insert(3, "B")     {(5,A),(9,C),     entry
+                     (3,B)}
+min()              {(5,A),(9,C),     (3,B)
+                     (3,B)}
+removeMin()        {(5,A),(9,C)}     (3,B)
+removeMin()        {(9,C)}           (5,A)
+size()             {(9,C)}           1
+removeMin()        {}                (9,C)
+isEmpty()          {}                true
+      </div>
+    </div>
+  </div>
+
+  <div class="warning mt">
+    <h3>Warning</h3>
+    <p><code>removeMin()</code> and <code>min()</code> throw an error (or return null) if called on an empty priority queue. Always check <code>isEmpty()</code> first.</p>
+  </div>
+  <div class="slide-number">3 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 4: Keys and Comparators ==================== -->
+<div class="slide fade-in">
+  <h2>Keys and Comparators</h2>
+  <p>Keys define priority. But how do we compare them?</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Total Order Relations</h3>
+      <p>A comparison rule must satisfy:</p>
+      <ul>
+        <li><strong>Reflexive:</strong> k &le; k</li>
+        <li><strong>Antisymmetric:</strong> if k<sub>1</sub> &le; k<sub>2</sub> and k<sub>2</sub> &le; k<sub>1</sub>, then k<sub>1</sub> = k<sub>2</sub></li>
+        <li><strong>Transitive:</strong> if k<sub>1</sub> &le; k<sub>2</sub> and k<sub>2</sub> &le; k<sub>3</sub>, then k<sub>1</sub> &le; k<sub>3</sub></li>
+      </ul>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Any two keys must be comparable. This is what makes it a <em>total</em> order (as opposed to a partial order).</p>
+      </div>
+    </div>
+    <div>
+      <h3>The Comparator Pattern</h3>
+      <div class="diagram small">
+interface Comparator&lt;K&gt; {
+    int compare(K a, K b);
+    // returns:
+    //   negative  if a &lt; b
+    //   zero      if a == b
+    //   positive  if a &gt; b
+}
+      </div>
+
+      <h3 class="mt">Natural vs Custom Ordering</h3>
+      <table>
+        <tr><th>Approach</th><th>Example</th></tr>
+        <tr><td style="text-align:left;"><strong>Natural</strong></td><td style="text-align:left;">Integers: 1 &lt; 2 &lt; 3 ...</td></tr>
+        <tr><td style="text-align:left;"><strong>Custom</strong></td><td style="text-align:left;">Strings by length, Points by x-coord</td></tr>
+      </table>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>A comparator is like a judge at a competition -- you can swap in a different judge to rank contestants by a different criterion.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 5: Implementation 1 - Unsorted List ==================== -->
+<div class="slide fade-in">
+  <h2>Implementation 1: Unsorted List</h2>
+  <p>Store entries in an unsorted linked list or array. Insertion is fast, but finding the minimum requires scanning.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <div class="diagram small">
+insert(3,"X")  insert(7,"Y")  insert(1,"Z")  insert(5,"W")
+
+  List (unsorted):
+  ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+  │(3,"X")│──►│(7,"Y")│──►│(1,"Z")│──►│(5,"W")│
+  └───────┘   └───────┘   └───────┘   └───────┘
+
+removeMin() — must scan ALL entries:
+
+  ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+  │(3,"X")│──►│(7,"Y")│──►│(1,"Z")│──►│(5,"W")│
+  └───────┘   └───────┘   └───┬───┘   └───────┘
+     check      check      ▲ MIN!        check
+                            │
+                      remove &amp; return (1,"Z")
+      </div>
+    </div>
+    <div>
+      <h3>Complexity</h3>
+      <table>
+        <tr><th>Operation</th><th>Time</th></tr>
+        <tr><td><code>insert</code></td><td style="color:#34d399;"><strong>O(1)</strong></td></tr>
+        <tr><td><code>removeMin</code></td><td style="color:#f87171;"><strong>O(n)</strong></td></tr>
+        <tr><td><code>min</code></td><td style="color:#f87171;"><strong>O(n)</strong></td></tr>
+        <tr><td><code>size</code>, <code>isEmpty</code></td><td style="color:#34d399;"><strong>O(1)</strong></td></tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Insert is O(1) because we just append. But removeMin is O(n) because we must scan every entry to find the smallest key.</p>
+      </div>
+
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Good for insert-heavy workloads. Terrible if you remove frequently.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 6: Implementation 2 - Sorted List ==================== -->
+<div class="slide fade-in">
+  <h2>Implementation 2: Sorted List</h2>
+  <p>Keep entries sorted by key. The minimum is always at the front, but insertion requires finding the right position.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <div class="diagram small">
+insert(3,"X")  insert(7,"Y")  insert(1,"Z")  insert(5,"W")
+
+  List (sorted by key):
+  ┌───────┐   ┌───────┐   ┌───────┐   ┌───────┐
+  │(1,"Z")│──►│(3,"X")│──►│(5,"W")│──►│(7,"Y")│
+  └───────┘   └───────┘   └───────┘   └───────┘
+   ▲ MIN!
+
+removeMin() — just remove the front!
+
+  ┌───────┐   ┌───────┐   ┌───────┐
+  │(3,"X")│──►│(5,"W")│──►│(7,"Y")│
+  └───────┘   └───────┘   └───────┘
+   ▲ new MIN
+
+insert(4,"Q") — walk to find position:
+  ┌───────┐        ┌───────┐   ┌───────┐   ┌───────┐
+  │(3,"X")│──►  ●  │(4,"Q")│──►│(5,"W")│──►│(7,"Y")│
+  └───────┘  insert └───────┘   └───────┘   └───────┘
+      </div>
+    </div>
+    <div>
+      <h3>Complexity</h3>
+      <table>
+        <tr><th>Operation</th><th>Time</th></tr>
+        <tr><td><code>insert</code></td><td style="color:#f87171;"><strong>O(n)</strong></td></tr>
+        <tr><td><code>removeMin</code></td><td style="color:#34d399;"><strong>O(1)</strong></td></tr>
+        <tr><td><code>min</code></td><td style="color:#34d399;"><strong>O(1)</strong></td></tr>
+        <tr><td><code>size</code>, <code>isEmpty</code></td><td style="color:#34d399;"><strong>O(1)</strong></td></tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>removeMin is O(1) because the smallest key is always at the front. But insert is O(n) because we walk the list to find the sorted position.</p>
+      </div>
+
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Good for remove-heavy workloads. Terrible if you insert frequently.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 7: Comparison of Implementations ==================== -->
+<div class="slide fade-in">
+  <h2>Comparison: Unsorted vs Sorted List</h2>
+  <p>Neither list-based approach gives us the best of both worlds.</p>
+
+  <div class="center mt">
+    <table style="margin: 0 auto;">
+      <tr>
+        <th>Operation</th>
+        <th>Unsorted List</th>
+        <th>Sorted List</th>
+      </tr>
+      <tr>
+        <td><code>insert(k, v)</code></td>
+        <td style="color:#34d399;"><strong>O(1)</strong></td>
+        <td style="color:#f87171;"><strong>O(n)</strong></td>
+      </tr>
+      <tr>
+        <td><code>removeMin()</code></td>
+        <td style="color:#f87171;"><strong>O(n)</strong></td>
+        <td style="color:#34d399;"><strong>O(1)</strong></td>
+      </tr>
+      <tr>
+        <td><code>min()</code></td>
+        <td style="color:#f87171;"><strong>O(n)</strong></td>
+        <td style="color:#34d399;"><strong>O(1)</strong></td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+              Time
+          │
+    O(n)  │  ████           ████
+          │  ████           ████
+          │  ████           ████
+    O(1)  │          ████           ████
+          │          ████           ████
+          └──────────────────────────────
+            insert removeMin  insert removeMin
+            ◄─ Unsorted ─►  ◄── Sorted ──►
+      </div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p><strong>Unsorted list</strong> = throwing clothes into a pile. Fast to add, slow to find what you need.</p>
+        <p><strong>Sorted list</strong> = keeping a perfectly organized closet. Slow to put away, fast to grab the right item.</p>
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Can we get O(log n) for <em>both</em> insert and removeMin? Yes -- with a <strong>heap</strong>! (Coming in the next lecture.)</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 8: Selection Sort using PQ ==================== -->
+<div class="slide fade-in">
+  <h2>Selection Sort Using a PQ</h2>
+  <p>Use an <strong style="color:#a5f3fc;">unsorted list</strong> PQ to sort a sequence.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Algorithm</h3>
+      <ol style="padding-left:24px;">
+        <li>Insert all n elements into the PQ &mdash; each <code>insert</code> is O(1)</li>
+        <li>Call <code>removeMin()</code> n times &mdash; each is O(n), O(n-1), ... O(1)</li>
+        <li>Elements come out in sorted order</li>
+      </ol>
+
+      <div class="diagram small mt">
+Input: [7, 4, 8, 2, 5]
+
+Phase 1 — Insert all (unsorted list):
+  PQ: {7, 4, 8, 2, 5}         total: 5 x O(1) = O(n)
+
+Phase 2 — removeMin repeatedly:
+  removeMin → 2  PQ: {7, 4, 8, 5}    scan 5 items
+  removeMin → 4  PQ: {7, 8, 5}       scan 4 items
+  removeMin → 5  PQ: {7, 8}          scan 3 items
+  removeMin → 7  PQ: {8}             scan 2 items
+  removeMin → 8  PQ: {}              scan 1 item
+
+Output: [2, 4, 5, 7, 8]  ✓ sorted!
+      </div>
+    </div>
+    <div>
+      <h3>Complexity Analysis</h3>
+      <div class="diagram small">
+Phase 1:  n inserts x O(1) = O(n)
+
+Phase 2:  n + (n-1) + ... + 2 + 1
+        = n(n+1)/2
+        = O(n^2)
+
+Total: O(n) + O(n^2) = O(n^2)
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>This is exactly <strong>Selection Sort</strong>! Each removeMin "selects" the minimum from the remaining unsorted elements.</p>
+      </div>
+
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>O(n^2) in all cases -- no best-case improvement. The scan is always required.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 9: Insertion Sort using PQ ==================== -->
+<div class="slide fade-in">
+  <h2>Insertion Sort Using a PQ</h2>
+  <p>Use a <strong style="color:#a5f3fc;">sorted list</strong> PQ to sort a sequence.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Algorithm</h3>
+      <ol style="padding-left:24px;">
+        <li>Insert all n elements into the PQ &mdash; each <code>insert</code> walks the sorted list</li>
+        <li>Call <code>removeMin()</code> n times &mdash; each is O(1)</li>
+        <li>Elements come out in sorted order</li>
+      </ol>
+
+      <div class="diagram small mt">
+Input: [7, 4, 8, 2, 5]
+
+Phase 1 — Insert into sorted list:
+  insert 7 → PQ: [7]                  walk 0
+  insert 4 → PQ: [4, 7]              walk 1
+  insert 8 → PQ: [4, 7, 8]           walk 2
+  insert 2 → PQ: [2, 4, 7, 8]        walk 3 (front)
+  insert 5 → PQ: [2, 4, 5, 7, 8]     walk 2
+
+Phase 2 — removeMin repeatedly:
+  removeMin → 2   [4, 5, 7, 8]       O(1)
+  removeMin → 4   [5, 7, 8]          O(1)
+  removeMin → 5   [7, 8]             O(1)
+  removeMin → 7   [8]                O(1)
+  removeMin → 8   []                 O(1)
+
+Output: [2, 4, 5, 7, 8]  ✓ sorted!
+      </div>
+    </div>
+    <div>
+      <h3>Complexity Analysis</h3>
+      <div class="diagram small">
+Phase 1:  1 + 2 + ... + (n-1) + n
+        = n(n+1)/2
+        = O(n^2)
+
+Phase 2:  n removes x O(1) = O(n)
+
+Total: O(n^2) + O(n) = O(n^2)
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>This is exactly <strong>Insertion Sort</strong>! Each insert places the element into its correct sorted position.</p>
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Like sorting a hand of playing cards: you pick up each card and slide it into the right spot among the cards you're already holding.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 10: Can We Do Better? ==================== -->
+<div class="slide fade-in">
+  <h2>Can We Do Better?</h2>
+  <p>Both PQ-based sorts are O(n^2). Is there a middle ground?</p>
+
+  <div class="center mt">
+    <div class="diagram" style="display:inline-block; text-align:left;">
+                 insert    removeMin    PQ-Sort
+  ────────────── ───────── ──────────── ──────────
+  Unsorted List   O(1)      O(n)        O(n^2)     ← Selection Sort
+  Sorted List     O(n)      O(1)        O(n^2)     ← Insertion Sort
+
+        ╔═════════════════════════════════════════╗
+        ║  What if BOTH were O(log n)?            ║
+        ║                                         ║
+        ║  insert: O(log n)  removeMin: O(log n)  ║
+        ║  PQ-Sort: O(n log n)                    ║
+        ║                                         ║
+        ║         >>> THE HEAP <<<                ║
+        ╚═════════════════════════════════════════╝
+    </div>
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A <strong>binary heap</strong> achieves O(log n) for both insert and removeMin by using a complete binary tree with the <em>heap-order property</em>.</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+The Heap: a "balanced" approach
+
+           2             ◄── min at root
+          / \
+         4   5
+        / \   \
+       7   9   8
+
+  insert:     bubble UP     O(log n)
+  removeMin:  trickle DOWN  O(log n)
+  PQ-Sort:    n x O(log n) = O(n log n) = Heap Sort!
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 11: The Entry / Key-Value Pattern ==================== -->
+<div class="slide fade-in">
+  <h2>The Entry / Key-Value Pattern</h2>
+  <p>Priority queues store <strong style="color:#a5f3fc;">entries</strong>, not bare keys. Each entry is a (key, value) pair.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Why Separate Key from Value?</h3>
+      <ul>
+        <li>The <strong>key</strong> determines priority (how entries are ordered)</li>
+        <li>The <strong>value</strong> is the actual data you care about</li>
+        <li>The same value might need different priorities in different contexts</li>
+      </ul>
+
+      <div class="diagram small mt">
+interface Entry&lt;K, V&gt; {
+    K getKey();     // the priority
+    V getValue();   // the payload
+}
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>A boarding pass at an airport: the <strong>key</strong> is your boarding group number, the <strong>value</strong> is you (the passenger). The airline decides your priority, not your name.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Examples</h3>
+      <table>
+        <tr><th>Context</th><th>Key</th><th>Value</th></tr>
+        <tr><td style="text-align:left;">ER Triage</td><td>Severity</td><td>Patient</td></tr>
+        <tr><td style="text-align:left;">Print Queue</td><td>Priority</td><td>Print Job</td></tr>
+        <tr><td style="text-align:left;">Event Sim</td><td>Time</td><td>Event</td></tr>
+        <tr><td style="text-align:left;">Dijkstra's</td><td>Distance</td><td>Vertex</td></tr>
+        <tr><td style="text-align:left;">Huffman</td><td>Frequency</td><td>Tree Node</td></tr>
+      </table>
+
+      <div class="diagram small mt">
+Entry examples:
+
+  (1, "chest pain patient")     ← treated first
+  (3, "sprained ankle patient") ← treated later
+  (5, "mild headache patient")  ← treated last
+
+  Key = severity   Value = patient info
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Entries decouple "what you store" from "how it's prioritized." This makes the PQ reusable across many domains.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 12: Adaptable Priority Queue ==================== -->
+<div class="slide fade-in">
+  <h2>Adaptable Priority Queue</h2>
+  <p>Sometimes you need to <strong>change</strong> a key or <strong>remove</strong> an arbitrary entry -- not just the minimum.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Additional Operations</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td style="text-align:left;"><code>remove(e)</code></td><td style="text-align:left;">Remove entry <em>e</em> from PQ</td></tr>
+        <tr><td style="text-align:left;"><code>replaceKey(e, k)</code></td><td style="text-align:left;">Change key of entry <em>e</em> to <em>k</em></td></tr>
+        <tr><td style="text-align:left;"><code>replaceValue(e, v)</code></td><td style="text-align:left;">Change value of entry <em>e</em> to <em>v</em></td></tr>
+      </table>
+
+      <h3 class="mt">Location-Aware Entries</h3>
+      <div class="diagram small">
+  Standard entry:
+    ┌─────────────┐
+    │ key │ value  │   knows nothing about
+    └─────────────┘   where it is in the PQ
+
+  Location-aware entry:
+    ┌──────────────────────┐
+    │ key │ value │ locator│──► points to its
+    └──────────────────────┘    position in PQ
+      </div>
+      <p>The locator lets us jump directly to an entry in O(1), avoiding an O(n) search.</p>
+    </div>
+    <div>
+      <h3>Why Do We Need This?</h3>
+
+      <div class="diagram small">
+Dijkstra's algorithm scenario:
+
+  PQ: { (10, A), (∞, B), (∞, C), (5, D) }
+
+  We discover a shorter path to B (cost 7):
+  replaceKey(entryB, 7)
+
+  PQ: { (10, A), (7, B), (∞, C), (5, D) }
+                   ▲
+              key changed!
+      </div>
+
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Without location-aware entries, <code>replaceKey</code> would require O(n) to find the entry first. With a locator, it's O(1) to find + O(log n) to re-heapify = <strong>O(log n)</strong> total.</p>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>An adaptable PQ extends the standard PQ by letting you modify entries already in the queue. This is essential for graph algorithms like Dijkstra's and Prim's.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 13: Application - Job Scheduling ==================== -->
+<div class="slide fade-in">
+  <h2>Application: Job Scheduling</h2>
+  <p>Operating systems use priority queues to decide which process runs next.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>OS Process Scheduler</h3>
+      <div class="diagram small">
+Running processes:
+┌──────────────────────────────────────┐
+│ Process     Priority   State         │
+│ ─────────── ────────── ──────────    │
+│ System IRQ      1      ready         │
+│ Video call      2      ready         │
+│ Compiler        5      ready         │
+│ Text editor     5      ready         │
+│ Backup job     10      ready         │
+│ Screen saver   15      ready         │
+└──────────────────────────────────────┘
+
+PQ.removeMin() → System IRQ (priority 1)
+  → runs on CPU
+
+PQ.removeMin() → Video call (priority 2)
+  → runs on CPU
+
+New process arrives:
+PQ.insert(3, "Web browser")
+  → inserted into PQ
+      </div>
+    </div>
+    <div>
+      <h3>How the PQ Helps</h3>
+      <div class="diagram small">
+        ┌──────────┐
+        │   CPU    │ ◄── always runs the
+        └────┬─────┘     highest-priority process
+             │
+     removeMin()
+             │
+    ┌────────▼────────┐
+    │  Priority Queue  │ ◄── processes waiting
+    │  ┌──┬──┬──┬──┐  │
+    │  │1 │2 │5 │10│  │
+    │  └──┴──┴──┴──┘  │
+    └────────▲────────┘
+             │
+         insert()
+             │
+    ┌────────┴────────┐
+    │  New processes   │
+    │  arriving        │
+    └─────────────────┘
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Like a hospital with one doctor: the most critical patient always gets treated next, but new patients can arrive at any time and get triaged into the queue.</p>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>The PQ efficiently finds the next process to schedule. With a heap, this costs O(log n) per operation -- critical when the OS handles thousands of processes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 14: Application - Event-Driven Simulation ==================== -->
+<div class="slide fade-in">
+  <h2>Application: Event-Driven Simulation</h2>
+  <p>Simulate a system by processing events in chronological order, even if they were generated out of order.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <div class="diagram small">
+Timeline of events:
+
+  t=0    t=2    t=5    t=7    t=12   t=15
+  │      │      │      │      │      │
+  ▼      ▼      ▼      ▼      ▼      ▼
+ Start  Arrive  Serve  Arrive  Serve  End
+
+Priority Queue (key = event time):
+┌──────────────────────────────────────┐
+│  (0,Start) (2,Arrive) (5,Serve) ... │
+└──────────────────────────────────────┘
+
+Loop:
+  while PQ is not empty:
+      event = PQ.removeMin()   ← earliest event
+      process(event)
+      // processing may INSERT new future events
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Events are entries with <strong>time as the key</strong>. Processing an event often creates new events (inserted with future timestamps). The PQ always gives us the chronologically next event.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Example: Bank Simulation</h3>
+      <div class="diagram small">
+Step 1: removeMin → (0, "Bank opens")
+  → insert(2, "Customer A arrives")
+  → insert(5, "Customer B arrives")
+
+Step 2: removeMin → (2, "Customer A arrives")
+  → insert(7, "Customer A done")
+
+Step 3: removeMin → (5, "Customer B arrives")
+  → insert(12, "Customer B done")
+
+Step 4: removeMin → (7, "Customer A done")
+  → "Customer A leaves"
+
+Step 5: removeMin → (12, "Customer B done")
+  → "Customer B leaves"
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Like a director with a schedule of scenes to film. Each scene might add new scenes to the schedule. The PQ always picks the scene that happens earliest in the story timeline.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 15: Application - Dijkstra's Algorithm Preview ==================== -->
+<div class="slide fade-in">
+  <h2>Application: Dijkstra's Algorithm Preview</h2>
+  <p>The priority queue is the engine behind the famous shortest-path algorithm.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>The Idea</h3>
+      <div class="diagram small">
+Graph with weighted edges:
+
+      2       3
+  A ────── B ────── D
+  │        │        │
+  │ 4      │ 1      │ 2
+  │        │        │
+  C ────── E ────── F
+      5       1
+
+Find shortest path from A to all others.
+      </div>
+
+      <div class="diagram small mt">
+Algorithm sketch:
+
+  PQ = { (0, A) }        ← start: dist to A is 0
+  while PQ not empty:
+      (d, u) = PQ.removeMin()     ← closest vertex
+      for each neighbor v of u:
+          if d + weight(u,v) &lt; dist[v]:
+              dist[v] = d + weight(u,v)
+              PQ.insert(dist[v], v)
+              // or replaceKey if using adaptable PQ
+      </div>
+    </div>
+    <div>
+      <h3>PQ Trace (from A)</h3>
+      <div class="diagram small">
+Step  removeMin   PQ after updates
+────  ─────────── ──────────────────────
+1     (0, A)      {(2,B), (4,C)}
+2     (2, B)      {(3,E), (4,C), (5,D)}
+3     (3, E)      {(4,C), (4,F), (5,D)}
+4     (4, C)      {(4,F), (5,D)}
+5     (4, F)      {(5,D)} → {(5,D)}
+6     (5, D)      {}
+
+Shortest distances from A:
+  A=0  B=2  C=4  D=5  E=3  F=4
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Dijkstra's "greedily" picks the unvisited vertex with the smallest known distance using <code>removeMin()</code>. With a heap-based PQ, the algorithm runs in <strong>O((V + E) log V)</strong>.</p>
+      </div>
+
+      <p class="mt"><span class="tag">Prerequisite</span> You'll study this in detail in the Graph Algorithms unit.</p>
+    </div>
+  </div>
+  <div class="slide-number">15 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 16: Application - Huffman Coding Preview ==================== -->
+<div class="slide fade-in">
+  <h2>Application: Huffman Coding Preview</h2>
+  <p>Build optimal prefix-free codes for data compression using a priority queue.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>The Idea</h3>
+      <p>Frequent characters get short codes; rare characters get long codes.</p>
+      <div class="diagram small">
+Character frequencies:
+  a: 45   b: 13   c: 12   d: 16   e: 9   f: 5
+
+Algorithm:
+  1. Insert each character as a leaf node
+     into PQ, keyed by frequency.
+  2. While PQ has more than one entry:
+     a. T1 = PQ.removeMin()
+     b. T2 = PQ.removeMin()
+     c. Create new node with T1, T2 as children
+        key = T1.freq + T2.freq
+     d. PQ.insert(new node)
+  3. Last remaining entry is the Huffman tree root.
+      </div>
+    </div>
+    <div>
+      <h3>Building the Tree</h3>
+      <div class="diagram small">
+PQ: [(5,f) (9,e) (12,c) (13,b) (16,d) (45,a)]
+
+removeMin → f(5), e(9)  → merge: (14)
+PQ: [(12,c) (13,b) (14,fe) (16,d) (45,a)]
+
+removeMin → c(12), b(13) → merge: (25)
+PQ: [(14,fe) (16,d) (25,cb) (45,a)]
+
+removeMin → fe(14), d(16) → merge: (30)
+PQ: [(25,cb) (30,fed) (45,a)]
+
+removeMin → cb(25), fed(30) → merge: (55)
+PQ: [(45,a) (55,cbfed)]
+
+removeMin → a(45), cbfed(55) → merge: (100)
+PQ: [(100, root)] → DONE!
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>The PQ always merges the two least frequent nodes. This greedy strategy produces an optimal prefix code. Two <code>removeMin</code> + one <code>insert</code> per step.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 17: Implementation Comparison ==================== -->
+<div class="slide fade-in">
+  <h2>Implementation Comparison</h2>
+  <p>How do all PQ implementations stack up?</p>
+
+  <div class="center mt">
+    <table style="margin: 0 auto;">
+      <tr>
+        <th>Operation</th>
+        <th>Unsorted List</th>
+        <th>Sorted List</th>
+        <th>Binary Heap</th>
+        <th>BST (balanced)</th>
+      </tr>
+      <tr>
+        <td><code>insert</code></td>
+        <td style="color:#34d399;">O(1)</td>
+        <td style="color:#f87171;">O(n)</td>
+        <td style="color:#fbbf24;">O(log n)</td>
+        <td style="color:#fbbf24;">O(log n)</td>
+      </tr>
+      <tr>
+        <td><code>removeMin</code></td>
+        <td style="color:#f87171;">O(n)</td>
+        <td style="color:#34d399;">O(1)</td>
+        <td style="color:#fbbf24;">O(log n)</td>
+        <td style="color:#fbbf24;">O(log n)</td>
+      </tr>
+      <tr>
+        <td><code>min</code></td>
+        <td style="color:#f87171;">O(n)</td>
+        <td style="color:#34d399;">O(1)</td>
+        <td style="color:#34d399;">O(1)</td>
+        <td style="color:#fbbf24;">O(log n)</td>
+      </tr>
+      <tr class="highlight">
+        <td><strong>PQ-Sort</strong></td>
+        <td>O(n^2)</td>
+        <td>O(n^2)</td>
+        <td style="color:#34d399;"><strong>O(n log n)</strong></td>
+        <td style="color:#34d399;"><strong>O(n log n)</strong></td>
+      </tr>
+      <tr>
+        <td>Space</td>
+        <td>O(n)</td>
+        <td>O(n)</td>
+        <td>O(n)</td>
+        <td>O(n)</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The <strong>binary heap</strong> is the sweet spot for priority queues: O(log n) insert and removeMin, O(1) min, simple array-based storage, and it gives us <strong>Heap Sort</strong> at O(n log n).</p>
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>A balanced BST (like AVL or Red-Black) also achieves O(log n) for everything, but has higher constant factors and more complex implementation. Heaps are preferred when you only need PQ operations.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram small center" style="margin-top:12px;">
+Choose your implementation:
+┌──────────────┬──────────────────────────────────────────────────┐
+│ Unsorted List│ Few removes, many inserts, small n              │
+│ Sorted List  │ Few inserts, many removes, small n              │
+│ Binary Heap  │ General purpose PQ — BEST default choice        │ ◄── use this
+│ Balanced BST │ Need ordered iteration or range queries too     │
+└──────────────┴──────────────────────────────────────────────────┘
+  </div>
+  <div class="slide-number">17 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 18: Summary & Cheat Sheet ==================== -->
+<div class="slide fade-in">
+  <h1>Summary &amp; Cheat Sheet</h1>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Core Concepts</h3>
+      <ul>
+        <li><strong>Priority Queue</strong> = collection where the element with the smallest (or largest) key is removed first</li>
+        <li><strong>Entry</strong> = (key, value) pair; key determines priority</li>
+        <li><strong>Comparator</strong> = defines the total order on keys</li>
+        <li><strong>Adaptable PQ</strong> = supports remove(e) and replaceKey(e, k)</li>
+      </ul>
+
+      <h3 class="mt">Sorting Connection</h3>
+      <div class="diagram small">
+PQ Implementation → Sorting Algorithm
+──────────────────  ──────────────────
+Unsorted List    →  Selection Sort  O(n^2)
+Sorted List      →  Insertion Sort  O(n^2)
+Binary Heap      →  Heap Sort      O(n log n)
+      </div>
+
+      <h3 class="mt">Applications</h3>
+      <ul>
+        <li>OS Job / Process Scheduling</li>
+        <li>Event-Driven Simulation</li>
+        <li>Dijkstra's Shortest Path</li>
+        <li>Huffman Coding (compression)</li>
+        <li>Prim's Minimum Spanning Tree</li>
+        <li>A* Search (AI pathfinding)</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Complexity Cheat Sheet</h3>
+      <table>
+        <tr><th></th><th>Unsorted</th><th>Sorted</th><th>Heap</th></tr>
+        <tr><td><code>insert</code></td><td>O(1)</td><td>O(n)</td><td style="color:#34d399;">O(log n)</td></tr>
+        <tr><td><code>removeMin</code></td><td>O(n)</td><td>O(1)</td><td style="color:#34d399;">O(log n)</td></tr>
+        <tr><td><code>min</code></td><td>O(n)</td><td>O(1)</td><td style="color:#34d399;">O(1)</td></tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Key Takeaway</h3>
+        <p>List-based PQs are simple but O(n) for at least one core operation. The <strong>binary heap</strong> (next lecture!) achieves O(log n) for both insert and removeMin -- the gold standard for priority queues.</p>
+      </div>
+
+      <div class="diagram small mt">
+  ┌─────────────────────────────────────────┐
+  │          WHAT TO REMEMBER               │
+  │                                         │
+  │  1. PQ ≠ Queue (not FIFO!)             │
+  │  2. Keys define priority                │
+  │  3. Entries = (key, value) pairs        │
+  │  4. Unsorted list → fast insert         │
+  │  5. Sorted list   → fast removeMin      │
+  │  6. Heap          → fast BOTH!          │
+  │  7. PQ-Sort with heap = O(n log n)      │
+  └─────────────────────────────────────────┘
+      </div>
+
+      <p class="mt center" style="color:#64748b; font-size:0.95em;">Next up: Binary Heaps -- the data structure that makes PQs efficient.</p>
+    </div>
+  </div>
+  <div class="slide-number">18 / 18</div>
+</div>
+
+<!-- ==================== Navigation ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="navigate(-1)">&#8592; Prev</button>
+  <button id="nextBtn" onclick="navigate(1)">Next &#8594;</button>
+</div>
+
+<script>
+(function() {
+  const slides = document.querySelectorAll('.slide');
+  let current = 0;
+
+  function showSlide(index) {
+    slides[current].classList.remove('active');
+    current = Math.max(0, Math.min(index, slides.length - 1));
+    slides[current].classList.add('active');
+    // Re-trigger fade-in animation
+    slides[current].classList.remove('fade-in');
+    void slides[current].offsetWidth;
+    slides[current].classList.add('fade-in');
+    // Update progress bar
+    const pct = ((current + 1) / slides.length) * 100;
+    document.getElementById('progress').style.width = pct + '%';
+    // Update button states
+    document.getElementById('prevBtn').disabled = (current === 0);
+    document.getElementById('nextBtn').disabled = (current === slides.length - 1);
+  }
+
+  window.navigate = function(dir) {
+    showSlide(current + dir);
+  };
+
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+      e.preventDefault();
+      navigate(1);
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault();
+      navigate(-1);
+    } else if (e.key === 'Home') {
+      e.preventDefault();
+      showSlide(0);
+    } else if (e.key === 'End') {
+      e.preventDefault();
+      showSlide(slides.length - 1);
+    }
+  });
+
+  // Initialize
+  showSlide(0);
+})();
+</script>
+
+</body>
+</html>

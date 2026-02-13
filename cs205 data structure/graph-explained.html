@@ -1,0 +1,1099 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Graphs - Modeling Connections | CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active" id="slide-1">
+  <div class="center">
+    <h1>Graphs &mdash; Modeling Connections</h1>
+    <p class="subtitle">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left; margin-top:20px;">
+         [A]-------[B]
+        / |  \       |  \
+       /  |   \      |   \
+     [F]  |   [C]----+--[D]
+       \  |  /       |  /
+        \ | /        | /
+         [E]-------[G]
+    </div>
+    <p class="mt" style="color:#64748b;">Use arrow keys or buttons to navigate &bull; 20 slides</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 2: What is a Graph? ==================== -->
+<div class="slide" id="slide-2">
+  <h2>What is a Graph?</h2>
+  <div class="two-col">
+    <div>
+      <p>A <strong style="color:#93c5fd;">graph G = (V, E)</strong> consists of:</p>
+      <ul>
+        <li><strong style="color:#a5f3fc;">V</strong> &mdash; a set of <em>vertices</em> (also called nodes)</li>
+        <li><strong style="color:#a5f3fc;">E</strong> &mdash; a set of <em>edges</em> (connections between vertices)</li>
+      </ul>
+      <p class="mt">Each edge connects <strong>two vertices</strong>. Unlike trees, graphs have no root, no parent-child hierarchy, and can contain <strong>cycles</strong>.</p>
+      <div class="analogy">
+        <h3>Analogy: Social Network</h3>
+        <p>People are vertices. Friendships are edges. You can reach anyone through a chain of mutual friends &mdash; that is a <em>path</em> in the graph.</p>
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Road Map</h3>
+        <p>Intersections are vertices. Roads connecting them are edges. Distances are <em>weights</em> on those edges.</p>
+      </div>
+    </div>
+    <div>
+      <h3>A Simple Graph</h3>
+      <div class="diagram">
+  Vertices: {A, B, C, D, E}
+  Edges:    {(A,B),(A,C),(B,C),(B,D),(C,E),(D,E)}
+
+        [A]
+       / \
+      /   \
+    [B]---[C]
+     |     |
+     |     |
+    [D]---[E]
+
+  |V| = 5  (five vertices)
+  |E| = 6  (six edges)
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Graphs are the most <strong>general</strong> data structure for modeling relationships. Trees, linked lists, and even arrays are all special cases of graphs!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 3: Graph Terminology ==================== -->
+<div class="slide" id="slide-3">
+  <h2>Graph Terminology</h2>
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  degree(A) = 2         path A-B-D = [A, B, D]
+  degree(B) = 3
+  degree(D) = 2         cycle: A - B - C - A
+
+        [A]
+       / \          A and B are <strong style="color:#fbbf24;">adjacent</strong>
+      /   \         Edge (A,B) is <strong style="color:#fbbf24;">incident</strong> to A
+    [B]---[C]       <strong style="color:#fbbf24;">Degree</strong> of B = 3
+     |     |
+     |     |
+    [D]---[E]
+      </div>
+    </div>
+    <div>
+      <table style="width:100%;">
+        <tr><th>Term</th><th>Definition</th></tr>
+        <tr><td style="text-align:left;"><strong>Vertex (Node)</strong></td><td style="text-align:left;">A fundamental unit in a graph</td></tr>
+        <tr><td style="text-align:left;"><strong>Edge</strong></td><td style="text-align:left;">A connection between two vertices</td></tr>
+        <tr><td style="text-align:left;"><strong>Adjacent</strong></td><td style="text-align:left;">Two vertices connected by an edge</td></tr>
+        <tr><td style="text-align:left;"><strong>Incident</strong></td><td style="text-align:left;">An edge is incident to its endpoints</td></tr>
+        <tr><td style="text-align:left;"><strong>Degree</strong></td><td style="text-align:left;">Number of edges touching a vertex</td></tr>
+        <tr><td style="text-align:left;"><strong>Path</strong></td><td style="text-align:left;">Sequence of vertices connected by edges</td></tr>
+        <tr><td style="text-align:left;"><strong>Cycle</strong></td><td style="text-align:left;">A path that starts and ends at the same vertex</td></tr>
+        <tr><td style="text-align:left;"><strong>Connected</strong></td><td style="text-align:left;">Every vertex is reachable from every other</td></tr>
+        <tr><td style="text-align:left;"><strong>Component</strong></td><td style="text-align:left;">A maximal connected subgraph</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>The <strong>degree</strong> of a vertex is the most fundamental local property. It tells you how "connected" that vertex is.</p>
+  </div>
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 4: Directed vs Undirected ==================== -->
+<div class="slide" id="slide-4">
+  <h2>Directed vs Undirected Graphs</h2>
+  <div class="two-col">
+    <div>
+      <h3>Undirected Graph</h3>
+      <p>Edges have <strong>no direction</strong>. If A connects to B, then B connects to A.</p>
+      <div class="diagram">
+    [A]------[B]
+     |        |
+     |        |
+    [C]------[D]
+
+  Edge (A,B) = Edge (B,A)
+  Symmetric relationship
+      </div>
+      <p><strong>Examples:</strong> Facebook friendships, road networks (two-way streets), computer networks (Ethernet)</p>
+    </div>
+    <div>
+      <h3>Directed Graph (Digraph)</h3>
+      <p>Edges have a <strong>direction</strong>. An edge from A to B does NOT imply B to A.</p>
+      <div class="diagram">
+    [A]----->[B]
+     |         |
+     v         v
+    [C]<------[D]
+
+  Edge (A,B) =/= Edge (B,A)
+  In-degree(C) = 2, Out-degree(C) = 0
+      </div>
+      <p><strong>Examples:</strong> Twitter follows, one-way streets, web page hyperlinks, prerequisite courses</p>
+    </div>
+  </div>
+  <div class="analogy mt">
+    <h3>Analogy: Streets</h3>
+    <p><strong>Undirected</strong> = two-way street: you can drive in both directions. <strong>Directed</strong> = one-way street: traffic flows in only one direction. Violating the direction is illegal (and impossible in graphs)!</p>
+  </div>
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 5: Weighted vs Unweighted ==================== -->
+<div class="slide" id="slide-5">
+  <h2>Weighted vs Unweighted Graphs</h2>
+  <div class="two-col">
+    <div>
+      <h3>Unweighted Graph</h3>
+      <p>All edges are "equal" &mdash; there is no cost associated with traversing an edge.</p>
+      <div class="diagram">
+    [A]------[B]
+     |        |
+     |        |
+    [C]------[D]
+
+  All edges cost "1"
+      </div>
+      <h3 class="mt">Weighted Graph</h3>
+      <p>Each edge carries a <strong>weight</strong> (cost, distance, time, capacity, etc.).</p>
+      <div class="diagram">
+           10
+    [A]--------[B]
+     |  \        |
+   3 |    \ 7    | 2
+     |      \    |
+    [C]------[D]
+         4
+      </div>
+    </div>
+    <div>
+      <h3>Application: City Distances</h3>
+      <div class="diagram small">
+          350km
+  [NYC]----------[Boston]
+    |  \             |
+    |   \210km       | 150km
+    |    \           |
+ 200km   [Philly]  [Hartford]
+    |      |
+    |      | 100km
+    |      |
+  [DC]-----+
+
+  Shortest NYC to DC?
+    Direct:  200km
+    Via Philly: 210 + 100 = 310km
+    Winner: direct route!
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Weights let us model <strong>real-world costs</strong>. The "shortest path" in a weighted graph minimizes total weight, not number of edges.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 6: Special Graphs ==================== -->
+<div class="slide" id="slide-6">
+  <h2>Special Graphs</h2>
+  <div class="two-col">
+    <div>
+      <h3>Complete Graph K<sub>4</sub></h3>
+      <p>Every vertex connects to every other vertex.</p>
+      <div class="diagram small">
+    [A]------[B]       |E| = V(V-1)/2
+     |\      /|            = 4(3)/2
+     |  \  /  |            = 6 edges
+     |   \/   |
+     |   /\   |
+     | /    \ |
+    [C]------[D]
+      </div>
+      <h3>Bipartite Graph</h3>
+      <p>Vertices split into two sets; edges only cross between sets.</p>
+      <div class="diagram small">
+  Set L    Set R
+  [1] ------- [A]
+  [1] ------- [B]
+  [2] ------- [A]
+  [3] ------- [B]
+  [3] ------- [C]
+
+  No edges within L or within R
+      </div>
+    </div>
+    <div>
+      <h3>DAG (Directed Acyclic Graph)</h3>
+      <p>Directed graph with <strong>no cycles</strong>. Used for dependencies.</p>
+      <div class="diagram small">
+    [CS101]---->[CS201]---->[CS301]
+       \                     ^
+        \                   /
+         +->[MATH201]------+
+
+  No way to follow arrows and return
+  to where you started (no cycle!)
+      </div>
+      <h3>Tree (as a Graph)</h3>
+      <p>A connected, acyclic, undirected graph.</p>
+      <div class="diagram small">
+        [A]            Properties:
+       / \             - Connected
+      /   \            - Acyclic
+    [B]   [C]          - |E| = |V| - 1
+    / \                - Exactly one path
+  [D] [E]                between any two nodes
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 7: Graph ADT ==================== -->
+<div class="slide" id="slide-7">
+  <h2>Graph ADT (Abstract Data Type)</h2>
+  <p>A Graph ADT defines the <strong>operations</strong> we need, independent of representation.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Query Operations</h3>
+      <table style="width:100%;">
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td style="text-align:left;"><code>vertices()</code></td><td style="text-align:left;">Return all vertices</td></tr>
+        <tr><td style="text-align:left;"><code>edges()</code></td><td style="text-align:left;">Return all edges</td></tr>
+        <tr><td style="text-align:left;"><code>numVertices()</code></td><td style="text-align:left;">Return |V|</td></tr>
+        <tr><td style="text-align:left;"><code>numEdges()</code></td><td style="text-align:left;">Return |E|</td></tr>
+        <tr><td style="text-align:left;"><code>getEdge(u, v)</code></td><td style="text-align:left;">Return edge from u to v (or null)</td></tr>
+        <tr><td style="text-align:left;"><code>degree(v)</code></td><td style="text-align:left;">Number of edges incident to v</td></tr>
+        <tr><td style="text-align:left;"><code>adjacentVertices(v)</code></td><td style="text-align:left;">Return neighbors of v</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Update Operations</h3>
+      <table style="width:100%;">
+        <tr><th>Method</th><th>Description</th></tr>
+        <tr><td style="text-align:left;"><code>insertVertex(x)</code></td><td style="text-align:left;">Add a new vertex with element x</td></tr>
+        <tr><td style="text-align:left;"><code>insertEdge(u, v, x)</code></td><td style="text-align:left;">Add edge between u and v with element x</td></tr>
+        <tr><td style="text-align:left;"><code>removeVertex(v)</code></td><td style="text-align:left;">Remove vertex v and all its edges</td></tr>
+        <tr><td style="text-align:left;"><code>removeEdge(e)</code></td><td style="text-align:left;">Remove edge e</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>The ADT tells us <strong>what</strong> operations a graph supports. The <em>representation</em> (matrix, list, or edge list) determines <strong>how</strong> efficiently each operation runs.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 8: Adjacency Matrix ==================== -->
+<div class="slide" id="slide-8">
+  <h2>Representation 1: Adjacency Matrix</h2>
+  <p>A 2D array <code>A[V][V]</code> where <code>A[i][j] = 1</code> if there is an edge from vertex i to vertex j.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>The Graph</h3>
+      <div class="diagram">
+    [0]------[1]
+     |      / |
+     |    /   |
+     |  /     |
+    [2]------[3]
+
+  V = {0, 1, 2, 3}
+  E = {(0,1),(0,2),(1,2),(1,3),(2,3)}
+      </div>
+    </div>
+    <div>
+      <h3>Its Adjacency Matrix</h3>
+      <div class="diagram">
+       0  1  2  3
+    +--+--+--+--+
+  0 | 0  1  1  0 |
+    +--+--+--+--+
+  1 | 1  0  1  1 |
+    +--+--+--+--+
+  2 | 1  1  0  1 |
+    +--+--+--+--+
+  3 | 0  1  1  0 |
+    +--+--+--+--+
+
+  Symmetric for undirected graphs!
+  A[i][j] == A[j][i]
+      </div>
+    </div>
+  </div>
+  <div class="two-col mt">
+    <div class="key-idea">
+      <h3>Key Idea</h3>
+      <p><strong>Space: O(V<sup>2</sup>)</strong> regardless of how many edges exist. For a graph with 10,000 vertices, this matrix has 100,000,000 cells!</p>
+    </div>
+    <div class="warning">
+      <h3>For Weighted Graphs</h3>
+      <p>Store the <strong>weight</strong> instead of 1, and use <code>infinity</code> (or a sentinel) instead of 0 for non-edges.</p>
+    </div>
+  </div>
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 9: Adjacency Matrix Pros/Cons ==================== -->
+<div class="slide" id="slide-9">
+  <h2>Adjacency Matrix: Pros and Cons</h2>
+  <div class="two-col">
+    <div>
+      <h3 style="color:#34d399;">Advantages</h3>
+      <ul>
+        <li><strong>O(1) edge lookup</strong> &mdash; Just check <code>A[i][j]</code></li>
+        <li><strong>O(1) edge insert/remove</strong> &mdash; Just set <code>A[i][j]</code></li>
+        <li><strong>Simple to implement</strong> &mdash; Just a 2D array</li>
+        <li><strong>Good for dense graphs</strong> where |E| is close to V<sup>2</sup></li>
+      </ul>
+      <div class="diagram small mt">
+  Is there an edge from 2 to 3?
+
+       0  1  2  3
+    +--+--+--+--+
+  2 | 1  1  0  1 |  &lt;-- A[2][3] = 1
+    +--+--+--+--+      YES! O(1)
+      </div>
+    </div>
+    <div>
+      <h3 style="color:#f87171;">Disadvantages</h3>
+      <ul>
+        <li><strong>O(V<sup>2</sup>) space</strong> &mdash; Even if graph has very few edges</li>
+        <li><strong>O(V) to find neighbors</strong> &mdash; Must scan entire row</li>
+        <li><strong>O(V<sup>2</sup>) to add a vertex</strong> &mdash; Must resize entire matrix</li>
+        <li><strong>Wasteful for sparse graphs</strong> (most real-world graphs)</li>
+      </ul>
+      <div class="diagram small mt">
+  Sparse graph with V=1000, E=50:
+
+  Matrix: 1,000,000 cells allocated
+  Only 100 cells are "1" (edges)
+  Wasted: 99.99% of space!
+      </div>
+    </div>
+  </div>
+  <div class="warning mt">
+    <h3>When to Use Adjacency Matrix</h3>
+    <p>Use when the graph is <strong>dense</strong> (many edges), when you need <strong>constant-time edge lookup</strong>, or when V is small enough that O(V<sup>2</sup>) space is acceptable.</p>
+  </div>
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 10: Adjacency List ==================== -->
+<div class="slide" id="slide-10">
+  <h2>Representation 2: Adjacency List</h2>
+  <p>An array of lists. Each vertex stores a list of its <strong>neighbors</strong>.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>The Same Graph</h3>
+      <div class="diagram">
+    [0]------[1]
+     |      / |
+     |    /   |
+     |  /     |
+    [2]------[3]
+
+  V = {0, 1, 2, 3}
+  E = {(0,1),(0,2),(1,2),(1,3),(2,3)}
+      </div>
+    </div>
+    <div>
+      <h3>Its Adjacency List</h3>
+      <div class="diagram">
+  0: [1] -> [2] -> null
+  1: [0] -> [2] -> [3] -> null
+  2: [0] -> [1] -> [3] -> null
+  3: [1] -> [2] -> null
+
+  Each vertex keeps a linked list
+  of its neighbors.
+      </div>
+    </div>
+  </div>
+  <div class="two-col mt">
+    <div class="key-idea">
+      <h3>Key Idea</h3>
+      <p><strong>Space: O(V + E)</strong>. We store each edge exactly twice (once in each endpoint's list) for undirected graphs. Much better than O(V<sup>2</sup>) for sparse graphs!</p>
+    </div>
+    <div class="analogy">
+      <h3>Analogy: Contact Lists</h3>
+      <p>Each person (vertex) has their own phone contact list (linked list of neighbors). You only store contacts you actually have, not a slot for every person on Earth.</p>
+    </div>
+  </div>
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 11: Adjacency List Pros/Cons ==================== -->
+<div class="slide" id="slide-11">
+  <h2>Adjacency List: Pros and Cons</h2>
+  <div class="two-col">
+    <div>
+      <h3 style="color:#34d399;">Advantages</h3>
+      <ul>
+        <li><strong>O(V + E) space</strong> &mdash; Proportional to actual size</li>
+        <li><strong>O(1) to add an edge</strong> &mdash; Prepend to list</li>
+        <li><strong>O(degree(v)) to iterate neighbors</strong> &mdash; Just walk the list</li>
+        <li><strong>O(1) to add a vertex</strong> &mdash; Append to array</li>
+        <li><strong>Efficient for sparse graphs</strong></li>
+      </ul>
+      <div class="diagram small mt">
+  Neighbors of vertex 1:
+
+  1: [0] -> [2] -> [3] -> null
+      ^      ^      ^
+      |      |      |
+    Just walk the list: O(deg(1)) = O(3)
+      </div>
+    </div>
+    <div>
+      <h3 style="color:#f87171;">Disadvantages</h3>
+      <ul>
+        <li><strong>O(degree(v)) edge lookup</strong> &mdash; Must search the list</li>
+        <li><strong>O(degree(v)) edge removal</strong> &mdash; Must find it first</li>
+        <li><strong>Slightly more complex</strong> to implement</li>
+        <li><strong>No quick way</strong> to check if edge exists</li>
+      </ul>
+      <div class="diagram small mt">
+  Is there an edge from 2 to 3?
+
+  2: [0] -> [1] -> [3] -> null
+      ^       ^      ^
+     no      no    YES! Found it.
+     Had to scan 3 entries: O(deg(2))
+      </div>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>Most real-world graphs are <strong>sparse</strong> (|E| much less than V<sup>2</sup>), so adjacency lists are the <strong>default choice</strong> for graph representation in practice.</p>
+  </div>
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 12: Matrix vs List Comparison ==================== -->
+<div class="slide" id="slide-12">
+  <h2>Adjacency Matrix vs Adjacency List</h2>
+  <p>Side-by-side comparison for the same graph:</p>
+  <div class="diagram small" style="text-align:center;">
+    [0]------[1]          Matrix                    List
+     |      / |       0  1  2  3
+     |    /   |     +--+--+--+--+          0: [1] -> [2]
+     |  /     |   0 | 0  1  1  0 |        1: [0] -> [2] -> [3]
+    [2]------[3]  1 | 1  0  1  1 |        2: [0] -> [1] -> [3]
+                  2 | 1  1  0  1 |        3: [1] -> [2]
+                  3 | 0  1  1  0 |
+  </div>
+  <table style="width:100%; margin-top:16px;">
+    <tr>
+      <th>Operation</th>
+      <th>Adjacency Matrix</th>
+      <th>Adjacency List</th>
+    </tr>
+    <tr>
+      <td><strong>Space</strong></td>
+      <td>O(V<sup>2</sup>)</td>
+      <td>O(V + E)</td>
+    </tr>
+    <tr>
+      <td><strong>Check edge (u,v)</strong></td>
+      <td style="color:#34d399;">O(1)</td>
+      <td>O(min(deg(u), deg(v)))</td>
+    </tr>
+    <tr>
+      <td><strong>Add edge</strong></td>
+      <td style="color:#34d399;">O(1)</td>
+      <td style="color:#34d399;">O(1)</td>
+    </tr>
+    <tr>
+      <td><strong>Remove edge</strong></td>
+      <td style="color:#34d399;">O(1)</td>
+      <td>O(deg(u))</td>
+    </tr>
+    <tr class="highlight">
+      <td><strong>Iterate neighbors of v</strong></td>
+      <td>O(V)</td>
+      <td style="color:#34d399;">O(deg(v))</td>
+    </tr>
+    <tr>
+      <td><strong>Add vertex</strong></td>
+      <td>O(V<sup>2</sup>)</td>
+      <td style="color:#34d399;">O(1)</td>
+    </tr>
+    <tr class="highlight">
+      <td><strong>Best for</strong></td>
+      <td>Dense graphs</td>
+      <td>Sparse graphs</td>
+    </tr>
+  </table>
+  <div class="warning mt">
+    <h3>Rule of Thumb</h3>
+    <p>If |E| is close to V<sup>2</sup> &rarr; use <strong>matrix</strong>. If |E| is much less than V<sup>2</sup> &rarr; use <strong>list</strong>. Most real-world graphs are sparse, so adjacency list is the default.</p>
+  </div>
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 13: Edge List ==================== -->
+<div class="slide" id="slide-13">
+  <h2>Representation 3: Edge List</h2>
+  <div class="two-col">
+    <div>
+      <p>The simplest representation: just store a <strong>list of all edges</strong> as (u, v) pairs.</p>
+      <div class="diagram">
+    [0]------[1]
+     |      / |
+     |    /   |
+     |  /     |
+    [2]------[3]
+
+  Edge List:
+  +-------+-------+
+  |   u   |   v   |
+  +-------+-------+
+  |   0   |   1   |
+  |   0   |   2   |
+  |   1   |   2   |
+  |   1   |   3   |
+  |   2   |   3   |
+  +-------+-------+
+      </div>
+    </div>
+    <div>
+      <h3>Complexity</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Cost</th></tr>
+        <tr><td><strong>Space</strong></td><td>O(E)</td></tr>
+        <tr><td><strong>Check edge (u,v)</strong></td><td>O(E) &mdash; must scan list</td></tr>
+        <tr><td><strong>Add edge</strong></td><td>O(1) &mdash; append to list</td></tr>
+        <tr><td><strong>Remove edge</strong></td><td>O(E) &mdash; must find it</td></tr>
+        <tr><td><strong>Iterate neighbors</strong></td><td>O(E) &mdash; must scan all</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>When to Use Edge Lists</h3>
+        <p>When you need to <strong>process all edges</strong> (e.g., Kruskal's MST algorithm), or when the graph is very simple and you want minimal overhead.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Edge lists are <strong>slow for lookups</strong>. You cannot quickly check if a specific edge exists or find a vertex's neighbors. Use adjacency list or matrix for general-purpose graphs.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 14: Graph Properties ==================== -->
+<div class="slide" id="slide-14">
+  <h2>Graph Properties &amp; Formulas</h2>
+  <div class="two-col">
+    <div>
+      <h3>Handshaking Lemma</h3>
+      <div class="diagram">
+    [A]------[B]       deg(A) = 2
+     |      / |        deg(B) = 3
+     |    /   |        deg(C) = 2
+     |  /     |        deg(D) = 3
+    [C]------[D]       deg(E) = 2
+     |                 --------
+     |                 Sum    = 12
+    [E]
+                       |E| = 6
+  Sum of degrees = 2|E|    edges
+      12         = 2(6) = 12  ✓
+      </div>
+      <div class="key-idea">
+        <h3>Handshaking Lemma</h3>
+        <p><strong>Sum of all vertex degrees = 2 &times; |E|</strong><br>
+        Each edge contributes 1 to the degree of each of its two endpoints, so it is counted twice in the sum.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Maximum Number of Edges</h3>
+      <div class="diagram">
+  UNDIRECTED graph with V vertices:
+
+    Max |E| = V(V-1) / 2
+
+    V=4: Max edges = 4(3)/2 = 6
+         (complete graph K4)
+
+  DIRECTED graph with V vertices:
+
+    Max |E| = V(V-1)
+
+    V=4: Max edges = 4(3) = 12
+         (each undirected edge becomes
+          two directed edges)
+      </div>
+      <h3 class="mt">Connected Components</h3>
+      <div class="diagram small">
+  [A]--[B]    [D]--[E]    [G]
+       |           |
+  [C]--+      [F]--+
+
+  3 components:
+    {A, B, C}  {D, E, F}  {G}
+      </div>
+      <p>A <strong>connected component</strong> is a maximal set of vertices where every pair is connected by a path.</p>
+    </div>
+  </div>
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 15: Paths and Connectivity ==================== -->
+<div class="slide" id="slide-15">
+  <h2>Paths and Connectivity</h2>
+  <div class="two-col">
+    <div>
+      <h3>Types of Paths</h3>
+      <div class="diagram">
+  <strong style="color:#93c5fd;">Path:</strong> A sequence of vertices where
+  each consecutive pair is connected
+  by an edge.
+
+    [A]--[B]--[C]--[D]
+    Path: A, B, C, D  (length = 3)
+
+  <strong style="color:#93c5fd;">Simple Path:</strong> No vertex is repeated.
+
+    A -> B -> C -> D    ✓ Simple
+    A -> B -> C -> B    ✗ Not simple
+                         (B repeated)
+
+  <strong style="color:#93c5fd;">Cycle:</strong> A path that returns to start.
+
+    [A]--[B]
+     \   /      Cycle: A, B, C, A
+      [C]       (length = 3)
+      </div>
+    </div>
+    <div>
+      <h3>Connectivity (Undirected)</h3>
+      <div class="diagram small">
+  <strong style="color:#34d399;">Connected graph:</strong>
+  Every vertex reachable from every other.
+
+    [A]--[B]--[C]
+     \        /      ✓ Connected
+      +--[D]-+
+
+  <strong style="color:#f87171;">Disconnected graph:</strong>
+
+    [A]--[B]    [C]--[D]
+                         ✗ No path A to C
+      </div>
+      <h3 class="mt">Strong Connectivity (Directed)</h3>
+      <div class="diagram small">
+  <strong style="color:#34d399;">Strongly connected:</strong>
+  Can reach any vertex from any other
+  following directed edges.
+
+    [A]-->[B]
+     ^     |     ✓ Strongly connected
+     |     v     (A->B->C->A all possible)
+    [C]<---+
+
+  <strong style="color:#f87171;">Not strongly connected:</strong>
+
+    [A]-->[B]-->[C]
+     No way from C back to A!
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 16: App - Social Networks ==================== -->
+<div class="slide" id="slide-16">
+  <h2>Application: Social Networks</h2>
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+     [Alice]---[Bob]---[Carol]
+        |     / |  \       \
+        |   /   |   \      [Dave]
+        | /     |    \       |
+     [Eve]   [Frank] [Grace]-+
+
+  Vertices = People
+  Edges    = Friendships (undirected)
+      </div>
+      <div class="key-idea">
+        <h3>Graph Metrics in Social Networks</h3>
+        <ul>
+          <li><strong>Degree</strong> = number of friends (popularity)</li>
+          <li><strong>Shortest path length</strong> = degrees of separation</li>
+          <li><strong>Connected component</strong> = a social circle</li>
+          <li><strong>Clustering coefficient</strong> = how interconnected your friends are</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <h3>Six Degrees of Separation</h3>
+      <div class="diagram small">
+  You -> Friend -> Friend -> ... -> Anyone
+
+  On Facebook (avg):
+    ~3.5 degrees of separation
+
+  On LinkedIn:
+    Connections up to 3rd degree shown
+
+  Shortest path algorithms can find
+  the minimum degrees of separation
+  between any two people!
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Directed Social Network</h3>
+        <p><strong>Twitter/Instagram</strong>: You can follow someone without them following you back. This is a <em>directed graph</em>. In-degree = followers. Out-degree = following.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 17: App - The Internet ==================== -->
+<div class="slide" id="slide-17">
+  <h2>Application: The Internet</h2>
+  <div class="two-col">
+    <div>
+      <h3>Network Topology</h3>
+      <div class="diagram">
+         [Router A]
+        /     |     \
+       /      |      \
+  [Host1] [Host2]  [Router B]
+                    /    \
+                   /      \
+             [Host3]  [Router C]
+                        |
+                      [Host4]
+
+  Vertices = Routers / Hosts
+  Edges    = Network links
+  Weights  = Bandwidth or latency
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Internet routing is fundamentally a <strong>shortest-path problem</strong> on a weighted graph. Protocols like OSPF use Dijkstra's algorithm!</p>
+      </div>
+    </div>
+    <div>
+      <h3>The World Wide Web</h3>
+      <div class="diagram small">
+    [Page A]---->[Page B]
+       |            |
+       v            v
+    [Page C]<---[Page D]
+       |
+       v
+    [Page E]
+
+  Vertices = Web pages
+  Edges    = Hyperlinks (directed!)
+
+  Google's PageRank algorithm treats
+  the web as a directed graph.
+  More incoming links = more important.
+      </div>
+      <div class="analogy">
+        <h3>Two Different Graphs</h3>
+        <p><strong>Physical Internet</strong>: undirected, weighted (bandwidth). <strong>World Wide Web</strong>: directed, unweighted (hyperlinks). Same real-world system, two different graph models!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 18: App - Maps and Navigation ==================== -->
+<div class="slide" id="slide-18">
+  <h2>Application: Maps and Navigation</h2>
+  <div class="two-col">
+    <div>
+      <h3>Road Network as a Graph</h3>
+      <div class="diagram">
+             5 mi
+    [Home]--------[Store]
+      |  \           |
+  3mi |   \ 8mi     | 2mi
+      |    \         |
+   [Park]  [School]-[Library]
+      |        4mi       |
+  6mi |                  | 3mi
+      |                  |
+    [Gym]------------[Cafe]
+            7mi
+
+  Vertices = Locations
+  Edges    = Roads
+  Weights  = Distances (miles)
+      </div>
+    </div>
+    <div>
+      <h3>GPS Shortest Path</h3>
+      <div class="diagram small">
+  Home to Library:
+
+  Route 1: Home -> Store -> Library
+            5    +   2   =  7 mi
+
+  Route 2: Home -> School -> Library
+            8    +    4   = 12 mi
+
+  Route 3: Home -> Park -> Gym -> Cafe
+            -> Library
+            3 + 6 + 7 + 3 = 19 mi
+
+  Winner: Route 1 (7 mi)!
+
+  Dijkstra's algorithm finds this
+  optimal path automatically.
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Every time you use Google Maps or GPS navigation, you are running a <strong>shortest-path algorithm</strong> on a massive weighted graph with millions of vertices.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 19: Preview - Graph Algorithms ==================== -->
+<div class="slide" id="slide-19">
+  <h2>Preview: Graph Algorithms</h2>
+  <p>Now that you understand graph structure, here is what is coming next:</p>
+  <div class="two-col mt">
+    <div>
+      <h3>BFS (Breadth-First Search)</h3>
+      <div class="diagram small">
+  Explore level by level (like ripples)
+
+  Level 0:     [A]
+  Level 1:   [B] [C]
+  Level 2: [D] [E] [F]
+
+  Uses a QUEUE. Finds shortest path
+  in unweighted graphs.
+      </div>
+      <h3 class="mt">DFS (Depth-First Search)</h3>
+      <div class="diagram small">
+  Explore as deep as possible first
+
+  [A] -> [B] -> [D] (dead end!)
+                 backtrack...
+         [B] -> [E] -> [F]
+
+  Uses a STACK (or recursion).
+  Detects cycles, topological sort.
+      </div>
+    </div>
+    <div>
+      <h3>Dijkstra's Shortest Path</h3>
+      <div class="diagram small">
+  Find shortest weighted path from
+  a source to all other vertices.
+
+       2        3
+  [S]---->[A]---->[T]
+   |               ^
+   +--------->-----+
+        10
+
+  Shortest S to T:
+    S->A->T = 2+3 = 5  (not 10!)
+      </div>
+      <h3 class="mt">Topological Sort</h3>
+      <div class="diagram small">
+  Order vertices so all edges point
+  "forward." Only works on DAGs!
+
+  [CS101]->[CS201]->[CS301]
+     \                ^
+      +->[MATH201]---+
+
+  Valid order:
+    CS101, MATH201, CS201, CS301
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 20: Summary & Cheat Sheet ==================== -->
+<div class="slide" id="slide-20">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <div class="two-col">
+    <div>
+      <h3>Core Concepts</h3>
+      <div class="diagram small">
+  G = (V, E)
+  |V| = number of vertices
+  |E| = number of edges
+
+  FORMULAS:
+  ─────────────────────────────────
+  Handshaking:  Σ deg(v) = 2|E|
+  Max edges (undirected): V(V-1)/2
+  Max edges (directed):   V(V-1)
+  Tree edges:  |E| = |V| - 1
+  ─────────────────────────────────
+
+  TYPES:
+  ─────────────────────────────────
+  Directed vs Undirected
+  Weighted vs Unweighted
+  Dense vs Sparse
+  Connected vs Disconnected
+  Cyclic vs Acyclic
+  ─────────────────────────────────
+      </div>
+    </div>
+    <div>
+      <h3>Representation Cheat Sheet</h3>
+      <table style="width:100%; font-size:0.9em;">
+        <tr>
+          <th></th>
+          <th>Matrix</th>
+          <th>Adj List</th>
+          <th>Edge List</th>
+        </tr>
+        <tr>
+          <td><strong>Space</strong></td>
+          <td>O(V<sup>2</sup>)</td>
+          <td style="color:#34d399;">O(V+E)</td>
+          <td style="color:#34d399;">O(E)</td>
+        </tr>
+        <tr>
+          <td><strong>Check edge</strong></td>
+          <td style="color:#34d399;">O(1)</td>
+          <td>O(deg)</td>
+          <td>O(E)</td>
+        </tr>
+        <tr>
+          <td><strong>Add edge</strong></td>
+          <td style="color:#34d399;">O(1)</td>
+          <td style="color:#34d399;">O(1)</td>
+          <td style="color:#34d399;">O(1)</td>
+        </tr>
+        <tr>
+          <td><strong>Neighbors</strong></td>
+          <td>O(V)</td>
+          <td style="color:#34d399;">O(deg)</td>
+          <td>O(E)</td>
+        </tr>
+        <tr class="highlight">
+          <td><strong>Best for</strong></td>
+          <td>Dense</td>
+          <td>Sparse</td>
+          <td>Edge-proc</td>
+        </tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Takeaway</h3>
+        <p>Graphs model <strong>connections</strong>. Choose your representation based on graph density and which operations you need most. <strong>Adjacency list</strong> is the go-to default for most real-world problems.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Coming Up Next</h3>
+        <p>BFS, DFS, shortest paths, and topological sort &mdash; algorithms that unlock the true power of graphs.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="navigate(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="navigate(1)">Next &#9654;</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const progress = document.getElementById('progress');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function showSlide(index) {
+  slides.forEach(s => s.classList.remove('active'));
+  slides[index].classList.add('active');
+  slides[index].classList.add('fade-in');
+  progress.style.width = ((index + 1) / total * 100) + '%';
+  prevBtn.disabled = index === 0;
+  nextBtn.disabled = index === total - 1;
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next >= 0 && next < total) {
+    current = next;
+    showSlide(current);
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); navigate(1); }
+  if (e.key === 'ArrowLeft') { e.preventDefault(); navigate(-1); }
+  if (e.key === 'Home') { e.preventDefault(); current = 0; showSlide(current); }
+  if (e.key === 'End') { e.preventDefault(); current = total - 1; showSlide(current); }
+});
+
+showSlide(0);
+</script>
+</body>
+</html>

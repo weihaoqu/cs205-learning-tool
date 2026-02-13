@@ -1,0 +1,1187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>CS205 — Recursion Explained</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+.step { display: none; }
+.step.visible { display: block; }
+.step-hint { color: #64748b; font-size: 0.85em; margin-top: 12px; font-style: italic; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide active" id="slide-1">
+  <div class="center" style="width:100%">
+    <h1 style="font-size:3.4em; margin-bottom:10px;">Recursion</h1>
+    <p class="subtitle" style="font-size:1.5em; margin-bottom:40px;">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:0.95em;">
+  "To understand recursion,
+   you must first understand recursion."
+
+       ┌──────────────────────┐
+       │  recursion (n):      │
+       │    if n == 0:        │
+       │      return "got it" │
+       │    else:             │
+       │      return          │
+       │       recursion(n-1) │  &lt;── calls itself!
+       └──────────────────────┘
+    </div>
+    <p style="color:#64748b; margin-top:30px; font-size:1em;">Use arrow keys or buttons to navigate &middot; Press <code>S</code> to reveal steps</p>
+  </div>
+  <div class="slide-number">1 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 2: WHAT IS RECURSION ==================== -->
+<div class="slide" id="slide-2">
+  <h2>What Is Recursion?</h2>
+  <p>A <strong>recursive function</strong> is a function that calls <em>itself</em> to solve smaller instances of the same problem.</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Russian Nesting Dolls</h3>
+        <p>Each doll contains a smaller doll inside it. You keep opening dolls until you reach the <strong>smallest one</strong> (the base case) -- then you stop.</p>
+      </div>
+      <div class="diagram" style="font-size:0.9em;">
+   ┌──────────────────────┐
+   │  ┌────────────────┐  │
+   │  │  ┌──────────┐  │  │
+   │  │  │  ┌────┐  │  │  │
+   │  │  │  │ ** │  │  │  │  &lt;-- base case
+   │  │  │  └────┘  │  │  │      (smallest)
+   │  │  └──────────┘  │  │
+   │  └────────────────┘  │
+   └──────────────────────┘
+      </div>
+    </div>
+    <div>
+      <h3>Real-World Examples</h3>
+      <ul>
+        <li>A folder that contains subfolders (which contain subfolders...)</li>
+        <li>A mirror reflecting another mirror</li>
+        <li>A story within a story within a story</li>
+        <li>Looking up a word in the dictionary, and the definition uses another word you need to look up</li>
+      </ul>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Recursion works because each call solves a <strong>smaller</strong> version of the same problem, until the problem is so small we know the answer directly.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 3: TWO ESSENTIAL PARTS ==================== -->
+<div class="slide" id="slide-3">
+  <h2>The Two Essential Parts</h2>
+  <p>Every correct recursive function needs <strong>exactly two things</strong>:</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>1. Base Case (Termination)</h3>
+        <p>The condition under which the function does <strong>NOT</strong> call itself. This is the "smallest doll" -- the answer we know directly.</p>
+      </div>
+      <div class="key-idea">
+        <h3>2. Recursive Case (Progress)</h3>
+        <p>The function calls itself with a <strong>smaller or simpler</strong> input, making progress toward the base case.</p>
+      </div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>If you forget the base case, or if the recursive case doesn't make progress, you get <strong>infinite recursion</strong> and a <code>StackOverflowError</code>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Flowchart</h3>
+      <div class="diagram" style="font-size:0.9em;">
+          ┌──────────────┐
+          │  function(n)  │
+          └──────┬───────┘
+                 │
+          ┌──────▼───────┐
+          │ Is it the     │
+          │ base case?    │
+          └──┬────────┬──┘
+         YES │        │ NO
+             │        │
+     ┌───────▼──┐  ┌──▼──────────────┐
+     │ Return   │  │ Do some work     │
+     │ known    │  │ Call function(   │
+     │ answer   │  │   smaller input) │
+     └──────────┘  └──┬──────────────┘
+                      │
+                      │ (repeats until
+                      │  base case hit)
+                      ▼
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 4: FACTORIAL ==================== -->
+<div class="slide" id="slide-4">
+  <h2>Example: Factorial</h2>
+  <p><code>n! = n * (n-1) * (n-2) * ... * 1</code> &nbsp; and &nbsp; <code>0! = 1</code></p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Recursive Definition</h3>
+      <div class="diagram">
+  factorial(n):
+    if n == 0:          // base case
+      return 1
+    else:               // recursive case
+      return n * factorial(n - 1)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p><code>factorial(4)</code> can't finish until <code>factorial(3)</code> finishes, which can't finish until <code>factorial(2)</code> finishes, and so on down to <code>factorial(0)</code>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Call Stack: factorial(4)</h3>
+      <div class="diagram small">
+  EXPANDING (calls going down):
+
+  factorial(4)
+    = 4 * factorial(3)
+           = 3 * factorial(2)
+                  = 2 * factorial(1)
+                         = 1 * factorial(0)
+                                = 1  &lt;-- base case!
+
+  COLLAPSING (returns coming back up):
+
+  factorial(0) = 1
+  factorial(1) = 1 * 1  = 1
+  factorial(2) = 2 * 1  = 2
+  factorial(3) = 3 * 2  = 6
+  factorial(4) = 4 * 6  = 24  &lt;-- answer!
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 5: THE CALL STACK ==================== -->
+<div class="slide" id="slide-5">
+  <h2>The Call Stack</h2>
+  <p>The <strong>call stack</strong> is how the computer keeps track of which function called which, what each function's local variables are, and where to return to.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <ul>
+        <li>Each function call creates a <strong>stack frame</strong></li>
+        <li>A frame holds: parameters, local variables, return address</li>
+        <li>Frames are <strong>pushed</strong> on call, <strong>popped</strong> on return</li>
+        <li>The stack grows downward in memory (conceptually upward in diagrams)</li>
+      </ul>
+
+      <div class="warning">
+        <h3>Stack Overflow</h3>
+        <p>The stack has a <strong>finite size</strong> (typically a few MB). Too many recursive calls without returning will exhaust it, causing a <code>StackOverflowError</code>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Stack during factorial(4)</h3>
+      <div class="diagram small">
+  At deepest point of recursion:
+
+  ┌───────────────────────────┐  &lt;-- TOP
+  │ Frame: factorial(0)       │
+  │   n = 0                   │
+  │   return 1                │
+  ├───────────────────────────┤
+  │ Frame: factorial(1)       │
+  │   n = 1                   │
+  │   waiting for factorial(0)│
+  ├───────────────────────────┤
+  │ Frame: factorial(2)       │
+  │   n = 2                   │
+  │   waiting for factorial(1)│
+  ├───────────────────────────┤
+  │ Frame: factorial(3)       │
+  │   n = 3                   │
+  │   waiting for factorial(2)│
+  ├───────────────────────────┤
+  │ Frame: factorial(4)       │
+  │   n = 4                   │
+  │   waiting for factorial(3)│
+  ├───────────────────────────┤
+  │ Frame: main()             │
+  │   called factorial(4)     │
+  └───────────────────────────┘  &lt;-- BOTTOM
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 6: TRACING RECURSION ==================== -->
+<div class="slide" id="slide-6">
+  <h2>Tracing Recursion Step by Step</h2>
+  <p>Let's trace <code>factorial(4)</code> showing the stack at <strong>every step</strong>.</p>
+  <p class="step-hint">Press <strong>S</strong> to reveal each step.</p>
+
+  <div class="diagram small" style="margin-top:16px;">
+<span class="step visible" data-slide="6" data-step="0">Step 1: main calls factorial(4)         Step 2: factorial(4) calls factorial(3)
+
+  ┌──────────────────┐                    ┌──────────────────┐
+  │ factorial(4)     │                    │ factorial(3)     │  &lt;-- new frame
+  │   n=4            │                    ├──────────────────┤
+  ├──────────────────┤                    │ factorial(4)     │
+  │ main()           │                    │   n=4, waiting   │
+  └──────────────────┘                    ├──────────────────┤
+                                          │ main()           │
+                                          └──────────────────┘</span>
+<span class="step" data-slide="6" data-step="1">
+Step 3: factorial(3) calls factorial(2)   Step 4: factorial(2) calls factorial(1)
+
+  ┌──────────────────┐                    ┌──────────────────┐
+  │ factorial(2)     │                    │ factorial(1)     │
+  ├──────────────────┤                    ├──────────────────┤
+  │ factorial(3)     │                    │ factorial(2)     │
+  │   n=3, waiting   │                    │   n=2, waiting   │
+  ├──────────────────┤                    ├──────────────────┤
+  │ factorial(4)     │                    │ factorial(3)     │
+  │   n=4, waiting   │                    │   n=3, waiting   │
+  ├──────────────────┤                    ├──────────────────┤
+  │ main()           │                    │ factorial(4)     │
+  └──────────────────┘                    │   n=4, waiting   │
+                                          ├──────────────────┤
+                                          │ main()           │
+                                          └──────────────────┘</span>
+<span class="step" data-slide="6" data-step="2">
+Step 5: factorial(1) calls factorial(0)   Step 6: BASE CASE! factorial(0) returns 1
+
+  ┌──────────────────┐                    ┌──────────────────┐
+  │ factorial(0)     │                    │ factorial(0) = 1 │ ---> POP!
+  ├──────────────────┤                    ├──────────────────┤
+  │ factorial(1)     │                    │ factorial(1)     │
+  │   n=1, waiting   │                    │   gets 1 back    │
+  ├──────────────────┤                    ├──────────────────┤
+  │ factorial(2)     │                    │ ...              │
+  │   n=2, waiting   │                    └──────────────────┘
+  ├──────────────────┤
+  │ factorial(3)     │                   Then returns unwind:
+  │   n=3, waiting   │                    f(1)=1*1=1, f(2)=2*1=2
+  ├──────────────────┤                    f(3)=3*2=6, f(4)=4*6=24
+  │ factorial(4)     │
+  │   n=4, waiting   │
+  ├──────────────────┤
+  │ main()           │  &lt;-- 6 frames!
+  └──────────────────┘</span>
+  </div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 7: FIBONACCI ==================== -->
+<div class="slide" id="slide-7">
+  <h2>Example: Fibonacci</h2>
+  <p><code>fib(0)=0, fib(1)=1, fib(n) = fib(n-1) + fib(n-2)</code> for n &ge; 2</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Code</h3>
+      <div class="diagram">
+  fib(n):
+    if n == 0: return 0   // base
+    if n == 1: return 1   // base
+    return fib(n-1) + fib(n-2)
+      </div>
+
+      <h3>Sequence</h3>
+      <table>
+        <tr><th>n</th><th>0</th><th>1</th><th>2</th><th>3</th><th>4</th><th>5</th><th>6</th><th>7</th></tr>
+        <tr><td>fib(n)</td><td>0</td><td>1</td><td>1</td><td>2</td><td>3</td><td>5</td><td>8</td><td>13</td></tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Unlike factorial (one recursive call), Fibonacci makes <strong>two</strong> recursive calls per invocation. This creates a <strong>binary tree</strong> of calls.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Recursion Tree for fib(5)</h3>
+      <div class="diagram small">
+                       fib(5)
+                      /      \
+                 fib(4)       fib(3)
+                /     \       /     \
+           fib(3)  fib(2)  fib(2)  fib(1)
+           /   \    / \     / \      |
+       fib(2) fib(1) f(1) f(0) f(1) f(0) 1
+        / \     |     |    |    |    |
+     f(1) f(0)  1     1    0    1    0
+       |    |
+       1    0
+
+  Total calls: 15 (for just fib(5)!)
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 8: WHY FIBONACCI IS SLOW ==================== -->
+<div class="slide" id="slide-8">
+  <h2>Why Naive Fibonacci Is Slow</h2>
+  <p>The recursion tree has <strong>O(2<sup>n</sup>)</strong> nodes because we recompute the same values over and over.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Repeated Subproblems</h3>
+      <div class="diagram small">
+  In fib(5), look how many times
+  each value is computed:
+
+  fib(5): 1 time
+  fib(4): 1 time
+  fib(3): 2 times   &lt;-- waste!
+  fib(2): 3 times   &lt;-- waste!
+  fib(1): 5 times   &lt;-- waste!
+  fib(0): 3 times   &lt;-- waste!
+
+  For fib(40):
+    ~331 million calls!
+    But only 41 unique subproblems.
+      </div>
+
+      <div class="warning">
+        <h3>Exponential Growth</h3>
+        <p><code>fib(50)</code> would take <strong>minutes</strong>. <code>fib(100)</code> would take longer than the age of the universe.</p>
+      </div>
+    </div>
+    <div>
+      <h3>The Fix: Memoization</h3>
+      <div class="diagram">
+  fib_memo(n, memo={}):
+    if n in memo:
+      return memo[n]     // cached!
+    if n == 0: return 0
+    if n == 1: return 1
+    memo[n] = fib_memo(n-1, memo)
+             + fib_memo(n-2, memo)
+    return memo[n]
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Store results of subproblems so each is computed <strong>only once</strong>. This drops the time from O(2<sup>n</sup>) to <strong>O(n)</strong>. This technique is the foundation of <strong>dynamic programming</strong>.</p>
+      </div>
+
+      <table class="mt">
+        <tr><th>Approach</th><th>Time</th><th>Space</th></tr>
+        <tr><td>Naive recursion</td><td>O(2<sup>n</sup>)</td><td>O(n) stack</td></tr>
+        <tr class="highlight"><td>Memoized</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr><td>Iterative</td><td>O(n)</td><td>O(1)</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="slide-number">8 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 9: SUM OF ARRAY ==================== -->
+<div class="slide" id="slide-9">
+  <h2>Example: Sum of an Array</h2>
+  <p>Compute the sum of an array recursively: peel off one element at a time.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Code</h3>
+      <div class="diagram">
+  sum(arr, n):
+    // n = number of elements
+    if n == 0:           // base case
+      return 0
+    return arr[n-1] + sum(arr, n-1)
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>Imagine a stack of bills. To count the total: take the top bill, add its value to the total of the remaining stack. If the stack is empty, the total is $0.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Trace: sum([3, 7, 2, 5], 4)</h3>
+      <div class="diagram small">
+  sum([3,7,2,5], 4)
+    = 5 + sum([3,7,2,5], 3)
+           = 2 + sum([3,7,2,5], 2)
+                  = 7 + sum([3,7,2,5], 1)
+                         = 3 + sum([3,7,2,5], 0)
+                                = 0  &lt;-- base case
+
+  Unwinding:
+    sum(arr, 0) = 0
+    sum(arr, 1) = 3 + 0  = 3
+    sum(arr, 2) = 7 + 3  = 10
+    sum(arr, 3) = 2 + 10 = 12
+    sum(arr, 4) = 5 + 12 = 17  &lt;-- answer!
+
+  Call stack at deepest point:
+  ┌────────────────────┐
+  │ sum(arr, 0)  n=0   │
+  ├────────────────────┤
+  │ sum(arr, 1)  n=1   │
+  ├────────────────────┤
+  │ sum(arr, 2)  n=2   │
+  ├────────────────────┤
+  │ sum(arr, 3)  n=3   │
+  ├────────────────────┤
+  │ sum(arr, 4)  n=4   │
+  └────────────────────┘
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 10: BINARY SEARCH ==================== -->
+<div class="slide" id="slide-10">
+  <h2>Example: Binary Search (Recursive)</h2>
+  <p>Search a <strong>sorted</strong> array by repeatedly halving the search space. Classic <strong>divide and conquer</strong>.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Code</h3>
+      <div class="diagram" style="font-size:0.9em;">
+  binarySearch(arr, target, lo, hi):
+    if lo > hi:              // base: not found
+      return -1
+    mid = (lo + hi) / 2
+    if arr[mid] == target:   // base: found!
+      return mid
+    if target &lt; arr[mid]:
+      return binarySearch(arr, target,
+                          lo, mid-1)
+    else:
+      return binarySearch(arr, target,
+                          mid+1, hi)
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Each recursive call eliminates <strong>half</strong> the remaining elements. This gives us <strong>O(log n)</strong> time -- far better than linear search's O(n).</p>
+      </div>
+    </div>
+    <div>
+      <h3>Trace: search for 7</h3>
+      <div class="diagram small">
+  arr = [1, 3, 5, 7, 9, 11, 13]
+  index: 0  1  2  3  4   5   6
+
+  Call 1: lo=0, hi=6, mid=3
+  [1, 3, 5, <strong>7</strong>, 9, 11, 13]
+             ^
+        arr[3]=7 == target? YES! Found!
+
+  Another example: search for 11
+
+  Call 1: lo=0, hi=6, mid=3
+  [ 1  3  5  7  9  11  13]
+    ~~~~~~~~~~^~~~~~~~~~~
+  11 > 7, so search right half
+
+  Call 2: lo=4, hi=6, mid=5
+              [ 9  11  13]
+                ~~~~^~~~~
+  arr[5]=11 == target? YES! Found!
+
+  Search space halving:
+  ┌─────────────────────────┐  n elements
+  └────────────┐            │
+               ▼            │
+         ┌───────────┐      │  n/2
+         └─────┐     │
+               ▼     │        n/4
+            ┌─────┐  │
+            └──┐  │           n/8 ... until 1
+               ▼
+           O(log n) calls total
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 11: POWER FUNCTION ==================== -->
+<div class="slide" id="slide-11">
+  <h2>Example: Power Function</h2>
+  <p>Compute x<sup>n</sup> recursively. Two approaches with very different performance.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Naive: O(n)</h3>
+      <div class="diagram">
+  power(x, n):
+    if n == 0: return 1
+    return x * power(x, n-1)
+      </div>
+      <div class="diagram small">
+  power(2, 8)
+    = 2 * power(2, 7)
+       = 2 * power(2, 6)
+          = 2 * power(2, 5)
+             ...
+  8 recursive calls total
+      </div>
+
+      <p>Each call reduces n by 1, so we make <strong>n</strong> calls.</p>
+    </div>
+    <div>
+      <h3>Fast: O(log n)</h3>
+      <div class="diagram">
+  fastPower(x, n):
+    if n == 0: return 1
+    half = fastPower(x, n / 2)
+    if n is even:
+      return half * half
+    else:
+      return x * half * half
+      </div>
+      <div class="diagram small">
+  fastPower(2, 8)
+    half = fastPower(2, 4)
+      half = fastPower(2, 2)
+        half = fastPower(2, 1)
+          half = fastPower(2, 0) = 1
+        return 2 * 1 * 1 = 2
+      return 2 * 2 = 4
+    return 4 * 4 = 16
+  return 16 * 16 = 256
+
+  Only 4 calls (log2(8) + 1)!
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>By squaring the half-result, we <strong>halve</strong> the exponent each time instead of subtracting 1. This is <strong>exponentiation by squaring</strong>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 12: LINEAR VS BINARY RECURSION ==================== -->
+<div class="slide" id="slide-12">
+  <h2>Linear vs Binary/Multiple Recursion</h2>
+  <p>Recursive functions are classified by <strong>how many</strong> recursive calls they make.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Linear Recursion (1 call)</h3>
+      <div class="diagram small">
+  Shape: a chain
+
+  f(n) ──▶ f(n-1) ──▶ f(n-2) ──▶ ... ──▶ f(0)
+
+  Examples:
+    - factorial(n)
+    - sum(arr, n)
+    - binary search
+
+  Depth: O(n) or O(log n)
+  Total calls: O(n) or O(log n)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Linear recursion creates a <strong>chain</strong>. Stack depth equals the number of calls. Easy to convert to iteration.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Binary/Multiple Recursion (2+ calls)</h3>
+      <div class="diagram small">
+  Shape: a tree
+
+          f(n)
+         /    \
+      f(n-1)  f(n-2)
+      /   \    /   \
+    ...  ...  ...  ...
+
+  Examples:
+    - fibonacci(n)
+    - merge sort
+    - Towers of Hanoi
+
+  Depth: O(n) or O(log n)
+  Total calls: up to O(2^n) !
+      </div>
+
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>Binary recursion can be <strong>exponential</strong> in total calls even though the stack depth is only O(n). The <em>tree</em> can have far more nodes than its height.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 13: TAIL RECURSION ==================== -->
+<div class="slide" id="slide-13">
+  <h2>Tail Recursion</h2>
+  <p>A recursive call is a <strong>tail call</strong> if it is the <strong>very last operation</strong> the function performs -- nothing happens after the call returns.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>NOT Tail Recursive</h3>
+      <div class="diagram">
+  factorial(n):
+    if n == 0: return 1
+    return n * factorial(n-1)
+           ^
+           |
+  Multiplication happens AFTER
+  the recursive call returns.
+  Must keep frame alive to do
+  the multiply.
+      </div>
+
+      <h3>Tail Recursive Version</h3>
+      <div class="diagram">
+  factorial(n, acc=1):
+    if n == 0: return acc
+    return factorial(n-1, n*acc)
+           ^
+           |
+  Nothing happens after this call.
+  The recursive call IS the return.
+  The frame can be reused!
+      </div>
+    </div>
+    <div>
+      <h3>Trace Comparison</h3>
+      <div class="diagram small">
+  NON-TAIL: factorial(4)
+    Stack grows to depth 5:
+    4 * (3 * (2 * (1 * 1)))
+    Must unwind all frames.
+
+  TAIL: factorial(4, 1)
+    factorial(4, 1)
+    factorial(3, 4)     // acc = 4*1
+    factorial(2, 12)    // acc = 3*4
+    factorial(1, 24)    // acc = 2*12
+    factorial(0, 24)    // acc = 1*24
+    return 24
+
+  With tail-call optimization (TCO):
+    Only 1 stack frame reused!
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Tail recursion carries the result in an <strong>accumulator</strong> parameter. The compiler can optimize this into a simple <strong>loop</strong> -- same speed, O(1) stack space.</p>
+      </div>
+
+      <div class="warning">
+        <h3>Note</h3>
+        <p>Java and Python do <strong>not</strong> optimize tail calls. Functional languages (Haskell, Scheme, Scala) typically do.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 14: RECURSION VS ITERATION ==================== -->
+<div class="slide" id="slide-14">
+  <h2>Recursion vs Iteration</h2>
+  <p>Any recursive algorithm can be converted to iteration (and vice versa). When should you use which?</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Side by Side: Factorial</h3>
+      <div class="diagram" style="font-size:0.9em;">
+  RECURSIVE:              ITERATIVE:
+
+  factorial(n):           factorial(n):
+    if n == 0:              result = 1
+      return 1              for i in 1..n:
+    return n *                result *= i
+      factorial(n-1)        return result
+      </div>
+
+      <table class="mt" style="width:100%;">
+        <tr><th>Aspect</th><th>Recursion</th><th>Iteration</th></tr>
+        <tr><td>Clarity</td><td>Often cleaner for trees, divide &amp; conquer</td><td>Cleaner for simple loops</td></tr>
+        <tr><td>Stack</td><td>O(n) frames</td><td>O(1)</td></tr>
+        <tr><td>Speed</td><td>Function call overhead</td><td>Slightly faster</td></tr>
+        <tr><td>Risk</td><td>Stack overflow</td><td>Infinite loop</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>When to Use Recursion</h3>
+      <ul>
+        <li>Problem has a <strong>recursive structure</strong> (trees, graphs, nested data)</li>
+        <li><strong>Divide and conquer</strong> algorithms (merge sort, quicksort)</li>
+        <li><strong>Backtracking</strong> problems (N-queens, mazes)</li>
+        <li>The recursive solution is <strong>much simpler</strong> than iterative</li>
+      </ul>
+
+      <h3 class="mt">When to Use Iteration</h3>
+      <ul>
+        <li>Simple <strong>linear</strong> computations (sum, factorial)</li>
+        <li><strong>Performance-critical</strong> code</li>
+        <li>Very <strong>deep</strong> recursion possible (n > 10000)</li>
+        <li>Language lacks tail-call optimization</li>
+      </ul>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Recursion is like giving <strong>instructions to a chain of helpers</strong> -- each passes a smaller task down. Iteration is like <strong>doing it yourself</strong> in a loop. Both finish the job; pick the one that's clearest.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 15: COMMON RECURSION PATTERNS ==================== -->
+<div class="slide" id="slide-15">
+  <h2>Common Recursion Patterns</h2>
+  <p>Most recursive algorithms fall into one of these three families.</p>
+
+  <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:24px; margin-top:20px;">
+    <div>
+      <div class="key-idea" style="min-height:140px;">
+        <h3>Divide and Conquer</h3>
+        <p>Split the problem into <strong>independent subproblems</strong>, solve each recursively, then <strong>combine</strong> results.</p>
+      </div>
+      <div class="diagram small">
+       problem
+       /     \
+    sub1    sub2
+     |        |
+   solve    solve
+     \       /
+      combine
+      </div>
+      <p><strong>Examples:</strong> merge sort, quicksort, binary search, fast power</p>
+    </div>
+    <div>
+      <div class="key-idea" style="min-height:140px; border-left-color:#8b5cf6; background:linear-gradient(135deg, rgba(139,92,246,0.15), rgba(236,72,153,0.15));">
+        <h3>Decrease and Conquer</h3>
+        <p>Reduce the problem by a <strong>constant amount</strong> (usually 1) each step. Linear chain of calls.</p>
+      </div>
+      <div class="diagram small">
+       f(n)
+        |
+       f(n-1)
+        |
+       f(n-2)
+        |
+       ...
+        |
+       f(0)  base
+      </div>
+      <p><strong>Examples:</strong> factorial, sum of array, insertion sort, selection sort</p>
+    </div>
+    <div>
+      <div class="key-idea" style="min-height:140px; border-left-color:#10b981; background:linear-gradient(135deg, rgba(16,185,129,0.15), rgba(59,130,246,0.15));">
+        <h3>Backtracking</h3>
+        <p>Try a choice, recurse. If it fails, <strong>undo</strong> the choice and try the next option.</p>
+      </div>
+      <div class="diagram small">
+       try A
+       /   \
+    ok?     fail
+     |        |
+   try B    undo A
+    / \     try C
+  ok? fail   ...
+      </div>
+      <p><strong>Examples:</strong> N-queens, maze solving, sudoku, generating permutations</p>
+    </div>
+  </div>
+  <div class="slide-number">15 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 16: TOWERS OF HANOI ==================== -->
+<div class="slide" id="slide-16">
+  <h2>Towers of Hanoi</h2>
+  <p>Move <strong>n</strong> disks from peg A to peg C using peg B as auxiliary. Rules: move one disk at a time; never place a larger disk on a smaller one.</p>
+  <p class="step-hint">Press <strong>S</strong> to step through the solution for 3 disks.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Recursive Solution</h3>
+      <div class="diagram" style="font-size:0.9em;">
+  hanoi(n, from, to, aux):
+    if n == 1:
+      move disk 1 from 'from' to 'to'
+      return
+    hanoi(n-1, from, aux, to)  // top n-1 to aux
+    move disk n from 'from' to 'to'
+    hanoi(n-1, aux, to, from)  // n-1 from aux to to
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>To move n disks: (1) move the top n-1 disks out of the way, (2) move the big disk, (3) move the n-1 disks on top. It takes <strong>2<sup>n</sup> - 1</strong> moves.</p>
+      </div>
+      <p>For 3 disks: 2<sup>3</sup> - 1 = <strong>7 moves</strong></p>
+    </div>
+    <div>
+<div class="step visible" data-slide="16" data-step="0">
+      <h3>Initial State</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+    [1]        |         |
+   [ 2 ]      |         |
+  [  3  ]     |         |
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="1">
+      <h3>Move 1: disk 1 A->C</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+   [ 2 ]      |         |
+  [  3  ]     |        [1]
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="2">
+      <h3>Move 2: disk 2 A->B</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+     |         |         |
+  [  3  ]   [ 2 ]     [1]
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="3">
+      <h3>Move 3: disk 1 C->B</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+     |        [1]        |
+  [  3  ]   [ 2 ]       |
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="4">
+      <h3>Move 4: disk 3 A->C</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+     |        [1]        |
+     |      [ 2 ]    [  3  ]
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="5">
+      <h3>Move 5: disk 1 B->A</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+     |         |         |
+    [1]     [ 2 ]    [  3  ]
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="6">
+      <h3>Move 6: disk 2 B->C</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |         |
+     |         |       [ 2 ]
+    [1]        |     [  3  ]
+  ========  ========  ========
+      </div>
+</div>
+<div class="step" data-slide="16" data-step="7">
+      <h3>Move 7: disk 1 A->C  -- DONE!</h3>
+      <div class="diagram small">
+     A         B         C
+     |         |         |
+     |         |        [1]
+     |         |       [ 2 ]
+     |         |     [  3  ]
+  ========  ========  ========
+      </div>
+</div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 17: COMMON MISTAKES ==================== -->
+<div class="slide" id="slide-17">
+  <h2>Common Mistakes</h2>
+  <p>Debugging recursion can be tricky. Watch out for these pitfalls.</p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:24px; margin-top:20px;">
+    <div class="warning">
+      <h3>1. Missing Base Case</h3>
+      <div class="diagram small" style="color:#fbbf24;">
+  // BROKEN -- no base case!
+  factorial(n):
+    return n * factorial(n-1)
+
+  factorial(3)
+    -> factorial(2)
+      -> factorial(1)
+        -> factorial(0)
+          -> factorial(-1)
+            -> factorial(-2)
+              -> ...  STACK OVERFLOW!
+      </div>
+      <p><strong>Fix:</strong> Always define when to <em>stop</em>.</p>
+    </div>
+
+    <div class="warning">
+      <h3>2. Not Making Progress</h3>
+      <div class="diagram small" style="color:#fbbf24;">
+  // BROKEN -- n never changes!
+  countdown(n):
+    if n == 0: return
+    print(n)
+    countdown(n)     // should be n-1
+
+  Infinite loop:
+    countdown(3) -> countdown(3)
+      -> countdown(3) -> ...
+      </div>
+      <p><strong>Fix:</strong> Each call must move <em>closer</em> to the base case.</p>
+    </div>
+
+    <div class="warning">
+      <h3>3. Wrong Base Case</h3>
+      <div class="diagram small" style="color:#fbbf24;">
+  // BROKEN -- base case never reached!
+  factorial(n):
+    if n == 1: return 1  // what about 0?
+    return n * factorial(n-1)
+
+  factorial(0)
+    -> 0 * factorial(-1)
+      -> -1 * factorial(-2) ...
+
+  Should handle n == 0 too!
+      </div>
+      <p><strong>Fix:</strong> Consider <em>all</em> possible inputs, including edge cases.</p>
+    </div>
+
+    <div class="warning">
+      <h3>4. Redundant Computation</h3>
+      <div class="diagram small" style="color:#fbbf24;">
+  // WORKS but extremely slow:
+  fib(n):
+    if n &lt;= 1: return n
+    return fib(n-1) + fib(n-2)
+
+  fib(5) computes fib(2) three times,
+  fib(1) five times...
+
+  O(2^n) when O(n) is possible!
+      </div>
+      <p><strong>Fix:</strong> Use <strong>memoization</strong> or convert to iteration.</p>
+    </div>
+  </div>
+
+  <div class="key-idea mt">
+    <h3>Debugging Tip</h3>
+    <p>Add print statements at the <strong>start</strong> of the function showing the parameters, and at the <strong>end</strong> showing the return value. This makes the call tree visible.</p>
+  </div>
+  <div class="slide-number">17 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 18: SUMMARY & CHEAT SHEET ==================== -->
+<div class="slide" id="slide-18">
+  <h2>Summary &amp; Cheat Sheet</h2>
+
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>The Recursion Recipe</h3>
+        <ol style="padding-left:20px;">
+          <li style="margin-bottom:8px; font-size:1.1em;">Identify the <strong>base case(s)</strong> -- the simplest input(s) with a known answer</li>
+          <li style="margin-bottom:8px; font-size:1.1em;">Identify the <strong>recursive case</strong> -- how to break the problem into smaller pieces</li>
+          <li style="margin-bottom:8px; font-size:1.1em;">Ensure each call <strong>makes progress</strong> toward a base case</li>
+          <li style="margin-bottom:8px; font-size:1.1em;"><strong>Trust the recursion</strong> -- assume the recursive call returns the correct answer for the smaller problem</li>
+          <li style="margin-bottom:8px; font-size:1.1em;">Combine the result of the recursive call with the current step</li>
+        </ol>
+      </div>
+
+      <div class="diagram small" style="margin-top:12px;">
+  Pattern             Time         Example
+  ─────────────────────────────────────────
+  Decrease by 1       O(n)         factorial
+  Decrease by half    O(log n)     bin search
+  Two calls (dep.)    O(2^n)*      fibonacci*
+  Two calls (indep.)  O(n log n)   merge sort
+  Backtracking        varies       N-queens
+
+  * without memoization
+      </div>
+    </div>
+    <div>
+      <h3>Key Concepts to Remember</h3>
+      <table style="width:100%; font-size:0.95em;">
+        <tr><th>Concept</th><th>What It Means</th></tr>
+        <tr><td>Base Case</td><td>When to stop recursing</td></tr>
+        <tr><td>Recursive Case</td><td>Self-call with smaller input</td></tr>
+        <tr><td>Call Stack</td><td>Frames tracking each call</td></tr>
+        <tr><td>Stack Overflow</td><td>Too-deep recursion</td></tr>
+        <tr><td>Tail Recursion</td><td>Recursive call is last op</td></tr>
+        <tr><td>Memoization</td><td>Cache repeated subproblems</td></tr>
+        <tr><td>Divide &amp; Conquer</td><td>Split, solve halves, combine</td></tr>
+        <tr><td>Backtracking</td><td>Try, recurse, undo if fail</td></tr>
+      </table>
+
+      <div class="analogy mt">
+        <h3>Final Analogy</h3>
+        <p>Recursion is the art of solving a problem by saying: <em>"If I could magically solve a slightly smaller version of this problem, how would I use that to solve the original?"</em> Then you just need to handle the tiniest case directly.</p>
+      </div>
+
+      <p class="mt" style="text-align:center; color:#64748b; font-size:0.9em;">CS205 Data Structures &middot; Recursion</p>
+    </div>
+  </div>
+  <div class="slide-number">18 / 18</div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="navigate(-1)">&larr; Prev</button>
+  <button id="nextBtn" onclick="navigate(1)">Next &rarr;</button>
+</div>
+
+<!-- ==================== JAVASCRIPT ==================== -->
+<script>
+const totalSlides = 18;
+let current = 1;
+
+// Track step state per slide: { slideNum: { currentStep, maxStep } }
+let stepState = {};
+
+function initSteps() {
+  for (let s = 1; s <= totalSlides; s++) {
+    const slideEl = document.getElementById('slide-' + s);
+    const steps = slideEl.querySelectorAll('.step[data-slide="' + s + '"]');
+    if (steps.length > 0) {
+      // Count max step index
+      let maxStep = 0;
+      steps.forEach(st => {
+        const idx = parseInt(st.getAttribute('data-step'));
+        if (idx > maxStep) maxStep = idx;
+      });
+      stepState[s] = { currentStep: 0, maxStep: maxStep };
+    }
+  }
+}
+
+function showSlide(n) {
+  // Hide all
+  for (let i = 1; i <= totalSlides; i++) {
+    const el = document.getElementById('slide-' + i);
+    el.classList.remove('active');
+  }
+  // Show current
+  const slideEl = document.getElementById('slide-' + n);
+  slideEl.classList.add('active');
+  slideEl.classList.remove('fade-in');
+  void slideEl.offsetWidth; // force reflow
+  slideEl.classList.add('fade-in');
+
+  // Update nav buttons
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+
+  // Update progress bar
+  const pct = ((n - 1) / (totalSlides - 1)) * 100;
+  document.getElementById('progress').style.width = pct + '%';
+}
+
+function navigate(dir) {
+  const next = current + dir;
+  if (next < 1 || next > totalSlides) return;
+  current = next;
+  showSlide(current);
+}
+
+function revealNextStep() {
+  if (!stepState[current]) return;
+  const state = stepState[current];
+  if (state.currentStep < state.maxStep) {
+    state.currentStep++;
+    const step = document.querySelector('.step[data-slide="' + current + '"][data-step="' + state.currentStep + '"]');
+    if (step) {
+      step.classList.add('visible');
+      step.classList.add('fade-in');
+    }
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    navigate(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    navigate(-1);
+  } else if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    revealNextStep();
+  }
+});
+
+// Initialize
+initSteps();
+showSlide(1);
+</script>
+
+</body>
+</html>

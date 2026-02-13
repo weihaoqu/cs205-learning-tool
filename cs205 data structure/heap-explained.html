@@ -1,0 +1,1248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Heaps &amp; Heap Sort - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: Title -->
+<!-- ============================================================ -->
+<div class="slide active" id="s1">
+  <div class="center">
+    <h1>Heaps</h1>
+    <p class="subtitle">The Efficient Priority Queue</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:0.85em;">
+  _   _
+ | | | | ___  __ _ _ __  ___
+ | |_| |/ _ \/ _` | '_ \/ __|
+ |  _  |  __/ (_| | |_) \__ \
+ |_| |_|\___|\__,_| .__/|___/
+                   |_|
+
+         ( 1 )
+        /     \
+     ( 3 )   ( 5 )
+     /   \
+  ( 7 ) ( 9 )
+
+  CS205 Data Structures
+    </div>
+    <p style="margin-top: 30px; color: #64748b;">Use arrow keys or buttons to navigate</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: What is a Heap? -->
+<!-- ============================================================ -->
+<div class="slide" id="s2">
+  <h2>What is a Heap?</h2>
+  <p class="subtitle">A complete binary tree with a special ordering property</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Two Requirements</h3>
+      <ul>
+        <li><strong>Complete binary tree</strong> -- every level is fully filled except possibly the last, which is filled left to right</li>
+        <li><strong>Heap-order property</strong> -- every node satisfies an ordering rule relative to its children</li>
+      </ul>
+
+      <h3 class="mt">Min-Heap: Parent &lt;= Children</h3>
+      <p>The smallest element is always at the root. Every parent is smaller than (or equal to) both of its children.</p>
+
+      <h3 class="mt">Max-Heap: Parent &gt;= Children</h3>
+      <p>The largest element is always at the root. Every parent is larger than (or equal to) both of its children.</p>
+    </div>
+    <div>
+      <h3>Min-Heap Example</h3>
+      <div class="diagram">
+           ( 1 )
+          /     \
+       ( 3 )   ( 5 )
+       /   \   /
+    ( 7 ) (9) (6)
+
+  Root = minimum element = 1
+
+  Check heap-order:
+    1 &lt;= 3  and  1 &lt;= 5   OK
+    3 &lt;= 7  and  3 &lt;= 9   OK
+    5 &lt;= 6               OK
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A heap is <strong>not</strong> a fully sorted structure. It only guarantees the root is the min (or max). The left child is not necessarily smaller than the right child. This partial ordering is what makes heaps fast.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: Heap Properties -->
+<!-- ============================================================ -->
+<div class="slide" id="s3">
+  <h2>Heap Properties</h2>
+  <p class="subtitle">The three properties that make heaps work</p>
+
+  <div class="two-col">
+    <div>
+      <h3>1. Complete Binary Tree</h3>
+      <p>All levels full except possibly the last. The last level is filled <strong>left to right</strong> with no gaps.</p>
+      <div class="diagram small">
+  COMPLETE (valid):      NOT COMPLETE (invalid):
+
+       ( 1 )                  ( 1 )
+      /     \                /     \
+   ( 3 )   ( 5 )          ( 3 )   ( 5 )
+   /   \                   /         \
+ ( 7 ) ( 9 )            ( 7 )       ( 9 )
+                                 ^gap here!
+      </div>
+
+      <h3 class="mt">2. Heap-Order Property</h3>
+      <p><strong>Min-heap:</strong> every parent &lt;= its children<br>
+         <strong>Max-heap:</strong> every parent &gt;= its children</p>
+      <p>This means the root always holds the extreme value (min or max).</p>
+    </div>
+    <div>
+      <h3>3. Height = O(log n)</h3>
+      <p>Because the tree is <strong>complete</strong>, it is always perfectly balanced. A heap with n nodes has height:</p>
+      <div class="diagram small">
+  height = floor( log2(n) )
+
+  n =  1  -->  height = 0
+  n =  3  -->  height = 1
+  n =  7  -->  height = 2
+  n = 15  -->  height = 3
+  n = 31  -->  height = 4
+
+  Every operation that travels
+  root-to-leaf is O(log n)!
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy: A Company Hierarchy</h3>
+        <p>Think of a min-heap like a company where the CEO (root) always has the lowest employee ID number. Every manager's ID is lower than their direct reports. You can always find the CEO instantly -- just look at the top!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: Why Heaps are Brilliant -->
+<!-- ============================================================ -->
+<div class="slide" id="s4">
+  <h2>Why Heaps are Brilliant</h2>
+  <p class="subtitle">The best of both worlds for priority queue operations</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Priority Queue Problem</h3>
+      <p>We need a data structure that supports:</p>
+      <ul>
+        <li><code>insert(key)</code> -- add a new element</li>
+        <li><code>removeMin()</code> -- remove and return the smallest element</li>
+      </ul>
+
+      <table style="margin-top: 20px; width: 100%;">
+        <tr>
+          <th>Implementation</th>
+          <th>insert</th>
+          <th>removeMin</th>
+        </tr>
+        <tr>
+          <td>Unsorted List</td>
+          <td>O(1)</td>
+          <td style="color: #f87171;">O(n)</td>
+        </tr>
+        <tr>
+          <td>Sorted List</td>
+          <td style="color: #f87171;">O(n)</td>
+          <td>O(1)</td>
+        </tr>
+        <tr class="highlight">
+          <td><strong>Heap</strong></td>
+          <td><strong>O(log n)</strong></td>
+          <td><strong>O(log n)</strong></td>
+        </tr>
+      </table>
+    </div>
+    <div>
+      <div class="diagram small">
+  Unsorted List:
+  insert = O(1) -- just append
+  removeMin = O(n) -- scan entire list
+
+  [7, 2, 9, 1, 5]  -- where is min?
+                       must check all!
+
+  Sorted List:
+  insert = O(n) -- find correct position
+  removeMin = O(1) -- it's at the front
+
+  [1, 2, 5, 7, 9]  -- min at front!
+                       but insert shifts
+
+  Heap:
+  insert = O(log n) -- add + bubble up
+  removeMin = O(log n) -- swap + bubble down
+
+       ( 1 )
+      /     \
+   ( 2 )   ( 5 )    -- min at root!
+   /   \             -- insert/remove
+ ( 7 ) ( 9 )           travel height
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A heap gives O(log n) for <strong>both</strong> operations. With n = 1,000,000, that is ~20 steps instead of 1,000,000. This makes heaps the go-to implementation for priority queues.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: Array Representation -->
+<!-- ============================================================ -->
+<div class="slide" id="s5">
+  <h2>Array Representation</h2>
+  <p class="subtitle">No pointers needed -- store a heap in a simple array!</p>
+
+  <div class="diagram">
+  The Tree:                          The Array:
+
+           ( 1 )                     index:  0   1   2   3   4   5
+          /     \                           ┌───┬───┬───┬───┬───┬───┐
+       ( 3 )   ( 5 )                 value: │ 1 │ 3 │ 5 │ 7 │ 9 │ 6 │
+       /   \   /                            └───┴───┴───┴───┴───┴───┘
+    ( 7 ) (9) (6)
+
+  How? Read the tree level by level, left to right:
+
+  Level 0:  1              -->  arr[0] = 1
+  Level 1:  3, 5           -->  arr[1] = 3,  arr[2] = 5
+  Level 2:  7, 9, 6        -->  arr[3] = 7,  arr[4] = 9,  arr[5] = 6
+  </div>
+
+  <div class="two-col">
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea: Level-Order = Array Order</h3>
+        <p>Because the tree is <strong>complete</strong>, there are no gaps when we lay it out level by level. This means we can use a flat array with zero wasted space -- no left/right child pointers needed!</p>
+      </div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Stadium Seating</h3>
+        <p>Imagine filling stadium seats row by row, left to right, no empty seats. Seat number alone tells you which row and position you are in. That is exactly how a heap fits in an array.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: Array Indexing Formulas -->
+<!-- ============================================================ -->
+<div class="slide" id="s6">
+  <h2>Array Indexing Formulas</h2>
+  <p class="subtitle">Navigate the tree using simple arithmetic -- no pointers!</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Three Formulas (0-indexed)</h3>
+      <div class="diagram">
+  Given a node at index i:
+
+  parent(i)     = (i - 1) / 2
+  leftChild(i)  = 2 * i + 1
+  rightChild(i) = 2 * i + 2
+      </div>
+
+      <h3 class="mt">Example: Node at index 1 (value 3)</h3>
+      <div class="diagram small">
+  parent(1)     = (1-1)/2 = 0  --> arr[0] = 1
+  leftChild(1)  = 2*1+1  = 3  --> arr[3] = 7
+  rightChild(1) = 2*1+2  = 4  --> arr[4] = 9
+      </div>
+
+      <h3 class="mt">Example: Node at index 4 (value 9)</h3>
+      <div class="diagram small">
+  parent(4)     = (4-1)/2 = 1  --> arr[1] = 3
+  leftChild(4)  = 2*4+1  = 9  --> out of bounds
+                                   (no children!)
+      </div>
+    </div>
+    <div>
+      <h3>Visualized on the Tree</h3>
+      <div class="diagram">
+          [0]( 1 )
+           /      \
+     [1]( 3 )   [2]( 5 )
+       /   \      /
+  [3](7) [4](9) [5](6)
+
+  Array:
+  index: 0   1   2   3   4   5
+        ┌───┬───┬───┬───┬───┬───┐
+        │ 1 │ 3 │ 5 │ 7 │ 9 │ 6 │
+        └───┴───┴───┴───┴───┴───┘
+              |
+         parent = [0]
+         left   = [3]
+         right  = [4]
+      </div>
+
+      <div class="warning">
+        <h3>Watch Out: Integer Division</h3>
+        <p>The parent formula uses <strong>integer division</strong> (floor). Both left child (index 1) and right child (index 2) map to parent index 0. This is intentional: <code>(1-1)/2 = 0</code> and <code>(2-1)/2 = 0</code>.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: Insert (Upheap / Bubble Up) -->
+<!-- ============================================================ -->
+<div class="slide" id="s7">
+  <h2>Insert: Upheap (Bubble Up)</h2>
+  <p class="subtitle">Add at the end, then swim the element up to restore heap order</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Algorithm</h3>
+      <ol>
+        <li><strong>Add</strong> the new element at the next available position (end of array = next leaf spot)</li>
+        <li><strong>Compare</strong> with parent</li>
+        <li>If new element &lt; parent, <strong>swap</strong> them</li>
+        <li><strong>Repeat</strong> until heap order is restored or we reach the root</li>
+      </ol>
+
+      <div class="diagram small">
+  // Pseudocode: insert into min-heap
+  insert(heap, value):
+    heap.add(value)       // add at end
+    i = heap.size - 1     // index of new elem
+    // bubble up
+    while i &gt; 0:
+      parent = (i - 1) / 2
+      if heap[i] &lt; heap[parent]:
+        swap(heap[i], heap[parent])
+        i = parent
+      else:
+        break             // heap order OK
+      </div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: New Employee</h3>
+        <p>A new employee joins at the bottom of the org chart. If they outrank their manager (smaller key), they swap positions. They keep getting promoted until they meet someone who outranks them -- or they become CEO (root).</p>
+      </div>
+
+      <div class="diagram small">
+  Time Complexity:
+
+  Worst case: element bubbles all
+  the way from leaf to root.
+
+  Distance = height = O(log n)
+
+  Each swap = O(1)
+
+  Total: O(log n)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The completeness property guarantees that adding at the end keeps the tree complete. The bubble-up fixes the heap order. Two properties, two steps, O(log n).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: Insert Example -->
+<!-- ============================================================ -->
+<div class="slide" id="s8">
+  <h2>Insert Example: Insert 2 into a Min-Heap</h2>
+  <p class="subtitle">Step-by-step trace showing each swap</p>
+
+  <div class="diagram">
+  Starting heap:              Array: [1, 4, 5, 7, 9, 6]
+
+           ( 1 )
+          /     \
+       ( 4 )   ( 5 )
+       /   \   /
+    ( 7 ) (9) (6)
+  </div>
+
+  <div class="diagram">
+  Step 1: Add 2 at the end    Array: [1, 4, 5, 7, 9, 6, <strong>2</strong>]
+
+           ( 1 )
+          /     \
+       ( 4 )   ( 5 )
+       /   \   /   \
+    ( 7 ) (9) (6) (<strong>2</strong>)    &lt;-- new element at index 6
+
+  Compare 2 with parent at index (6-1)/2 = 2 --> parent is 5
+  2 &lt; 5 --> SWAP!
+  </div>
+
+  <div class="diagram">
+  Step 2: Swap 2 and 5        Array: [1, 4, <strong>2</strong>, 7, 9, 6, 5]
+
+           ( 1 )
+          /     \
+       ( 4 )   (<strong>2</strong>)      &lt;-- 2 moved up
+       /   \   /   \
+    ( 7 ) (9) (6)  (5)
+
+  Compare 2 with parent at index (2-1)/2 = 0 --> parent is 1
+  2 &gt; 1 --> STOP! Heap order restored.
+  </div>
+
+  <div class="key-idea">
+    <h3>Result</h3>
+    <p>Final heap: <code>[1, 4, 2, 7, 9, 6, 5]</code>. The element 2 bubbled up one level. Only 1 swap was needed because 2 &gt; 1 (the root). In the worst case, an element could bubble all the way to the root: O(log n) swaps.</p>
+  </div>
+
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: RemoveMin (Downheap / Bubble Down) -->
+<!-- ============================================================ -->
+<div class="slide" id="s9">
+  <h2>RemoveMin: Downheap (Bubble Down)</h2>
+  <p class="subtitle">Remove root, move last to root, then sink it down</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Algorithm</h3>
+      <ol>
+        <li><strong>Save</strong> the root value (this is the min)</li>
+        <li><strong>Move</strong> the last element to the root position</li>
+        <li><strong>Remove</strong> the last position (shrink array)</li>
+        <li><strong>Bubble down</strong>: compare with children, swap with the <strong>smaller</strong> child</li>
+        <li><strong>Repeat</strong> until heap order is restored or we reach a leaf</li>
+      </ol>
+
+      <div class="diagram small">
+  // Pseudocode: removeMin
+  removeMin(heap):
+    min = heap[0]
+    heap[0] = heap[last]   // move last to root
+    heap.removeLast()
+    // bubble down
+    i = 0
+    while hasLeftChild(i):
+      smallest = i
+      if heap[left(i)] &lt; heap[smallest]:
+        smallest = left(i)
+      if hasRight(i) and
+         heap[right(i)] &lt; heap[smallest]:
+        smallest = right(i)
+      if smallest != i:
+        swap(heap[i], heap[smallest])
+        i = smallest
+      else: break
+    return min
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Why Swap with the Smaller Child?</h3>
+        <p>If we swapped with the larger child, that child would become the parent of the smaller child -- violating heap order! Always pick the <strong>smaller</strong> child (in a min-heap) to maintain the invariant.</p>
+      </div>
+
+      <div class="diagram small">
+  Why not just remove root directly?
+
+       ( 1 )
+      /     \           Remove 1...
+   ( 3 )   ( 5 )        now what?
+   /   \                The tree has
+ ( 7 ) ( 9 )            a hole!
+
+  Moving the last element to the
+  root keeps the tree COMPLETE.
+  Then bubble-down fixes ORDER.
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>RemoveMin maintains both heap properties: moving the last element to root preserves <strong>completeness</strong>, and bubble-down restores <strong>heap order</strong>. Time: O(log n).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: RemoveMin Example -->
+<!-- ============================================================ -->
+<div class="slide" id="s10">
+  <h2>RemoveMin Example</h2>
+  <p class="subtitle">Remove the minimum from a min-heap, step by step</p>
+
+  <div class="diagram">
+  Starting heap:              Array: [1, 3, 5, 7, 9, 6]
+
+           ( 1 )      &lt;-- remove this (min)
+          /     \
+       ( 3 )   ( 5 )
+       /   \   /
+    ( 7 ) (9) (6)
+  </div>
+
+  <div class="diagram">
+  Step 1: Move last to root    Array: [<strong>6</strong>, 3, 5, 7, 9]
+
+           (<strong>6</strong>)       &lt;-- last element (6) placed at root
+          /     \
+       ( 3 )   ( 5 )
+       /   \
+    ( 7 ) ( 9 )
+
+  Compare 6 with children: left=3, right=5
+  Smaller child = 3. Is 6 &gt; 3? YES --> SWAP!
+  </div>
+
+  <div class="diagram">
+  Step 2: Swap 6 and 3         Array: [3, <strong>6</strong>, 5, 7, 9]
+
+           ( 3 )
+          /     \
+       (<strong>6</strong>)     ( 5 )
+       /   \
+    ( 7 ) ( 9 )
+
+  Compare 6 with children: left=7, right=9
+  Smaller child = 7. Is 6 &gt; 7? NO --> STOP!
+  </div>
+
+  <div class="key-idea">
+    <h3>Result</h3>
+    <p>Returned min = <strong>1</strong>. Final heap: <code>[3, 6, 5, 7, 9]</code>. Element 6 sank one level and stopped because it was already smaller than both children. Heap order restored.</p>
+  </div>
+
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: Building a Heap: Top-Down -->
+<!-- ============================================================ -->
+<div class="slide" id="s11">
+  <h2>Building a Heap: Top-Down</h2>
+  <p class="subtitle">Insert elements one at a time -- O(n log n)</p>
+
+  <div class="diagram small">
+  Build a min-heap from: [5, 3, 8, 1, 4]
+
+  Insert 5:        Insert 3:        Insert 8:        Insert 1:          Insert 4:
+                   3 &lt; 5, swap!     8 &gt; 3, stop      1 &lt; 3, swap!       4 &gt; 1, stop
+
+    (5)              (3)              (3)              (1)                 (1)
+                    /                /   \            /   \              /     \
+                  (5)              (5)   (8)        (3)   (8)          (3)     (8)
+                                                   /                  /  \
+                                                 (5)               (5)  (4)
+                                                   ^
+                                               1 &lt; 5, swap!
+                                               then 1 &lt; 3, swap!
+  </div>
+
+  <div class="two-col">
+    <div>
+      <h3>Trace the Array</h3>
+      <div class="diagram small">
+  Start:  []
+  +5:     [5]
+  +3:     [5, 3] --> bubble up
+          [3, 5]
+  +8:     [3, 5, 8]      (8 &gt; 3, OK)
+  +1:     [3, 5, 8, 1]   --> bubble up
+          [3, 5, 8, 1]
+          [3, 1, 8, 5]   (swap 1,5)
+          [1, 3, 8, 5]   (swap 1,3)
+  +4:     [1, 3, 8, 5, 4] (4 &gt; 3, OK)
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Time Complexity: O(n log n)</h3>
+        <p>Each insert is O(log n) in the worst case. Doing n inserts gives O(n log n) total. This works, but we can do better with the <strong>bottom-up</strong> approach on the next slide!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: Building a Heap: Bottom-Up (Heapify) -->
+<!-- ============================================================ -->
+<div class="slide" id="s12">
+  <h2>Building a Heap: Bottom-Up (Heapify)</h2>
+  <p class="subtitle">Start from the last internal node and sift down -- O(n)!</p>
+
+  <div class="diagram small">
+  Input array: [5, 3, 8, 1, 4, 2, 7]     (just treat it as a tree directly)
+
+  Initial tree (NOT a heap):        Last non-leaf = index (n/2)-1 = 2
+         [0]( 5 )
+          /       \
+     [1]( 3 )   [2]( 8 )
+       /   \      /   \
+   [3](1) [4](4) [5](2) [6](7)
+  </div>
+
+  <div class="diagram small">
+  Sift down index 2 (value 8):    Sift down index 1 (value 3):    Sift down index 0 (value 5):
+  children: 2, 7                  children: 1, 4                  children: 1, 2
+  smallest child = 2              smallest child = 1              smallest child = 1
+  8 &gt; 2, swap!                    3 &gt; 1, swap!                    5 &gt; 1, swap!
+
+         ( 5 )                          ( 5 )                          ( 1 )
+        /     \                        /     \                        /     \
+     ( 3 )   ( 2 )                  ( 1 )   ( 2 )                  ( 3 )   ( 2 )
+     /   \   /   \                  /   \   /   \                  /   \   /   \
+   (1)  (4) (8)  (7)             (3)  (4) (8)  (7)              (3)  (4) (8)  (7)
+              ^                    ^                              ^
+           8 moved down         1 moved up, 3 moved down       continue: 5 &gt; 3? YES
+                                                                 swap 5 and 3
+
+                                                                     ( 1 )
+                                                                    /     \
+                                                                 ( 3 )   ( 2 )
+                                                                 /   \   /   \
+                                                               (5)  (4) (8)  (7)
+  </div>
+
+  <div class="key-idea">
+    <h3>Key Idea</h3>
+    <p>Process nodes from the <strong>last internal node up to the root</strong>. Each node sifts down at most to the bottom. Result: a valid min-heap <code>[1, 3, 2, 5, 4, 8, 7]</code> built in O(n) time!</p>
+  </div>
+
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: Why Bottom-Up is O(n) -->
+<!-- ============================================================ -->
+<div class="slide" id="s13">
+  <h2>Why Bottom-Up Heapify is O(n)</h2>
+  <p class="subtitle">Most nodes are near the bottom and barely need to move</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Intuition</h3>
+      <div class="diagram small">
+  Level 0 (root):   1 node
+                    sifts down up to h levels
+
+  Level 1:          2 nodes
+                    sift down up to h-1 levels
+
+  Level 2:          4 nodes
+                    sift down up to h-2 levels
+       ...
+  Level h-1:        n/4 nodes
+                    sift down at most 1 level
+
+  Level h (leaves): n/2 nodes
+                    sift down 0 levels (skip!)
+      </div>
+
+      <p>Half the nodes are leaves -- they do <strong>zero work</strong>! A quarter of nodes sift down at most 1 level. Only 1 node (root) sifts down h levels.</p>
+    </div>
+    <div>
+      <h3>The Math</h3>
+      <div class="diagram small">
+  Total work = sum over all levels:
+
+  h
+  SUM  (nodes at level k) * (h - k)
+  k=0
+
+     h
+  =  SUM  2^k * (h - k)
+     k=0
+
+  This sum evaluates to:
+
+  = 2^(h+1) - h - 2
+  = O(n)
+
+  (NOT n log n!)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Top-down build = O(n log n) because the <strong>many</strong> elements inserted later bubble up a <strong>long</strong> distance. Bottom-up build = O(n) because the <strong>many</strong> elements at the bottom sift down a <strong>short</strong> distance. The work is concentrated where it is cheapest.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: Heap Sort -->
+<!-- ============================================================ -->
+<div class="slide" id="s14">
+  <h2>Heap Sort</h2>
+  <p class="subtitle">Build a max-heap, then repeatedly extract the maximum -- O(n log n), in-place!</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Algorithm</h3>
+      <ol>
+        <li><strong>Build a max-heap</strong> from the array using bottom-up heapify -- O(n)</li>
+        <li><strong>Repeat</strong> n-1 times:
+          <ul>
+            <li>Swap root (max) with the last unsorted element</li>
+            <li>Shrink the heap size by 1</li>
+            <li>Bubble down the new root to restore heap order</li>
+          </ul>
+        </li>
+      </ol>
+
+      <div class="diagram small">
+  // Pseudocode
+  heapSort(arr):
+    // Phase 1: Build max-heap
+    buildMaxHeap(arr)      // O(n)
+
+    // Phase 2: Extract max repeatedly
+    for i = n-1 down to 1: // O(n log n)
+      swap(arr[0], arr[i]) // max goes to end
+      heapSize--
+      siftDown(arr, 0)     // fix heap
+      </div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Why Max-Heap for Sorting?</h3>
+        <p>We want to sort in <strong>ascending</strong> order. By extracting the <strong>max</strong> and placing it at the end of the array, we fill the sorted portion from right to left. The sorted elements accumulate at the back while the heap shrinks at the front.</p>
+      </div>
+
+      <div class="diagram small">
+  ┌──────────────┬────────────┐
+  │  HEAP part   │ SORTED part│
+  │  (shrinking) │ (growing)  │
+  └──────────────┴────────────┘
+
+  Each step:
+  1. Swap max to end of heap
+  2. Heap shrinks by 1
+  3. Sorted region grows by 1
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>Like a talent show: the winner (max) of each round is retired to the "hall of fame" (sorted region). The remaining contestants re-compete (re-heapify).</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: Heap Sort Trace -->
+<!-- ============================================================ -->
+<div class="slide" id="s15">
+  <h2>Heap Sort Trace</h2>
+  <p class="subtitle">Sort [5, 3, 8, 1, 4, 2] using heap sort</p>
+
+  <div class="diagram small">
+  Step 0: Build max-heap from [5, 3, 8, 1, 4, 2]
+
+  Result: [8, 4, 5, 1, 3, 2]           Step 1: Swap 8 and 2, sift down
+                                        [2, 4, 5, 1, 3 | 8]
+       ( 8 )                                 ( 5 )
+      /     \                               /     \
+   ( 4 )   ( 5 )                         ( 4 )   ( 2 )          sorted: [8]
+   /   \   /                             /   \
+ ( 1 ) (3)(2)                          ( 1 ) ( 3 )
+  </div>
+
+  <div class="diagram small">
+  Step 2: Swap 5 and 3, sift down      Step 3: Swap 4 and 1, sift down
+  [3, 4, 2, 1 | 3, 8]                  [1, 3, 2 | 1, 3, 8]    wait...
+  [4, 3, 2, 1 | 5, 8]                  --> sift: [3, 1, 2 | 4, 5, 8]
+
+       ( 4 )                                 ( 3 )
+      /     \                               /     \             sorted:
+   ( 3 )   ( 2 )       sorted:           ( 1 )   ( 2 )         [4, 5, 8]
+   /                    [5, 8]
+ ( 1 )
+  </div>
+
+  <div class="diagram small">
+  Step 4: Swap 3 and 2, sift down      Step 5: Swap 2 and 1   DONE!
+  [2, 1 | 3, 4, 5, 8]                  [1 | 2, 3, 4, 5, 8]
+
+       ( 2 )          sorted:               sorted:
+      /                [3, 4, 5, 8]          [1, 2, 3, 4, 5, 8]
+   ( 1 )
+
+  Final sorted array: [1, 2, 3, 4, 5, 8]
+  </div>
+
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: Min-Heap vs Max-Heap -->
+<!-- ============================================================ -->
+<div class="slide" id="s16">
+  <h2>Min-Heap vs Max-Heap</h2>
+  <p class="subtitle">Same structure, just flip the comparison</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Min-Heap</h3>
+      <div class="diagram">
+         ( 1 )        parent &lt;= children
+        /     \
+     ( 3 )   ( 2 )    root = MINIMUM
+     /   \
+   ( 5 ) ( 4 )
+      </div>
+      <ul>
+        <li>Parent <strong>&lt;=</strong> children</li>
+        <li>Root = <strong>smallest</strong> element</li>
+        <li>Used for: <strong>priority queues</strong> (get min-priority item)</li>
+        <li><code>removeMin()</code> returns the smallest</li>
+      </ul>
+      <p class="mt">Java's <code>PriorityQueue</code> is a <strong>min-heap</strong> by default.</p>
+    </div>
+    <div>
+      <h3>Max-Heap</h3>
+      <div class="diagram">
+         ( 9 )        parent &gt;= children
+        /     \
+     ( 7 )   ( 8 )    root = MAXIMUM
+     /   \
+   ( 3 ) ( 5 )
+      </div>
+      <ul>
+        <li>Parent <strong>&gt;=</strong> children</li>
+        <li>Root = <strong>largest</strong> element</li>
+        <li>Used for: <strong>heap sort</strong> (extract max to sort ascending)</li>
+        <li><code>removeMax()</code> returns the largest</li>
+      </ul>
+      <p class="mt">To get a max-heap in Java, use a reversed comparator.</p>
+    </div>
+  </div>
+
+  <div class="key-idea">
+    <h3>Key Idea</h3>
+    <p>The only difference is the direction of the comparison operator. All algorithms (insert, remove, heapify) are identical in structure -- just swap <code>&lt;</code> with <code>&gt;</code>. Think of them as the <strong>same data structure</strong> with a configurable comparator.</p>
+  </div>
+
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: Java's PriorityQueue -->
+<!-- ============================================================ -->
+<div class="slide" id="s17">
+  <h2>Java's PriorityQueue</h2>
+  <p class="subtitle">Built-in min-heap -- ready to use</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Basic Usage (Min-Heap)</h3>
+      <div class="diagram small">
+  import java.util.PriorityQueue;
+
+  PriorityQueue&lt;Integer&gt; pq =
+      new PriorityQueue&lt;&gt;();
+
+  pq.add(5);      // insert
+  pq.add(3);
+  pq.add(8);
+  pq.add(1);
+
+  pq.peek();      // 1 (min, no remove)
+  pq.poll();      // 1 (remove min)
+  pq.poll();      // 3
+  pq.poll();      // 5
+  pq.poll();      // 8
+  pq.size();      // 0
+  pq.isEmpty();   // true
+      </div>
+
+      <h3 class="mt">Key Methods</h3>
+      <table>
+        <tr><th>Method</th><th>Description</th><th>Time</th></tr>
+        <tr><td><code>add(e)</code></td><td>Insert</td><td>O(log n)</td></tr>
+        <tr><td><code>peek()</code></td><td>View min</td><td>O(1)</td></tr>
+        <tr><td><code>poll()</code></td><td>Remove min</td><td>O(log n)</td></tr>
+        <tr><td><code>size()</code></td><td>Count</td><td>O(1)</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Max-Heap with Reversed Comparator</h3>
+      <div class="diagram small">
+  // Option 1: Collections.reverseOrder()
+  PriorityQueue&lt;Integer&gt; maxPQ =
+    new PriorityQueue&lt;&gt;(
+      Collections.reverseOrder()
+    );
+
+  // Option 2: Lambda comparator
+  PriorityQueue&lt;Integer&gt; maxPQ =
+    new PriorityQueue&lt;&gt;(
+      (a, b) -&gt; b - a
+    );
+
+  maxPQ.add(5);
+  maxPQ.add(3);
+  maxPQ.add(8);
+  maxPQ.poll();  // 8 (max!)
+  maxPQ.poll();  // 5
+      </div>
+
+      <h3 class="mt">Custom Objects</h3>
+      <div class="diagram small">
+  // Priority queue of tasks by priority
+  PriorityQueue&lt;Task&gt; taskPQ =
+    new PriorityQueue&lt;&gt;(
+      (t1, t2) -&gt;
+        t1.priority - t2.priority
+    );
+
+  // Or implement Comparable&lt;Task&gt;
+  // in your Task class
+      </div>
+
+      <div class="warning">
+        <h3>Common Mistake</h3>
+        <p>Java's <code>PriorityQueue</code> is a <strong>min-heap</strong> by default. If you need the largest element first, you <strong>must</strong> provide a reversed comparator!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: Application: Top-K Elements -->
+<!-- ============================================================ -->
+<div class="slide" id="s18">
+  <h2>Application: Top-K Elements</h2>
+  <p class="subtitle">Find the k largest elements in a stream using a min-heap of size k</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Trick: Use a Min-Heap of Size k</h3>
+      <p>To find the <strong>k largest</strong>, maintain a min-heap of size k. The root is always the <strong>smallest of the k largest</strong> seen so far. It acts as a gatekeeper.</p>
+
+      <div class="diagram small">
+  Algorithm:
+  1. Insert first k elements
+  2. For each remaining element:
+     - If element &gt; heap root (min):
+       remove root, insert element
+     - Otherwise: skip it
+  3. Heap contains k largest!
+      </div>
+
+      <div class="diagram small">
+  // Java implementation
+  PriorityQueue&lt;Integer&gt; minHeap =
+      new PriorityQueue&lt;&gt;();
+
+  for (int num : stream) {
+    if (minHeap.size() &lt; k) {
+      minHeap.add(num);
+    } else if (num &gt; minHeap.peek()) {
+      minHeap.poll();
+      minHeap.add(num);
+    }
+  }
+  // minHeap has k largest elements
+      </div>
+    </div>
+    <div>
+      <h3>Example: Top 3 from [4,1,7,3,9,2,8]</h3>
+      <div class="diagram small">
+  k = 3, stream: 4, 1, 7, 3, 9, 2, 8
+
+  Process 4: heap = [4]
+  Process 1: heap = [1, 4]
+  Process 7: heap = [1, 4, 7]  (size=k)
+
+  Process 3: 3 &gt; root(1)? YES
+     remove 1, add 3
+     heap = [3, 4, 7]
+
+  Process 9: 9 &gt; root(3)? YES
+     remove 3, add 9
+     heap = [4, 9, 7]
+
+  Process 2: 2 &gt; root(4)? NO, skip
+
+  Process 8: 8 &gt; root(4)? YES
+     remove 4, add 8
+     heap = [7, 9, 8]
+
+  Top 3 = {7, 8, 9}
+      </div>
+
+      <div class="key-idea">
+        <h3>Time: O(n log k)</h3>
+        <p>We process n elements, each heap operation is O(log k). Since k is typically much smaller than n, this is far better than sorting the whole array at O(n log n). For k=10 and n=1 billion, that is ~33 operations per element instead of ~30 billion total!</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: Application: Merge K Sorted Lists -->
+<!-- ============================================================ -->
+<div class="slide" id="s19">
+  <h2>Application: Merge K Sorted Lists</h2>
+  <p class="subtitle">Use a min-heap of size k to efficiently merge -- O(n log k)</p>
+
+  <div class="two-col">
+    <div>
+      <h3>The Problem</h3>
+      <p>Given k sorted lists with a total of n elements, merge them into one sorted list.</p>
+
+      <div class="diagram small">
+  List 1: [1, 4, 7]
+  List 2: [2, 5, 8]
+  List 3: [3, 6, 9]
+
+  Merged: [1, 2, 3, 4, 5, 6, 7, 8, 9]
+      </div>
+
+      <h3 class="mt">Algorithm</h3>
+      <ol>
+        <li>Insert the <strong>first element</strong> of each list into a min-heap (with a tag for which list it came from)</li>
+        <li>Extract min from heap, add to result</li>
+        <li>Insert the <strong>next element</strong> from that same list</li>
+        <li>Repeat until heap is empty</li>
+      </ol>
+    </div>
+    <div>
+      <h3>Trace</h3>
+      <div class="diagram small">
+  Heap initially: {1, 2, 3}
+  (one from each list)
+
+  Extract 1 (from L1), insert 4
+  --> heap: {2, 3, 4}  out: [1]
+
+  Extract 2 (from L2), insert 5
+  --> heap: {3, 4, 5}  out: [1,2]
+
+  Extract 3 (from L3), insert 6
+  --> heap: {4, 5, 6}  out: [1,2,3]
+
+  Extract 4 (from L1), insert 7
+  --> heap: {5, 6, 7}  out: [1,2,3,4]
+
+  ... and so on until all done.
+      </div>
+
+      <div class="key-idea">
+        <h3>Time: O(n log k)</h3>
+        <p>The heap always has at most <strong>k</strong> elements (one per list). Each of the <strong>n</strong> total elements is inserted and extracted once. Each operation costs O(log k). Total: O(n log k).</p>
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>Like a tournament bracket for k runners. At each step, you pick the fastest runner (min), record their time, and their next teammate enters the race. The heap keeps the bracket organized.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: Summary & Cheat Sheet -->
+<!-- ============================================================ -->
+<div class="slide" id="s20">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <p class="subtitle">Everything you need to know about heaps in one slide</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Core Operations</h3>
+      <table style="width: 100%;">
+        <tr>
+          <th>Operation</th>
+          <th>Time</th>
+          <th>How</th>
+        </tr>
+        <tr>
+          <td>peek / findMin</td>
+          <td>O(1)</td>
+          <td>Return root</td>
+        </tr>
+        <tr>
+          <td>insert</td>
+          <td>O(log n)</td>
+          <td>Add at end + bubble up</td>
+        </tr>
+        <tr>
+          <td>removeMin</td>
+          <td>O(log n)</td>
+          <td>Swap root/last + bubble down</td>
+        </tr>
+        <tr>
+          <td>build (top-down)</td>
+          <td>O(n log n)</td>
+          <td>Insert one by one</td>
+        </tr>
+        <tr class="highlight">
+          <td>build (bottom-up)</td>
+          <td>O(n)</td>
+          <td>Heapify from last parent</td>
+        </tr>
+        <tr>
+          <td>heap sort</td>
+          <td>O(n log n)</td>
+          <td>Build max-heap + extract</td>
+        </tr>
+      </table>
+
+      <h3 class="mt">Array Formulas (0-indexed)</h3>
+      <div class="diagram small">
+  parent(i)     = (i - 1) / 2
+  leftChild(i)  = 2 * i + 1
+  rightChild(i) = 2 * i + 2
+      </div>
+    </div>
+    <div>
+      <h3>When to Use a Heap</h3>
+      <ul>
+        <li><strong>Priority Queue</strong> -- process items by priority</li>
+        <li><strong>Top-K elements</strong> -- min-heap of size k, O(n log k)</li>
+        <li><strong>Merge K sorted lists</strong> -- min-heap of size k</li>
+        <li><strong>Heap Sort</strong> -- O(n log n), in-place, not stable</li>
+        <li><strong>Median finding</strong> -- two heaps (max + min)</li>
+        <li><strong>Dijkstra's algorithm</strong> -- shortest path</li>
+      </ul>
+
+      <h3 class="mt">Heap Sort Properties</h3>
+      <div class="diagram small">
+  Time:    O(n log n)   (always)
+  Space:   O(1)         (in-place!)
+  Stable:  NO
+  Compare: merge sort is stable but
+           uses O(n) extra space.
+           Quicksort is O(n^2) worst
+           case but faster in practice.
+      </div>
+
+      <div class="key-idea">
+        <h3>The Big Picture</h3>
+        <p>A heap is a <strong>partially ordered, complete binary tree stored in an array</strong>. It trades full sorting for fast access to the extreme element. This trade-off is what makes priority queues, heap sort, and many graph algorithms efficient.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- Navigation -->
+<!-- ============================================================ -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&larr; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &rarr;</button>
+</div>
+
+<script>
+const totalSlides = 20;
+let current = 1;
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const slide = document.getElementById('s' + n);
+  if (slide) { slide.classList.add('active'); slide.classList.add('fade-in'); }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  document.getElementById('progress').style.width = ((n / totalSlides) * 100) + '%';
+}
+function changeSlide(delta) {
+  const next = current + delta;
+  if (next >= 1 && next <= totalSlides) { current = next; showSlide(current); }
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+});
+showSlide(1);
+</script>
+
+</body>
+</html>

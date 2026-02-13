@@ -1,0 +1,1047 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CS205 - Analysis of Algorithms</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+.step { opacity: 0; transition: opacity 0.4s ease; }
+.step.visible { opacity: 1; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ============== SLIDE 1: Title ============== -->
+<div class="slide active" id="slide-1">
+  <div class="center">
+    <h1>Analysis of Algorithms</h1>
+    <p class="subtitle">Big-O, Big-Omega, Big-Theta</p>
+    <p class="subtitle" style="font-size:1.1em; margin-top: 20px;">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left; margin-top:30px;">
+       _____ _                  _____                    _           _ _
+      |_   _(_)_ __ ___   ___ / ____|___  _ __ ___  _ __| | _____  _(_) |_ _   _
+        | | | | '_ ` _ \ / _ \ |   / _ \| '_ ` _ \| '_ \ |/ _ \ \/ / | __| | | |
+        | | | | | | | | |  __/ |__| (_) | | | | | | |_) | |  __/>  <| | |_| |_| |
+        |_| |_|_| |_| |_|\___|\____\___/|_| |_| |_| .__/|_|\___/_/\_\_|\__|\__, |
+                                                    |_|                     |___/
+    </div>
+    <p style="margin-top: 30px; color: #64748b; font-size: 0.9em;">Use arrow keys or buttons to navigate | Press S to reveal steps</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ============== SLIDE 2: Why Analyze Algorithms? ============== -->
+<div class="slide" id="slide-2">
+  <h2>Why Analyze Algorithms?</h2>
+  <p>The same problem can be solved in vastly different amounts of time depending on the algorithm chosen.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Same problem, different speeds</h3>
+      <p>Consider searching for a name in a phone book:</p>
+      <ul>
+        <li><strong>Linear scan:</strong> Check every page one by one</li>
+        <li><strong>Binary search:</strong> Open to the middle, eliminate half each time</li>
+      </ul>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>Imagine sorting 1 million exam papers. A bad algorithm could take <strong>years</strong>. A good one finishes in <strong>seconds</strong>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Impact at scale (n = 1,000)</h3>
+      <table>
+        <tr><th>Complexity</th><th>Operations</th><th>At 1 GHz</th></tr>
+        <tr><td>O(n)</td><td>1,000</td><td>1 &mu;s</td></tr>
+        <tr><td>O(n log n)</td><td>~10,000</td><td>10 &mu;s</td></tr>
+        <tr class="highlight"><td>O(n&sup2;)</td><td>1,000,000</td><td>1 ms</td></tr>
+        <tr><td>O(n&sup3;)</td><td>10&sup9;</td><td>1 sec</td></tr>
+        <tr><td>O(2&#x207F;)</td><td>~10&sup3;&sup0;&sup1;</td><td>Heat death of universe</td></tr>
+      </table>
+    </div>
+  </div>
+
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>Algorithm analysis lets us predict performance <strong>before</strong> we run the code, and compare algorithms <strong>independently</strong> of hardware.</p>
+  </div>
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ============== SLIDE 3: What is an Algorithm? ============== -->
+<div class="slide" id="slide-3">
+  <h2>What is an Algorithm?</h2>
+  <div class="two-col">
+    <div>
+      <p>An <strong>algorithm</strong> is a step-by-step procedure for solving a problem in a finite number of steps.</p>
+      <h3 class="mt">Properties of an Algorithm</h3>
+      <ul>
+        <li><strong>Input:</strong> Zero or more inputs</li>
+        <li><strong>Output:</strong> At least one output</li>
+        <li><strong>Definiteness:</strong> Each step is precisely defined</li>
+        <li><strong>Finiteness:</strong> Terminates after finite steps</li>
+        <li><strong>Effectiveness:</strong> Each step is basic enough to be carried out</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Pseudocode Conventions</h3>
+      <div class="diagram small">
+Algorithm findMax(A, n):
+  Input:  Array A of n integers
+  Output: The maximum element
+
+  currentMax &larr; A[0]
+  for i &larr; 1 to n-1 do
+      if A[i] &gt; currentMax then
+          currentMax &larr; A[i]
+  return currentMax</div>
+      <p style="font-size:0.95em; color:#94a3b8;">We use pseudocode (not any specific language) so the analysis is language-independent.</p>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>We analyze the <em>algorithm</em>, not the <em>program</em>. The algorithm is the idea; the program is just one implementation of it.</p>
+  </div>
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ============== SLIDE 4: Measuring Efficiency ============== -->
+<div class="slide" id="slide-4">
+  <h2>Measuring Efficiency</h2>
+  <div class="two-col">
+    <div>
+      <h3>Why NOT wall-clock time?</h3>
+      <ul>
+        <li>Depends on the specific computer hardware</li>
+        <li>Depends on the programming language used</li>
+        <li>Depends on the compiler/interpreter</li>
+        <li>Depends on other processes running</li>
+        <li>Depends on the specific input data</li>
+      </ul>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>"My laptop ran it in 2 seconds" tells us almost nothing about the algorithm itself.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Machine-Independent Analysis</h3>
+      <p>Instead of timing, we <strong>count primitive operations</strong> as a function of input size <em>n</em>.</p>
+      <h3 class="mt">Primitive Operations</h3>
+      <ul>
+        <li>Assigning a value to a variable</li>
+        <li>Comparing two values</li>
+        <li>Arithmetic operation (+, -, *, /)</li>
+        <li>Accessing an array element by index</li>
+        <li>Following a pointer / reference</li>
+        <li>Returning from a function</li>
+      </ul>
+      <p class="mt">Each primitive operation takes <strong>constant time</strong> &mdash; we call it O(1).</p>
+    </div>
+  </div>
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ============== SLIDE 5: Counting Primitive Operations ============== -->
+<div class="slide" id="slide-5">
+  <h2>Counting Primitive Operations</h2>
+  <p>Let's carefully count every operation in <code>findMax</code>:</p>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+Algorithm findMax(A, n):
+
+  currentMax &larr; A[0]        # 2 ops
+                              #  (index + assign)
+
+  for i &larr; 1 to n-1 do      # 1 assign + (n-1) compares
+                              #  + (n-1) increments
+
+      if A[i] &gt; currentMax    # 2(n-1) ops
+          then                #  (index + compare)
+
+          currentMax &larr; A[i]  # 0 to 2(n-1) ops
+                              #  (index + assign)
+
+  return currentMax           # 1 op</div>
+    </div>
+    <div>
+      <h3>Counting it up</h3>
+      <table style="font-size:0.95em;">
+        <tr><th>Operation</th><th>Count</th></tr>
+        <tr><td>Initialization</td><td>2</td></tr>
+        <tr><td>Loop control</td><td>1 + 2(n-1)</td></tr>
+        <tr><td>Comparison in loop</td><td>2(n-1)</td></tr>
+        <tr><td>Assignment in loop (worst)</td><td>2(n-1)</td></tr>
+        <tr><td>Return</td><td>1</td></tr>
+        <tr class="highlight"><td><strong>Best case total</strong></td><td><strong>2 + 3(n-1) + 1 = 3n</strong></td></tr>
+        <tr class="highlight"><td><strong>Worst case total</strong></td><td><strong>2 + 5(n-1) + 1 = 5n - 2</strong></td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Both best and worst case are <strong>proportional to n</strong>. The exact constants (3 vs 5) don't matter for classification &mdash; it's <strong>O(n)</strong> either way.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ============== SLIDE 6: Growth Rate ============== -->
+<div class="slide" id="slide-6">
+  <h2>Growth Rate of Functions</h2>
+  <p>We care about how running time <strong>grows</strong> as input size n increases, not the exact count.</p>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Drop constants &amp; lower-order terms</h3>
+      <ul>
+        <li>5n + 3 &rarr; <strong>O(n)</strong></li>
+        <li>2n&sup2; + 10n + 7 &rarr; <strong>O(n&sup2;)</strong></li>
+        <li>100 &rarr; <strong>O(1)</strong></li>
+        <li>3n&sup3; + n&sup2; + 42 &rarr; <strong>O(n&sup3;)</strong></li>
+      </ul>
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>If you're driving 1000 miles, it doesn't matter if you start 5 feet ahead. At large scale, the <strong>dominant term</strong> determines everything.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Growth curves (ASCII)</h3>
+      <div class="diagram small">
+  time
+   ^
+   |                                    * 2^n
+   |                                *
+   |                            *
+   |                        *         . n^2
+   |                    *         . .
+   |                *         . .
+   |            *         . .
+   |        *         . .       _--- n log n
+   |    *         . .     _----
+   |  *       . .   __----     ___--- n
+   | *    . . __----     ___---
+   |*. . ----    ___-----
+   |..----___----               __---- log n
+   +--------------------------------&gt; n
+   |
+      </div>
+    </div>
+  </div>
+
+  <div class="key-idea">
+    <h3>Key Idea</h3>
+    <p>Growth rate analysis lets us focus on the <strong>big picture</strong> &mdash; how algorithms scale, not how they perform on tiny inputs.</p>
+  </div>
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ============== SLIDE 7: Big-O Notation ============== -->
+<div class="slide" id="slide-7">
+  <h2>Big-O Notation (Upper Bound)</h2>
+  <div class="two-col">
+    <div>
+      <h3>Formal Definition</h3>
+      <div class="key-idea">
+        <h3>Definition</h3>
+        <p>f(n) is <strong>O(g(n))</strong> if there exist positive constants <strong>c</strong> and <strong>n<sub>0</sub></strong> such that:</p>
+        <p style="font-size:1.3em; text-align:center; color:#93c5fd; margin: 12px 0;"><strong>f(n) &le; c &middot; g(n)</strong>&emsp;for all n &ge; n<sub>0</sub></p>
+      </div>
+      <h3 class="mt">What it means intuitively</h3>
+      <ul>
+        <li>f(n) grows <strong>no faster than</strong> g(n)</li>
+        <li>g(n) is an <strong>upper bound</strong> on f(n)</li>
+        <li>"In the worst case, it's <em>at most</em> this"</li>
+      </ul>
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Big-O is like saying "this trip will take <strong>at most</strong> 3 hours." It might take less, but never more (past a certain point).</p>
+      </div>
+    </div>
+    <div>
+      <h3>Visual: f(n) stays under c&middot;g(n)</h3>
+      <div class="diagram">
+   ^
+   |          c*g(n)
+   |           /
+   |          /
+   |         /
+   |        /  f(n)
+   |       / ../
+   |      / ./
+   |     /./
+   |    /.
+   |   /.
+   |  *   &larr; n&sub0; (from here on,
+   | /|      f(n) &le; c*g(n))
+   |/ |
+   +--|------------------&gt; n
+   |  n&sub0;
+
+   After n&sub0;, f(n) is always
+   at or below the line c*g(n).
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ============== SLIDE 8: Big-O Examples ============== -->
+<div class="slide" id="slide-8">
+  <h2>Big-O: Worked Examples</h2>
+  <div class="two-col">
+    <div>
+      <h3>Example 1: Prove 3n + 5 is O(n)</h3>
+      <div class="diagram small">
+ We need to find c and n&sub0; such that:
+   3n + 5 &le; c &middot; n  for all n &ge; n&sub0;
+
+ Choose c = 4, n&sub0; = 5:
+
+   3n + 5 &le; 4n ?
+   5 &le; n ?       (subtract 3n)
+   Yes! When n &ge; 5  &#x2713;
+
+ Check: n=5:  3(5)+5 = 20 &le; 4(5) = 20 &#x2713;
+        n=6:  3(6)+5 = 23 &le; 4(6) = 24 &#x2713;
+        n=10: 3(10)+5= 35 &le; 4(10)= 40 &#x2713;</div>
+      <p style="color:#34d399;">Therefore, 3n + 5 is O(n) with c=4, n<sub>0</sub>=5.</p>
+    </div>
+    <div>
+      <h3>Example 2: Prove n&sup2; + 3n is O(n&sup2;)</h3>
+      <div class="diagram small">
+ We need to find c and n&sub0; such that:
+   n&sup2; + 3n &le; c &middot; n&sup2;  for all n &ge; n&sub0;
+
+ Choose c = 2, n&sub0; = 3:
+
+   n&sup2; + 3n &le; 2n&sup2; ?
+   3n &le; n&sup2; ?       (subtract n&sup2;)
+   3 &le; n ?          (divide by n)
+   Yes! When n &ge; 3  &#x2713;
+
+ Check: n=3: 9+9 = 18 &le; 2(9) = 18  &#x2713;
+        n=4: 16+12= 28 &le; 2(16)= 32 &#x2713;
+        n=5: 25+15= 40 &le; 2(25)= 50 &#x2713;</div>
+      <p style="color:#34d399;">Therefore, n&sup2; + 3n is O(n&sup2;) with c=2, n<sub>0</sub>=3.</p>
+    </div>
+  </div>
+  <div class="warning mt">
+    <h3>Warning</h3>
+    <p>The choice of c and n<sub>0</sub> is <strong>not unique</strong> &mdash; many valid pairs exist. You only need to find <em>one</em> pair that works. Also, 3n + 5 is technically O(n&sup2;) too, but that's a loose (less useful) bound.</p>
+  </div>
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ============== SLIDE 9: Big-Omega ============== -->
+<div class="slide" id="slide-9">
+  <h2>Big-Omega &Omega; (Lower Bound)</h2>
+  <div class="two-col">
+    <div>
+      <div class="key-idea">
+        <h3>Definition</h3>
+        <p>f(n) is <strong>&Omega;(g(n))</strong> if there exist positive constants <strong>c</strong> and <strong>n<sub>0</sub></strong> such that:</p>
+        <p style="font-size:1.3em; text-align:center; color:#93c5fd; margin: 12px 0;"><strong>f(n) &ge; c &middot; g(n)</strong>&emsp;for all n &ge; n<sub>0</sub></p>
+      </div>
+      <h3 class="mt">What it means</h3>
+      <ul>
+        <li>f(n) grows <strong>at least as fast as</strong> g(n)</li>
+        <li>g(n) is a <strong>lower bound</strong> on f(n)</li>
+        <li>"The algorithm needs <em>at least</em> this much time"</li>
+      </ul>
+      <h3 class="mt">Example</h3>
+      <p>3n + 5 is &Omega;(n): choose c=3, n<sub>0</sub>=1.</p>
+      <p>3n + 5 &ge; 3n for all n &ge; 1. &#x2713;</p>
+    </div>
+    <div>
+      <h3>Visual: f(n) stays above c&middot;g(n)</h3>
+      <div class="diagram">
+   ^
+   |         f(n)
+   |          /
+   |         /
+   |        /
+   |       /
+   |      / .  c*g(n)
+   |     / .
+   |    /.
+   |   /.
+   |  *   &larr; n&sub0;
+   | /|
+   |. |
+   +--|------------------&gt; n
+   |  n&sub0;
+
+   After n&sub0;, f(n) is always
+   at or above the line c*g(n).
+      </div>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>Big-Omega is like saying "this trip takes <strong>at least</strong> 1 hour." It might take more, but never less.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ============== SLIDE 10: Big-Theta ============== -->
+<div class="slide" id="slide-10">
+  <h2>Big-Theta &Theta; (Tight Bound)</h2>
+  <div class="two-col">
+    <div>
+      <div class="key-idea">
+        <h3>Definition</h3>
+        <p>f(n) is <strong>&Theta;(g(n))</strong> if there exist positive constants <strong>c<sub>1</sub></strong>, <strong>c<sub>2</sub></strong>, and <strong>n<sub>0</sub></strong> such that:</p>
+        <p style="font-size:1.2em; text-align:center; color:#93c5fd; margin: 12px 0;"><strong>c<sub>1</sub>&middot;g(n) &le; f(n) &le; c<sub>2</sub>&middot;g(n)</strong></p>
+        <p style="text-align:center; color:#93c5fd;">for all n &ge; n<sub>0</sub></p>
+      </div>
+      <h3 class="mt">Equivalently</h3>
+      <p>f(n) is &Theta;(g(n)) if and only if:</p>
+      <ul>
+        <li>f(n) is O(g(n)) &mdash; <em>and</em></li>
+        <li>f(n) is &Omega;(g(n))</li>
+      </ul>
+      <h3 class="mt">Example</h3>
+      <p>3n + 5 is &Theta;(n):</p>
+      <ul>
+        <li>Upper: 3n+5 &le; 4n for n &ge; 5 (c<sub>2</sub>=4)</li>
+        <li>Lower: 3n+5 &ge; 3n for n &ge; 1 (c<sub>1</sub>=3)</li>
+        <li>Use n<sub>0</sub> = 5, c<sub>1</sub>=3, c<sub>2</sub>=4 &#x2713;</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Visual: f(n) sandwiched</h3>
+      <div class="diagram">
+   ^
+   |       c&sub2;*g(n)
+   |         /
+   |        / f(n)
+   |       / ../
+   |      / ./  c&sub1;*g(n)
+   |     /./   .
+   |    /.   .
+   |   /. .
+   |  * .
+   | /.
+   |/.
+   +-------------------&gt; n
+   |  n&sub0;
+
+   f(n) is "sandwiched" between
+   c&sub1;*g(n) and c&sub2;*g(n).
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>&Theta; gives the <strong>exact growth rate</strong>. When someone says "this algorithm <em>is</em> n log n," they really mean &Theta;(n log n). It's the most precise characterization.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ============== SLIDE 11: Common Growth Rates ============== -->
+<div class="slide" id="slide-11">
+  <h2>Common Growth Rates</h2>
+  <p>Listed from fastest to slowest growing (best to worst for runtime):</p>
+  <table class="mt" style="margin: 16px auto;">
+    <tr>
+      <th>Name</th>
+      <th>Big-O</th>
+      <th>n = 10</th>
+      <th>n = 100</th>
+      <th>n = 1,000</th>
+      <th>Example</th>
+    </tr>
+    <tr>
+      <td>Constant</td><td>O(1)</td>
+      <td>1</td><td>1</td><td>1</td>
+      <td>Array index</td>
+    </tr>
+    <tr>
+      <td>Logarithmic</td><td>O(log n)</td>
+      <td>3</td><td>7</td><td>10</td>
+      <td>Binary search</td>
+    </tr>
+    <tr>
+      <td>Linear</td><td>O(n)</td>
+      <td>10</td><td>100</td><td>1,000</td>
+      <td>Linear search</td>
+    </tr>
+    <tr class="highlight">
+      <td>Linearithmic</td><td>O(n log n)</td>
+      <td>30</td><td>700</td><td>10,000</td>
+      <td>Merge sort</td>
+    </tr>
+    <tr>
+      <td>Quadratic</td><td>O(n&sup2;)</td>
+      <td>100</td><td>10,000</td><td>1,000,000</td>
+      <td>Bubble sort</td>
+    </tr>
+    <tr>
+      <td>Cubic</td><td>O(n&sup3;)</td>
+      <td>1,000</td><td>1,000,000</td><td>10&sup9;</td>
+      <td>Matrix multiply</td>
+    </tr>
+    <tr>
+      <td>Exponential</td><td>O(2&#x207F;)</td>
+      <td>1,024</td><td>~10&sup3;&sup0;</td><td>~10&sup3;&sup0;&sup1;</td>
+      <td>Subsets</td>
+    </tr>
+    <tr>
+      <td>Factorial</td><td>O(n!)</td>
+      <td>3,628,800</td><td>~10&sup1;&sup5;&sup8;</td><td>LOL</td>
+      <td>Permutations</td>
+    </tr>
+  </table>
+  <div class="warning" style="max-width: 700px; margin: 16px auto;">
+    <h3>Warning</h3>
+    <p>Anything beyond O(n&sup2;) becomes impractical very quickly. O(2&#x207F;) and O(n!) are essentially unsolvable for n &gt; 30&ndash;50.</p>
+  </div>
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ============== SLIDE 12: Analyzing Loops ============== -->
+<div class="slide" id="slide-12">
+  <h2>Analyzing Loops</h2>
+  <div class="two-col">
+    <div>
+      <h3>Single Loop &rarr; O(n)</h3>
+      <div class="diagram small">
+for i &larr; 0 to n-1 do    # runs n times
+    doSomething()        # O(1) each
+
+Total: n &times; O(1) = O(n)</div>
+
+      <h3 class="mt">Nested Loops &rarr; O(n&sup2;)</h3>
+      <div class="diagram small">
+for i &larr; 0 to n-1 do      # n times
+    for j &larr; 0 to n-1 do  #   n times each
+        doSomething()      #   O(1)
+
+Total: n &times; n &times; O(1) = O(n&sup2;)</div>
+    </div>
+    <div>
+      <h3>Loop with Halving &rarr; O(log n)</h3>
+      <div class="diagram small">
+i &larr; n
+while i &gt; 0 do
+    doSomething()     # O(1)
+    i &larr; i / 2
+
+How many times does i halve
+before reaching 0?
+
+n &rarr; n/2 &rarr; n/4 &rarr; ... &rarr; 1
+
+That's log&sub2;(n) steps.
+
+Total: O(log n)</div>
+
+      <h3 class="mt">Loop with Doubling &rarr; O(log n)</h3>
+      <div class="diagram small">
+i &larr; 1
+while i &lt; n do
+    doSomething()     # O(1)
+    i &larr; i * 2
+
+1 &rarr; 2 &rarr; 4 &rarr; 8 &rarr; ... &rarr; n
+Also log&sub2;(n) steps.  O(log n)</div>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p><strong>Multiply</strong> for nested loops. <strong>Halving or doubling</strong> the loop variable means logarithmic. A loop running n times with a O(log n) body gives O(n log n).</p>
+  </div>
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ============== SLIDE 13: Analyzing Recursive Algorithms ============== -->
+<div class="slide" id="slide-13">
+  <h2>Analyzing Recursive Algorithms</h2>
+  <p>Recursive algorithms are analyzed using <strong>recurrence relations</strong>.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Pattern 1: Linear Recursion</h3>
+      <div class="diagram small">
+T(n) = T(n-1) + O(1)
+
+Expand:
+  T(n)   = T(n-1) + c
+  T(n-1) = T(n-2) + c
+  T(n-2) = T(n-3) + c
+  ...
+  T(1)   = c
+
+Total = n &times; c = O(n)
+
+Example: factorial(n)
+  fact(n) = n * fact(n-1)
+  fact(1) = 1</div>
+      <h3 class="mt">Pattern 2: Two calls, halved</h3>
+      <div class="diagram small">
+T(n) = 2T(n/2) + O(n)
+
+This is Merge Sort!
+Solves to: O(n log n)
+
+(Via the Master Theorem or
+ by expanding the tree)</div>
+    </div>
+    <div>
+      <h3>Recursion Tree for T(n) = 2T(n/2) + n</h3>
+      <div class="diagram small">
+            n             &larr; cost: n
+          /   \
+       n/2     n/2        &larr; cost: n
+      /   \   /   \
+    n/4  n/4 n/4  n/4     &larr; cost: n
+    ...  ...  ...  ...
+     1  1  1 ... 1  1     &larr; cost: n
+
+   log(n) levels
+   Each level costs n
+   Total: n &times; log(n) = O(n log n)</div>
+
+      <h3 class="mt">Pattern 3: Single call, halved</h3>
+      <div class="diagram small">
+T(n) = T(n/2) + O(1)
+
+This is Binary Search!
+  log(n) levels, O(1) per level.
+  Total: O(log n)</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Write the recurrence &rarr; expand it &rarr; find the pattern &rarr; determine the total.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ============== SLIDE 14: Best / Worst / Average Case ============== -->
+<div class="slide" id="slide-14">
+  <h2>Best Case, Worst Case, Average Case</h2>
+  <div class="two-col">
+    <div>
+      <h3>Linear Search Example</h3>
+      <div class="diagram small">
+Algorithm linearSearch(A, n, target):
+    for i &larr; 0 to n-1 do
+        if A[i] == target then
+            return i
+    return -1</div>
+      <table class="mt">
+        <tr><th>Case</th><th>When?</th><th>Comparisons</th></tr>
+        <tr><td><strong>Best</strong></td><td>Target is first</td><td>1 = O(1)</td></tr>
+        <tr><td><strong>Worst</strong></td><td>Target is last / absent</td><td>n = O(n)</td></tr>
+        <tr><td><strong>Average</strong></td><td>Target equally likely anywhere</td><td>n/2 = O(n)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="diagram small">
+   Best case: found immediately!
+   [ target | ... | ... | ... ]
+     ^
+     found at index 0
+
+   Worst case: check everything
+   [ ... | ... | ... | target ]
+                         ^
+     found at index n-1 (or not found)</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>We usually analyze the <strong>worst case</strong> because:</p>
+        <ul>
+          <li>It gives a <strong>guarantee</strong> on performance</li>
+          <li>It's often easier to analyze than average case</li>
+          <li>For some algorithms, the worst case occurs often</li>
+        </ul>
+      </div>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Don't confuse <strong>Big-O</strong> (a bound on a function) with <strong>worst case</strong> (a type of input). You can talk about the Big-O of the best case, worst case, or average case.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ============== SLIDE 15: Amortized Analysis ============== -->
+<div class="slide" id="slide-15">
+  <h2>Amortized Analysis (Brief Intro)</h2>
+  <p>Sometimes a single operation is expensive, but averaged over many operations, the cost is low.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>ArrayList / Dynamic Array</h3>
+      <p>When the array is full, we <strong>double</strong> its capacity and copy everything.</p>
+      <div class="diagram small">
+Insert #1:  [1|_]          cost: 1
+Insert #2:  [1|2]          cost: 1
+Insert #3:  [1|2|3|_]      cost: 1 + 2 (copy)
+Insert #4:  [1|2|3|4]      cost: 1
+Insert #5:  [1|2|3|4|5|_|_|_] cost: 1 + 4 (copy)
+Insert #6:  [1|2|3|4|5|6|_|_] cost: 1
+Insert #7:  [1|2|3|4|5|6|7|_] cost: 1
+Insert #8:  [1|2|3|4|5|6|7|8] cost: 1</div>
+    </div>
+    <div>
+      <h3>Cost analysis for n inserts</h3>
+      <div class="diagram small">
+Copies happen at insert 3, 5, 9, 17, ...
+Copy costs: 2 + 4 + 8 + 16 + ...
+
+Total copy cost for n inserts:
+  2 + 4 + 8 + ... + n &le; 2n
+
+Total cost = n (inserts) + 2n (copies)
+           = 3n
+
+Amortized cost per insert = 3n/n = 3
+                          = O(1) !</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Individual insert can be O(n) in the worst case. But the <strong>amortized cost</strong> per insert is <strong>O(1)</strong>. "Expensive operations are rare enough that they average out."</p>
+      </div>
+    </div>
+  </div>
+  <div class="analogy mt">
+    <h3>Analogy</h3>
+    <p>Think of it like paying rent. You save a little each day, and once a month you pay a big lump sum. On average, your daily spending is still constant.</p>
+  </div>
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ============== SLIDE 16: Space Complexity ============== -->
+<div class="slide" id="slide-16">
+  <h2>Space Complexity</h2>
+  <p>Algorithm analysis isn't just about <strong>time</strong> &mdash; <strong>memory usage</strong> matters too.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>What counts as space?</h3>
+      <ul>
+        <li><strong>Input space:</strong> Memory for the input itself (usually excluded from analysis)</li>
+        <li><strong>Auxiliary space:</strong> Extra memory the algorithm needs beyond the input</li>
+      </ul>
+      <h3 class="mt">In-Place Algorithms</h3>
+      <p>Use only <strong>O(1) extra space</strong> &mdash; they modify the input directly.</p>
+      <div class="diagram small">
+Swap two elements: O(1) extra
+
+temp &larr; A[i]    # 1 variable
+A[i] &larr; A[j]
+A[j] &larr; temp</div>
+    </div>
+    <div>
+      <h3>Space complexity examples</h3>
+      <table>
+        <tr><th>Algorithm</th><th>Time</th><th>Space (aux)</th></tr>
+        <tr><td>Linear search</td><td>O(n)</td><td>O(1)</td></tr>
+        <tr><td>Binary search (iterative)</td><td>O(log n)</td><td>O(1)</td></tr>
+        <tr><td>Binary search (recursive)</td><td>O(log n)</td><td>O(log n)*</td></tr>
+        <tr class="highlight"><td>Merge sort</td><td>O(n log n)</td><td>O(n)</td></tr>
+        <tr><td>Insertion sort</td><td>O(n&sup2;)</td><td>O(1)</td></tr>
+        <tr><td>Copy array</td><td>O(n)</td><td>O(n)</td></tr>
+      </table>
+      <p style="font-size:0.9em; color:#94a3b8;">* Recursive calls use stack space</p>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Recursion uses stack space! Each recursive call adds a frame. A recursion depth of n means O(n) space, even if no arrays are allocated.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ============== SLIDE 17: Common Algorithm Complexities ============== -->
+<div class="slide" id="slide-17">
+  <h2>Common Algorithm Complexities</h2>
+  <div class="two-col">
+    <div>
+      <h3>Sorting</h3>
+      <table style="font-size:0.95em;">
+        <tr><th>Algorithm</th><th>Best</th><th>Average</th><th>Worst</th></tr>
+        <tr><td>Bubble Sort</td><td>O(n)</td><td>O(n&sup2;)</td><td>O(n&sup2;)</td></tr>
+        <tr><td>Insertion Sort</td><td>O(n)</td><td>O(n&sup2;)</td><td>O(n&sup2;)</td></tr>
+        <tr><td>Selection Sort</td><td>O(n&sup2;)</td><td>O(n&sup2;)</td><td>O(n&sup2;)</td></tr>
+        <tr class="highlight"><td>Merge Sort</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n log n)</td></tr>
+        <tr class="highlight"><td>Quick Sort</td><td>O(n log n)</td><td>O(n log n)</td><td>O(n&sup2;)</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Comparison-based sorting has a proven <strong>lower bound of &Omega;(n log n)</strong>. No comparison sort can do better in the worst case.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Searching</h3>
+      <table style="font-size:0.95em;">
+        <tr><th>Algorithm</th><th>Time</th><th>Requires</th></tr>
+        <tr><td>Linear Search</td><td>O(n)</td><td>Nothing</td></tr>
+        <tr class="highlight"><td>Binary Search</td><td>O(log n)</td><td>Sorted array</td></tr>
+        <tr><td>Hash Table Lookup</td><td>O(1) avg</td><td>Hash table</td></tr>
+      </table>
+
+      <h3 class="mt">Graph Algorithms (Preview)</h3>
+      <table style="font-size:0.95em;">
+        <tr><th>Algorithm</th><th>Time</th></tr>
+        <tr><td>BFS / DFS</td><td>O(V + E)</td></tr>
+        <tr><td>Dijkstra's</td><td>O((V+E) log V)</td></tr>
+      </table>
+      <p class="mt" style="font-size:0.9em; color:#94a3b8;">V = vertices, E = edges. You'll learn these later in the course!</p>
+    </div>
+  </div>
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ============== SLIDE 18: Pitfalls ============== -->
+<div class="slide" id="slide-18">
+  <h2>Common Pitfalls</h2>
+  <div class="two-col">
+    <div>
+      <div class="warning">
+        <h3>Pitfall 1: Confusing O and &Theta;</h3>
+        <p>Saying "linear search is O(n&sup2;)" is technically <em>true</em> (O is an upper bound), but <strong>misleading</strong>. The tight bound is &Theta;(n). Always give the <strong>tightest</strong> bound you can.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Pitfall 2: Ignoring constants in practice</h3>
+        <p>Big-O ignores constants, but in the real world, an O(n) algorithm with a huge constant can be slower than O(n&sup2;) for reasonable inputs.</p>
+        <div class="diagram small">
+ 1,000,000 &middot; n  vs  n&sup2;
+
+ For n &lt; 1,000,000:
+   the "slower" n&sup2; is actually faster!</div>
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Pitfall 3: Log base doesn't matter</h3>
+        <p>In Big-O, log base is irrelevant because:</p>
+        <div class="diagram small">
+log&sub2;(n) = log&sub1;&sub0;(n) / log&sub1;&sub0;(2)
+        = log&sub1;&sub0;(n) &times; 3.32...
+
+The 3.32 is just a constant,
+and constants are dropped in Big-O.
+
+So O(log&sub2; n) = O(log&sub1;&sub0; n) = O(ln n)</div>
+      </div>
+      <div class="warning mt">
+        <h3>Pitfall 4: Confusing case &amp; bound</h3>
+        <p><strong>Best/worst/average case</strong> = which input.<br>
+        <strong>O / &Omega; / &Theta;</strong> = type of bound on the function.</p>
+        <p>You can say: "The worst case is &Theta;(n&sup2;)" or "The best case is O(n)." These are separate concepts!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ============== SLIDE 19: How to Determine Big-O Quickly ============== -->
+<div class="slide" id="slide-19">
+  <h2>How to Determine Big-O Quickly</h2>
+  <p>Rules of thumb for fast analysis:</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Rule 1: Drop Constants</h3>
+      <div class="diagram small">
+5n + 100  &rarr;  O(n)
+3n&sup2;       &rarr;  O(n&sup2;)
+42        &rarr;  O(1)</div>
+
+      <h3 class="mt">Rule 2: Drop Lower-Order Terms</h3>
+      <div class="diagram small">
+n&sup2; + n + 1     &rarr;  O(n&sup2;)
+n&sup3; + 100n&sup2;     &rarr;  O(n&sup3;)
+n log n + n    &rarr;  O(n log n)</div>
+
+      <h3 class="mt">Rule 3: Sequential = Add</h3>
+      <div class="diagram small">
+for i &larr; 0 to n:     # O(n)
+    ...
+for j &larr; 0 to n:     # O(n)
+    ...
+
+Total: O(n) + O(n) = O(n)</div>
+    </div>
+    <div>
+      <h3>Rule 4: Nested = Multiply</h3>
+      <div class="diagram small">
+for i &larr; 0 to n:           # O(n)
+    for j &larr; 0 to n:       #   &times; O(n)
+        ...
+                             # = O(n&sup2;)
+
+for i &larr; 0 to n:           # O(n)
+    for j &larr; 0 to i:       #   avg n/2
+        ...                  # = O(n&sup2;)
+
+  (Sum 0+1+2+...+n = n(n+1)/2 = O(n&sup2;))</div>
+
+      <h3 class="mt">Rule 5: Halving = log</h3>
+      <div class="diagram small">
+If loop variable is halved or doubled
+each iteration &rarr; O(log n)
+
+If O(n) loop contains O(log n) work:
+  &rarr; O(n log n)</div>
+
+      <div class="key-idea mt">
+        <h3>Quick Decision Flowchart</h3>
+        <p>Single loop over n? &rarr; O(n)<br>
+           Nested loop? &rarr; O(n&sup2;)<br>
+           Halving? &rarr; O(log n)<br>
+           Divide and conquer? &rarr; Probably O(n log n)</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ============== SLIDE 20: Summary & Cheat Sheet ============== -->
+<div class="slide" id="slide-20">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <div class="two-col">
+    <div>
+      <h3>The Three Notations</h3>
+      <table style="font-size:0.95em;">
+        <tr><th>Notation</th><th>Meaning</th><th>Bound</th></tr>
+        <tr><td><strong>O(g(n))</strong></td><td>f(n) &le; c&middot;g(n)</td><td>Upper</td></tr>
+        <tr><td><strong>&Omega;(g(n))</strong></td><td>f(n) &ge; c&middot;g(n)</td><td>Lower</td></tr>
+        <tr class="highlight"><td><strong>&Theta;(g(n))</strong></td><td>c&sub1;&middot;g(n) &le; f(n) &le; c&sub2;&middot;g(n)</td><td>Tight</td></tr>
+      </table>
+
+      <h3 class="mt">Growth Rate Hierarchy</h3>
+      <div class="diagram small">
+ fastest                      slowest
+ &larr;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&mdash;&rarr;
+
+ O(1)  &lt;  O(log n)  &lt;  O(n)
+       &lt;  O(n log n) &lt;  O(n&sup2;)
+       &lt;  O(n&sup3;)      &lt;  O(2&#x207F;)
+       &lt;  O(n!)</div>
+    </div>
+    <div>
+      <h3>Analysis Checklist</h3>
+      <ul>
+        <li>Identify primitive operations</li>
+        <li>Count operations as a function of n</li>
+        <li>Drop constants and lower-order terms</li>
+        <li>For loops: add sequential, multiply nested</li>
+        <li>For recursion: write recurrence, solve it</li>
+        <li>State which case (best/worst/average)</li>
+        <li>Don't forget space complexity!</li>
+      </ul>
+      <div class="key-idea mt">
+        <h3>Key Takeaway</h3>
+        <p>Algorithm analysis is about understanding <strong>scalability</strong>. A good algorithm on slow hardware will always eventually beat a bad algorithm on fast hardware &mdash; you just need a large enough input.</p>
+      </div>
+      <div class="diagram small" style="text-align:center; margin-top:12px;">
+  "A good algorithm is worth a
+   thousand fast processors."</div>
+    </div>
+  </div>
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&larr; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &rarr;</button>
+</div>
+
+<script>
+const totalSlides = 20;
+let currentSlide = 1;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const target = document.getElementById('slide-' + n);
+  if (target) {
+    target.classList.add('active');
+    target.classList.add('fade-in');
+    setTimeout(() => target.classList.remove('fade-in'), 500);
+  }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  document.getElementById('progress').style.width = ((n / totalSlides) * 100) + '%';
+
+  // Reset step reveals for current slide
+  currentStepIndex = 0;
+  const steps = target ? target.querySelectorAll('.step') : [];
+  steps.forEach(s => s.classList.remove('visible'));
+}
+
+function changeSlide(delta) {
+  const newSlide = currentSlide + delta;
+  if (newSlide >= 1 && newSlide <= totalSlides) {
+    currentSlide = newSlide;
+    showSlide(currentSlide);
+  }
+}
+
+let currentStepIndex = 0;
+
+function revealNextStep() {
+  const slide = document.getElementById('slide-' + currentSlide);
+  if (!slide) return;
+  const steps = slide.querySelectorAll('.step');
+  if (currentStepIndex < steps.length) {
+    steps[currentStepIndex].classList.add('visible');
+    currentStepIndex++;
+  }
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    revealNextStep();
+  }
+});
+
+// Initialize
+showSlide(1);
+</script>
+
+</body>
+</html>

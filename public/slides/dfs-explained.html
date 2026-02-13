@@ -1,0 +1,1450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DFS - Depth-First Search - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+.step { opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(8px); }
+.step.visible { opacity: 1; transform: translateY(0); }
+.code-block { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.7; white-space: pre; overflow-x: auto; margin: 16px 0; color: #e2e8f0; }
+.code-block .kw { color: #c084fc; }
+.code-block .type { color: #67e8f9; }
+.code-block .str { color: #86efac; }
+.code-block .cmt { color: #64748b; }
+.code-block .fn { color: #93c5fd; }
+.code-block .num { color: #fbbf24; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; align-items: start; }
+.tag { display: inline-block; background: #334155; color: #93c5fd; padding: 2px 10px; border-radius: 6px; font-size: 0.85em; margin-right: 6px; }
+.tag.green { background: rgba(16,185,129,0.2); color: #34d399; }
+.tag.yellow { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.tag.red { background: rgba(239,68,68,0.2); color: #f87171; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active" id="slide-1">
+  <div class="center" style="width:100%;">
+    <h1 style="font-size:3.2em;">DFS - Depth-First Search</h1>
+    <p class="subtitle" style="font-size:1.6em;">Go Deep, Then Backtrack</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:1.1em; margin-top:20px;">
+        A --&gt; B --&gt; D --&gt; (dead end, backtrack!)
+        |         |
+        v         v
+        C         E --&gt; F
+        |
+        v
+        G
+    </div>
+    <p class="subtitle" style="margin-top:30px;">CS205 Data Structures</p>
+    <p style="color:#64748b; font-size:0.95em;">Use arrow keys or buttons to navigate &bull; Press S to reveal steps</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 2: What is DFS? ==================== -->
+<div class="slide" id="slide-2">
+  <h2>What is DFS?</h2>
+  <p>Depth-First Search explores a graph by going <strong style="color:#a5f3fc;">as deep as possible</strong> along each branch before backtracking.</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+  Graph:                DFS Order:
+
+    (A)----(B)            A (1)
+     |  \   |             |
+     |   \  |             B (2)
+     |    \ |             |
+    (C)   (D)             D (3)
+     |                    |
+    (E)----(F)            F (4)
+                          |
+                          E (5)
+
+                          backtrack to A...
+
+                          C (6)
+      </div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Maze Explorer</h3>
+        <p>Imagine exploring a maze: you always walk forward, taking the first available turn. When you hit a dead end, you backtrack to the last intersection and try a different path.</p>
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>DFS is driven by a <strong style="color:#a5f3fc;">stack</strong> (either the call stack via recursion, or an explicit stack). It visits vertices in a deep-first manner rather than level-by-level.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 3: DFS Uses a Stack ==================== -->
+<div class="slide" id="slide-3">
+  <h2>DFS Uses a Stack (or Recursion)</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Recursion IS a Stack</h3>
+      <div class="diagram small">
+  Call Stack during DFS:
+
+  DFS(F)    &lt;-- top of stack
+  DFS(E)
+  DFS(D)
+  DFS(B)
+  DFS(A)    &lt;-- bottom (first call)
+
+  When DFS(F) returns, we "pop"
+  back to DFS(E), then DFS(D)...
+  This IS backtracking!
+      </div>
+      <div class="key-idea">
+        <h3>Key Insight</h3>
+        <p>The recursive version uses the <strong style="color:#a5f3fc;">program's call stack</strong> implicitly. The iterative version uses an <strong style="color:#a5f3fc;">explicit stack data structure</strong>. Both do the same thing.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Two Equivalent Approaches</h3>
+      <table style="width:100%;">
+        <tr>
+          <th></th>
+          <th>Recursive</th>
+          <th>Iterative</th>
+        </tr>
+        <tr>
+          <td><strong>Stack</strong></td>
+          <td>Call stack (implicit)</td>
+          <td>Explicit Stack object</td>
+        </tr>
+        <tr>
+          <td><strong>Push</strong></td>
+          <td>Recursive call</td>
+          <td>stack.push(v)</td>
+        </tr>
+        <tr>
+          <td><strong>Pop</strong></td>
+          <td>Function return</td>
+          <td>stack.pop()</td>
+        </tr>
+        <tr>
+          <td><strong>Risk</strong></td>
+          <td>Stack overflow on deep graphs</td>
+          <td>Uses heap memory</td>
+        </tr>
+      </table>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Recursive DFS can cause a <strong>stack overflow</strong> on very deep graphs (e.g., a path of 100,000 nodes). The iterative version avoids this.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 4: DFS Algorithm (Recursive) ==================== -->
+<div class="slide" id="slide-4">
+  <h2>DFS Algorithm (Recursive)</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Pseudocode</h3>
+      <div class="code-block">
+<span class="kw">function</span> <span class="fn">DFS</span>(G):
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        visited[v] = <span class="num">false</span>
+
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        <span class="kw">if not</span> visited[v]:
+            <span class="fn">DFS-Visit</span>(v)
+
+
+<span class="kw">function</span> <span class="fn">DFS-Visit</span>(u):
+    visited[u] = <span class="num">true</span>
+    <span class="cmt">// process vertex u here</span>
+
+    <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+        <span class="kw">if not</span> visited[v]:
+            <span class="fn">DFS-Visit</span>(v)
+      </div>
+    </div>
+    <div>
+      <h3>How It Works</h3>
+      <ul>
+        <li><strong style="color:#a5f3fc;">Mark</strong> the current vertex as visited</li>
+        <li><strong style="color:#a5f3fc;">Recurse</strong> on each unvisited neighbor</li>
+        <li>When all neighbors are visited, the function <strong style="color:#a5f3fc;">returns</strong> (backtracks)</li>
+        <li>Outer loop handles <strong>disconnected</strong> graphs</li>
+      </ul>
+
+      <div class="diagram small mt">
+  DFS-Visit(A)
+    ├── DFS-Visit(B)
+    │     ├── DFS-Visit(D)
+    │     │     └── (no unvisited neighbors)
+    │     └── DFS-Visit(E)
+    │           └── DFS-Visit(F)
+    └── DFS-Visit(C)
+          └── (no unvisited neighbors)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The recursion tree of DFS-Visit calls IS the DFS tree of the graph.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 5: DFS Algorithm (Iterative) ==================== -->
+<div class="slide" id="slide-5">
+  <h2>DFS Algorithm (Iterative)</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Pseudocode</h3>
+      <div class="code-block">
+<span class="kw">function</span> <span class="fn">DFS-Iterative</span>(G, source):
+    <span class="kw">let</span> S = <span class="kw">new</span> <span class="type">Stack</span>()
+    <span class="kw">let</span> visited = <span class="kw">new</span> <span class="type">Set</span>()
+
+    S.<span class="fn">push</span>(source)
+
+    <span class="kw">while</span> S is not empty:
+        u = S.<span class="fn">pop</span>()
+
+        <span class="kw">if</span> u <span class="kw">not in</span> visited:
+            visited.<span class="fn">add</span>(u)
+            <span class="cmt">// process vertex u here</span>
+
+            <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+                <span class="kw">if</span> v <span class="kw">not in</span> visited:
+                    S.<span class="fn">push</span>(v)
+      </div>
+    </div>
+    <div>
+      <h3>Step-by-Step Logic</h3>
+      <ol>
+        <li><strong>Push</strong> the source onto the stack</li>
+        <li><strong>Pop</strong> a vertex from the stack</li>
+        <li>If it hasn't been visited yet, <strong>mark</strong> it visited</li>
+        <li><strong>Push</strong> all unvisited neighbors onto the stack</li>
+        <li><strong>Repeat</strong> until the stack is empty</li>
+      </ol>
+
+      <div class="warning mt">
+        <h3>Warning: Subtle Difference</h3>
+        <p>The iterative version may visit vertices in a <strong>different order</strong> than the recursive version, because it pushes ALL neighbors at once. The recursive version visits one neighbor completely before even looking at the next.</p>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>BFS vs DFS: One Character Difference</h3>
+        <p>Replace the Stack with a Queue, and you get BFS! That is the only structural difference.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 6: Step-by-Step Example (Part 1) ==================== -->
+<div class="slide" id="slide-6">
+  <h2>DFS Step-by-Step Example</h2>
+  <p>Graph with 7 vertices. We start DFS at vertex <strong style="color:#a5f3fc;">A</strong>. Neighbors processed in alphabetical order.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  Our Graph (undirected):
+
+       (A)-----(B)
+       / \       \
+      /   \       \
+    (C)   (D)----(E)
+     |             |
+     |             |
+    (F)          (G)
+
+  Adjacency Lists:
+    A: [B, C, D]
+    B: [A, E]
+    C: [A, F]
+    D: [A, E]
+    E: [B, D, G]
+    F: [C]
+    G: [E]
+      </div>
+    </div>
+    <div>
+      <div class="step">
+        <h3>Step 1: Visit A</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A</span>}
+  Stack:   [A calls B, C, D]
+  Path:    A
+  Action:  Visit A, recurse on first
+           unvisited neighbor: B
+        </div>
+      </div>
+      <div class="step">
+        <h3>Step 2: Visit B</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B</span>}
+  Stack:   [..., B calls A(skip), E]
+  Path:    A &rarr; B
+  Action:  Visit B, A already visited,
+           recurse on E
+        </div>
+      </div>
+      <div class="step">
+        <h3>Step 3: Visit E</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B, E</span>}
+  Stack:   [..., E calls B(skip),D,G]
+  Path:    A &rarr; B &rarr; E
+  Action:  Visit E, B visited, recurse
+           on D
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b; font-size:0.9em;">Press S to reveal each step</p>
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 7: Step-by-Step (continued) ==================== -->
+<div class="slide" id="slide-7">
+  <h2>DFS Step-by-Step (continued)</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  Graph State after Step 3:
+
+       <span style="color:#86efac;">(A)</span>-----<span style="color:#86efac;">(B)</span>
+       / \       \
+      /   \       \
+    (C)   (D)----<span style="color:#86efac;">(E)</span>
+     |             |
+     |             |
+    (F)          (G)
+
+  <span style="color:#86efac;">Green = visited</span>
+  White = unvisited
+      </div>
+    </div>
+    <div>
+      <div class="step">
+        <h3>Step 4: Visit D</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B, E, D</span>}
+  Stack:   [..., D calls A(skip),E(skip)]
+  Path:    A &rarr; B &rarr; E &rarr; D
+  Action:  Visit D, all neighbors visited.
+           <span style="color:#fbbf24;">BACKTRACK</span> to E!
+        </div>
+      </div>
+      <div class="step">
+        <h3>Step 5: Visit G</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B, E, D, G</span>}
+  Stack:   [..., G calls E(skip)]
+  Path:    A &rarr; B &rarr; E &rarr; G
+  Action:  Back at E, next unvisited
+           neighbor is G. Visit G.
+           G has no unvisited neighbors.
+           <span style="color:#fbbf24;">BACKTRACK</span> to E, then B, then A!
+        </div>
+      </div>
+      <div class="step">
+        <h3>Step 6: Visit C</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B, E, D, G, C</span>}
+  Stack:   [..., A calls C]
+  Path:    A &rarr; C
+  Action:  Back at A, next unvisited
+           neighbor is C. Visit C.
+           Recurse on F.
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b; font-size:0.9em;">Press S to reveal each step</p>
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 8: Step-by-Step (Final) ==================== -->
+<div class="slide" id="slide-8">
+  <h2>DFS Step-by-Step (Final)</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="step">
+        <h3>Step 7: Visit F</h3>
+        <div class="diagram small">
+  Visited: {<span style="color:#86efac;">A, B, E, D, G, C, F</span>}
+  Stack:   [..., F calls C(skip)]
+  Path:    A &rarr; C &rarr; F
+  Action:  Visit F. Only neighbor C is
+           already visited.
+           <span style="color:#fbbf24;">BACKTRACK</span> to C, then A.
+           A has no more unvisited
+           neighbors. <span style="color:#86efac;">DONE!</span>
+        </div>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>DFS Visit Order</h3>
+        <p style="font-size:1.3em; color:#a5f3fc; font-weight:bold;">A &rarr; B &rarr; E &rarr; D &rarr; G &rarr; C &rarr; F</p>
+        <p>Notice how DFS goes deep (A&rarr;B&rarr;E&rarr;D) before backtracking. It does NOT visit level-by-level like BFS would.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Final DFS Tree</h3>
+      <div class="diagram">
+  DFS Tree:
+
+         (A)
+        /   \
+      (B)   (C)
+       |      \
+      (E)     (F)
+      / \
+    (D) (G)
+
+  <span style="color:#86efac;">Tree edges</span> (solid):
+    A-B, B-E, E-D, E-G, A-C, C-F
+
+  <span style="color:#fbbf24;">Non-tree edges</span> (not shown):
+    A-D  (D was already visited via E)
+    B-A  (A was already visited)
+      </div>
+      <div class="diagram small">
+  Complete Graph with edge types:
+
+       (A)- - -(B)       <span style="color:#86efac;">━ = tree edge</span>
+       ┃ ╲       ┃       <span style="color:#fbbf24;">- = back edge</span>
+       ┃  ╲       ┃
+      (C)  (D)- -(E)
+       ┃           ┃
+      (F)        (G)
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 9: The DFS Tree ==================== -->
+<div class="slide" id="slide-9">
+  <h2>The DFS Tree &amp; Edge Classification</h2>
+  <p>When DFS traverses a <strong>directed</strong> graph, every edge falls into one of four categories:</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  Directed Graph:        DFS Tree:
+
+    (A)&rarr;(B)&rarr;(D)         A
+     |    |   &darr;          ┃
+     v    v   |          B
+    (C)  (E)&larr;┘          ┃
+     |   &darr;              E
+     └&rarr;(F)              ┃
+         &darr;              D
+        (A) (back!)
+
+  Edge Classification:
+  ━━━━━━━━━━━━━━━━━━━
+  A&rarr;B : <span style="color:#86efac;">Tree edge</span>
+  B&rarr;E : <span style="color:#86efac;">Tree edge</span>
+  E&rarr;D : <span style="color:#86efac;">Tree edge</span>
+  A&rarr;C : <span style="color:#86efac;">Tree edge</span>
+  D&rarr;E : <span style="color:#fbbf24;">Back edge</span>  (to ancestor)
+  B&rarr;D : <span style="color:#67e8f9;">Forward edge</span> (to descendant)
+  C&rarr;F : <span style="color:#86efac;">Tree edge</span>
+  F&rarr;A : <span style="color:#fbbf24;">Back edge</span>  (to ancestor)
+      </div>
+    </div>
+    <div>
+      <table style="width:100%;">
+        <tr>
+          <th>Edge Type</th>
+          <th>Goes To</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td><span class="tag green">Tree</span></td>
+          <td>Unvisited vertex</td>
+          <td>Part of DFS tree</td>
+        </tr>
+        <tr>
+          <td><span class="tag yellow">Back</span></td>
+          <td>Ancestor in DFS tree</td>
+          <td>Indicates a <strong>cycle</strong>!</td>
+        </tr>
+        <tr>
+          <td><span class="tag">Forward</span></td>
+          <td>Descendant in DFS tree</td>
+          <td>Shortcut down</td>
+        </tr>
+        <tr>
+          <td><span class="tag red">Cross</span></td>
+          <td>Neither ancestor nor descendant</td>
+          <td>Between branches</td>
+        </tr>
+      </table>
+
+      <div class="warning mt">
+        <h3>Important for Undirected Graphs</h3>
+        <p>In undirected graphs, there are only <strong>tree edges</strong> and <strong>back edges</strong>. Forward and cross edges cannot exist.</p>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p><strong style="color:#fbbf24;">Back edge = cycle</strong>. This is the foundation of DFS-based cycle detection.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 10: Discovery and Finish Times ==================== -->
+<div class="slide" id="slide-10">
+  <h2>Discovery and Finish Times</h2>
+  <p>DFS assigns two timestamps to each vertex: <code>d[v]</code> (discovery) and <code>f[v]</code> (finish).</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+  DFS with timestamps:
+
+  Graph: A &rarr; B &rarr; D
+         |       |
+         v       v
+         C       E
+
+  Vertex   d[v]   f[v]
+  ━━━━━━━━━━━━━━━━━━━━
+    A        1     10
+    B        2      7
+    D        3      4
+    E        5      6
+    C        8      9
+
+  Timeline:
+  ──────────────────────────────&gt; time
+  1  2  3  4  5  6  7  8  9  10
+  A[ B[ D[D]  E[E]  B]  C[C]  A]
+
+  Parenthesis view:
+  ( A  ( B  ( D )  ( E )  )  ( C )  )
+      </div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Parenthesis Theorem</h3>
+        <p>For any two vertices u and v, exactly one of these is true:</p>
+        <ul>
+          <li><code>[d[u], f[u]]</code> and <code>[d[v], f[v]]</code> are <strong>entirely disjoint</strong> (neither is ancestor of other)</li>
+          <li>One interval <strong>completely contains</strong> the other (ancestor-descendant relationship)</li>
+        </ul>
+        <p>They <strong>never partially overlap</strong>. Like properly nested parentheses!</p>
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy: Nested Boxes</h3>
+        <p>Think of each vertex as a box that opens at time d[v] and closes at f[v]. Boxes are either completely inside one another or completely separate -- they never partially overlap.</p>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Edge Classification via Timestamps</h3>
+        <ul>
+          <li><strong>Tree/Forward:</strong> d[u] &lt; d[v] &lt; f[v] &lt; f[u]</li>
+          <li><strong>Back:</strong> d[v] &lt; d[u] &lt; f[u] &lt; f[v]</li>
+          <li><strong>Cross:</strong> d[v] &lt; f[v] &lt; d[u] &lt; f[u]</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 11: BFS vs DFS ==================== -->
+<div class="slide" id="slide-11">
+  <h2>BFS vs DFS Comparison</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Same Graph, Different Orders</h3>
+      <div class="diagram small">
+  Graph:
+       (A)-----(B)
+       / \       \
+      /   \       \
+    (C)   (D)----(E)
+     |             |
+    (F)          (G)
+
+  BFS from A (queue):     DFS from A (stack):
+  ━━━━━━━━━━━━━━━━━━━     ━━━━━━━━━━━━━━━━━━━
+  Level 0: A               A
+  Level 1: B, C, D           B
+  Level 2: E, F                E
+  Level 3: G                     D
+                                 G
+  Order: A B C D E F G       C
+                               F
+                          Order: A B E D G C F
+      </div>
+      <div class="diagram small">
+  BFS Tree:           DFS Tree:
+
+      (A)                 (A)
+     / | \               /   \
+   (B)(C)(D)           (B)   (C)
+    |   |   \           |      \
+   (E) (F)  (E)x      (E)     (F)
+    |                  / \
+   (G)               (D) (G)
+      </div>
+    </div>
+    <div>
+      <table style="width:100%;">
+        <tr>
+          <th>Property</th>
+          <th>BFS</th>
+          <th>DFS</th>
+        </tr>
+        <tr>
+          <td>Data structure</td>
+          <td><span class="tag">Queue</span></td>
+          <td><span class="tag">Stack</span></td>
+        </tr>
+        <tr>
+          <td>Exploration</td>
+          <td>Level by level</td>
+          <td>Deep first</td>
+        </tr>
+        <tr>
+          <td>Shortest path?</td>
+          <td><span class="tag green">Yes</span> (unweighted)</td>
+          <td><span class="tag red">No</span></td>
+        </tr>
+        <tr>
+          <td>Path existence?</td>
+          <td><span class="tag green">Yes</span></td>
+          <td><span class="tag green">Yes</span></td>
+        </tr>
+        <tr>
+          <td>Cycle detection</td>
+          <td>Possible</td>
+          <td><span class="tag green">Natural</span></td>
+        </tr>
+        <tr>
+          <td>Topological sort</td>
+          <td><span class="tag red">No</span></td>
+          <td><span class="tag green">Yes</span></td>
+        </tr>
+        <tr>
+          <td>Time complexity</td>
+          <td>O(V + E)</td>
+          <td>O(V + E)</td>
+        </tr>
+        <tr>
+          <td>Space complexity</td>
+          <td>O(V)</td>
+          <td>O(V)</td>
+        </tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>When to Use Which?</h3>
+        <ul>
+          <li><strong>BFS</strong>: Shortest path, closest neighbors, level-order</li>
+          <li><strong>DFS</strong>: Cycle detection, topological sort, connected components, path finding, maze solving</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 12: Edge Classification in Directed Graphs ==================== -->
+<div class="slide" id="slide-12">
+  <h2>Edge Classification in Directed Graphs</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Directed Graph:
+
+     (A)&rarr;(B)&rarr;(C)
+      |  &nearr;     |
+      v /      v
+     (D)&rarr;(E)&rarr;(F)
+            &darr;
+           (A)  ← back edge to ancestor!
+
+
+  DFS from A (d/f times):
+  ━━━━━━━━━━━━━━━━━━━━━━
+  A: 1/12   B: 2/11   C: 3/10
+  D: 5/8    E: 6/7    F: 4/9
+      </div>
+      <div class="diagram small">
+  DFS Tree:
+
+       A (1/12)
+       ┃
+       B (2/11)
+       ┃
+       C (3/10)
+       ┃
+       F (4/9)
+       ┃
+       ...
+
+  Edge A&rarr;D: <span style="color:#67e8f9;">forward</span> (A is ancestor of D)
+  Edge D&rarr;B: <span style="color:#c084fc;">cross</span>  (B finished, different branch)
+  Edge E&rarr;A: <span style="color:#fbbf24;">back</span>   (A is ancestor, still open)
+      </div>
+    </div>
+    <div>
+      <h3>How to Classify During DFS</h3>
+      <p>Use vertex <strong>colors</strong> (states):</p>
+      <table style="width:100%;">
+        <tr>
+          <th>Color</th>
+          <th>State</th>
+          <th>Meaning</th>
+        </tr>
+        <tr>
+          <td><span style="color:#e2e8f0;">WHITE</span></td>
+          <td>Undiscovered</td>
+          <td>Not yet visited</td>
+        </tr>
+        <tr>
+          <td><span style="color:#94a3b8;">GRAY</span></td>
+          <td>Discovered</td>
+          <td>In progress (on stack)</td>
+        </tr>
+        <tr>
+          <td><span style="color:#1e293b; background:#e2e8f0; padding:2px 6px; border-radius:3px;">BLACK</span></td>
+          <td>Finished</td>
+          <td>Fully explored</td>
+        </tr>
+      </table>
+
+      <div class="code-block mt" style="font-size:0.8em;">
+<span class="cmt">// When exploring edge u → v:</span>
+<span class="kw">if</span> color[v] == WHITE:
+    <span class="cmt">// Tree edge</span>
+<span class="kw">if</span> color[v] == GRAY:
+    <span class="cmt">// Back edge (v is ancestor, CYCLE!)</span>
+<span class="kw">if</span> color[v] == BLACK:
+    <span class="kw">if</span> d[u] &lt; d[v]:
+        <span class="cmt">// Forward edge</span>
+    <span class="kw">else</span>:
+        <span class="cmt">// Cross edge</span>
+      </div>
+
+      <div class="warning mt">
+        <h3>The Critical Rule</h3>
+        <p>Edge to a <strong style="color:#fbbf24;">GRAY</strong> vertex = <strong style="color:#fbbf24;">Back edge</strong> = <strong style="color:#fbbf24;">CYCLE</strong>! A gray vertex is still being processed (it's an ancestor on the current DFS path).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 13: Cycle Detection ==================== -->
+<div class="slide" id="slide-13">
+  <h2>Cycle Detection with DFS</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Directed Graph: 3-Color Method</h3>
+      <div class="code-block" style="font-size:0.85em;">
+<span class="kw">function</span> <span class="fn">hasCycle</span>(G):
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        color[v] = WHITE
+
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        <span class="kw">if</span> color[v] == WHITE:
+            <span class="kw">if</span> <span class="fn">dfsDetect</span>(v):
+                <span class="kw">return</span> <span class="num">true</span>
+    <span class="kw">return</span> <span class="num">false</span>
+
+<span class="kw">function</span> <span class="fn">dfsDetect</span>(u):
+    color[u] = GRAY   <span class="cmt">// in progress</span>
+
+    <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+        <span class="kw">if</span> color[v] == GRAY:
+            <span class="kw">return</span> <span class="num">true</span>  <span class="cmt">// CYCLE!</span>
+        <span class="kw">if</span> color[v] == WHITE:
+            <span class="kw">if</span> <span class="fn">dfsDetect</span>(v):
+                <span class="kw">return</span> <span class="num">true</span>
+
+    color[u] = BLACK   <span class="cmt">// done</span>
+    <span class="kw">return</span> <span class="num">false</span>
+      </div>
+    </div>
+    <div>
+      <h3>Why Back Edge = Cycle?</h3>
+      <div class="diagram small">
+  If edge u &rarr; v is a back edge:
+
+  v is an ancestor of u in DFS tree
+
+  Path:  v ~~&gt; ... ~~&gt; u  (tree path)
+         ^               |
+         |               |
+         +&lt;---- u &rarr; v ---+  (back edge)
+
+  The tree path v ~~&gt; u plus the
+  back edge u &rarr; v forms a CYCLE!
+      </div>
+
+      <h3 class="mt">Undirected Graph: Simpler</h3>
+      <div class="code-block" style="font-size:0.85em;">
+<span class="kw">function</span> <span class="fn">dfsDetect</span>(u, parent):
+    visited[u] = <span class="num">true</span>
+
+    <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+        <span class="kw">if not</span> visited[v]:
+            <span class="kw">if</span> <span class="fn">dfsDetect</span>(v, u):
+                <span class="kw">return</span> <span class="num">true</span>
+        <span class="kw">else if</span> v != parent:
+            <span class="kw">return</span> <span class="num">true</span>  <span class="cmt">// CYCLE!</span>
+
+    <span class="kw">return</span> <span class="num">false</span>
+      </div>
+      <div class="warning">
+        <h3>Undirected Caveat</h3>
+        <p>In undirected graphs, every edge appears twice (u-v and v-u). We must exclude the <strong>parent</strong> edge when checking for back edges.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 14: Topological Sort ==================== -->
+<div class="slide" id="slide-14">
+  <h2>Topological Sort</h2>
+  <p>A linear ordering of vertices such that for every directed edge u &rarr; v, vertex u comes <strong>before</strong> v.</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  DAG (Directed Acyclic Graph):
+
+    (A)&rarr;(B)&rarr;(D)
+     |        &nearr;
+     v      /
+    (C)&rarr;(E)&rarr;(F)
+
+  Topological Order:
+    A, C, E, B, D, F
+    or
+    A, B, C, E, D, F
+    or
+    A, B, C, E, F, D
+    ...  (multiple valid orders)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Topological sort = <strong>reverse of DFS finish order</strong>. When a vertex finishes (all descendants explored), prepend it to the result.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Algorithm</h3>
+      <div class="code-block" style="font-size:0.85em;">
+<span class="kw">function</span> <span class="fn">topologicalSort</span>(G):
+    <span class="kw">let</span> result = []
+    <span class="kw">let</span> visited = <span class="kw">new</span> <span class="type">Set</span>()
+
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        <span class="kw">if</span> v <span class="kw">not in</span> visited:
+            <span class="fn">dfs</span>(v, visited, result)
+
+    <span class="kw">return</span> result.<span class="fn">reverse</span>()
+
+<span class="kw">function</span> <span class="fn">dfs</span>(u, visited, result):
+    visited.<span class="fn">add</span>(u)
+
+    <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+        <span class="kw">if</span> v <span class="kw">not in</span> visited:
+            <span class="fn">dfs</span>(v, visited, result)
+
+    result.<span class="fn">push</span>(u) <span class="cmt">// post-order!</span>
+      </div>
+
+      <div class="warning mt">
+        <h3>Prerequisite: No Cycles!</h3>
+        <p>Topological sort only works on <strong>DAGs</strong> (Directed Acyclic Graphs). If there is a cycle, no valid topological order exists.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 15: Topological Sort Example ==================== -->
+<div class="slide" id="slide-15">
+  <h2>Topological Sort: Course Prerequisites</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  Course Prerequisite DAG:
+
+  (CS101)&rarr;(CS201)&rarr;(CS301)
+     |         |         |
+     v         v         v
+  (CS102)&rarr;(CS202)   (CS401)
+     |         |
+     v         v
+  (MATH1)   (CS302)
+
+  Adjacency:
+    CS101 &rarr; CS201, CS102
+    CS201 &rarr; CS301, CS202
+    CS301 &rarr; CS401
+    CS102 &rarr; CS202, MATH1
+    CS202 &rarr; CS302
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Getting Dressed</h3>
+        <p>Underwear before pants, socks before shoes, shirt before jacket. Topological sort gives you an order that respects ALL dependencies.</p>
+      </div>
+    </div>
+    <div>
+      <h3>DFS Trace (finish order)</h3>
+      <div class="step">
+        <div class="diagram small">
+  Start DFS at CS101:
+  CS101 &rarr; CS201 &rarr; CS301 &rarr; CS401
+                                 finish: <span style="color:#fbbf24;">CS401 (1)</span>
+                          finish: <span style="color:#fbbf24;">CS301 (2)</span>
+                 &rarr; CS202 &rarr; CS302
+                            finish: <span style="color:#fbbf24;">CS302 (3)</span>
+                    finish: <span style="color:#fbbf24;">CS202 (4)</span>
+           finish: <span style="color:#fbbf24;">CS201 (5)</span>
+        &rarr; CS102 &rarr; MATH1
+                    finish: <span style="color:#fbbf24;">MATH1 (6)</span>
+                 (CS202 already visited)
+           finish: <span style="color:#fbbf24;">CS102 (7)</span>
+  finish: <span style="color:#fbbf24;">CS101 (8)</span>
+        </div>
+      </div>
+      <div class="step">
+        <div class="key-idea">
+          <h3>Result</h3>
+          <p><strong>Finish order:</strong> CS401, CS301, CS302, CS202, CS201, MATH1, CS102, CS101</p>
+          <p><strong>Reversed (topological):</strong></p>
+          <p style="color:#86efac; font-weight:bold; font-size:1.1em;">CS101, CS102, MATH1, CS201, CS202, CS302, CS301, CS401</p>
+          <p>Every course appears <strong>after</strong> all its prerequisites. Valid schedule!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b; font-size:0.9em;">Press S to reveal steps</p>
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 16: Connected Components ==================== -->
+<div class="slide" id="slide-16">
+  <h2>Application: Connected Components (Undirected)</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Undirected Graph with 3 components:
+
+  Component 0:       Component 1:
+    (A)--(B)           (E)--(F)
+     |  /               |
+    (C)                (G)
+
+  Component 2:
+    (H)--(I)
+
+  Run DFS from each unvisited vertex.
+  Each DFS call discovers one full
+  connected component.
+      </div>
+
+      <div class="code-block" style="font-size:0.85em;">
+<span class="kw">function</span> <span class="fn">connectedComponents</span>(G):
+    <span class="kw">let</span> comp = <span class="num">0</span>
+    <span class="kw">let</span> visited = <span class="kw">new</span> <span class="type">Set</span>()
+    <span class="kw">let</span> component = {}
+
+    <span class="kw">for each</span> vertex v <span class="kw">in</span> G:
+        <span class="kw">if</span> v <span class="kw">not in</span> visited:
+            <span class="fn">dfs</span>(v, visited, comp, component)
+            comp += <span class="num">1</span>
+
+<span class="kw">function</span> <span class="fn">dfs</span>(u, visited, comp, component):
+    visited.<span class="fn">add</span>(u)
+    component[u] = comp
+    <span class="kw">for each</span> neighbor v <span class="kw">of</span> u:
+        <span class="kw">if</span> v <span class="kw">not in</span> visited:
+            <span class="fn">dfs</span>(v, visited, comp, component)
+      </div>
+    </div>
+    <div>
+      <h3>How It Works</h3>
+      <div class="step">
+        <div class="diagram small">
+  Step 1: DFS from A (Component 0)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Visit: A &rarr; B &rarr; C (all connected)
+  component[A]=0, component[B]=0, component[C]=0
+        </div>
+      </div>
+      <div class="step">
+        <div class="diagram small">
+  Step 2: A,B,C visited. Next unvisited: E
+  DFS from E (Component 1)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Visit: E &rarr; F, E &rarr; G
+  component[E]=1, component[F]=1, component[G]=1
+        </div>
+      </div>
+      <div class="step">
+        <div class="diagram small">
+  Step 3: Next unvisited: H
+  DFS from H (Component 2)
+  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Visit: H &rarr; I
+  component[H]=2, component[I]=2
+
+  Result: 3 connected components found!
+        </div>
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Each call to DFS from the outer loop discovers exactly one connected component. The total number of outer-loop calls = number of components.</p>
+      </div>
+    </div>
+  </div>
+  <p style="color:#64748b; font-size:0.9em;">Press S to reveal steps</p>
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 17: Strongly Connected Components ==================== -->
+<div class="slide" id="slide-17">
+  <h2>Application: Strongly Connected Components (Directed)</h2>
+  <p>An SCC is a maximal set of vertices where every vertex is reachable from every other vertex.</p>
+
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  Directed Graph:
+
+    (A)&rarr;(B)   (E)&rarr;(F)
+     &uarr;    |     &uarr;    |
+     |    v     |    v
+    (D)&lt;-(C)   (H)&lt;-(G)
+
+  SCC 1: {A, B, C, D}  (cycle: A&rarr;B&rarr;C&rarr;D&rarr;A)
+  SCC 2: {E, F, G, H}  (cycle: E&rarr;F&rarr;G&rarr;H&rarr;E)
+      </div>
+
+      <div class="key-idea">
+        <h3>Kosaraju's Algorithm (Overview)</h3>
+        <ol>
+          <li>Run DFS on original graph G. Record <strong>finish times</strong>.</li>
+          <li>Compute <strong>G<sup>T</sup></strong> (reverse all edges).</li>
+          <li>Run DFS on G<sup>T</sup> in <strong>decreasing finish time</strong> order.</li>
+          <li>Each DFS tree in step 3 = one SCC.</li>
+        </ol>
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+  Kosaraju's Step-by-Step:
+
+  Step 1: DFS on G, finish order:
+          D(4), C(5), B(6), A(7),
+          H(2), G(3), F(8), E(9)
+
+  Step 2: Reverse all edges (G^T):
+    (A)&lt;-(B)   (E)&lt;-(F)
+     |    &uarr;     |    &uarr;
+     v    |     v    |
+    (D)&rarr;(C)   (H)&rarr;(G)
+
+  Step 3: DFS on G^T, process in
+          decreasing finish order:
+          E(9),F(8),A(7),B(6),...
+
+    DFS from E: visits E,H,G,F &rarr; SCC!
+    DFS from A: visits A,D,C,B &rarr; SCC!
+
+  Result: 2 SCCs found
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Think of SCCs as "islands" in a directed graph where you can travel between any two cities on the same island. Kosaraju's finds these islands by looking at the graph forwards AND backwards.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 18: Maze Generation and Solving ==================== -->
+<div class="slide" id="slide-18">
+  <h2>Application: Maze Generation &amp; Solving</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Maze Generation (DFS Random Walk)</h3>
+      <div class="diagram small">
+  Grid of cells (all walls up):
+  +--+--+--+--+
+  |  |  |  |  |
+  +--+--+--+--+
+  |  |  |  |  |
+  +--+--+--+--+
+  |  |  |  |  |
+  +--+--+--+--+
+
+  DFS with random neighbor selection:
+  Start at (0,0), pick random unvisited
+  neighbor, remove wall between them.
+  Backtrack when stuck.
+
+  Result:
+  +--+--+--+--+
+  |        |  |
+  +  +--+  +  +
+  |  |     |  |
+  +  +  +--+  +
+  |     |     |
+  +--+--+--+--+
+      </div>
+      <p>DFS creates long, winding corridors with few branches -- a "perfect maze" (exactly one path between any two cells).</p>
+    </div>
+    <div>
+      <h3>Maze Solving (DFS Backtracking)</h3>
+      <div class="diagram small">
+  Maze:
+  +--+--+--+--+
+  |S       |  |
+  +  +--+  +  +
+  |  |     |  |
+  +  +  +--+  +
+  |     |    E|
+  +--+--+--+--+
+
+  DFS solving:
+  +--+--+--+--+
+  |<span style="color:#86efac;">* * *</span>   |  |
+  +  +--+  +  +
+  |  |  <span style="color:#86efac;">*</span>  |  |
+  +  +  +--+  +
+  |     |  <span style="color:#86efac;">* *</span>|
+  +--+--+--+--+
+
+  <span style="color:#86efac;">*</span> = solution path
+      </div>
+      <div class="key-idea mt">
+        <h3>Why DFS Works for Mazes</h3>
+        <p>DFS naturally backtracks when it hits dead ends, making it perfect for exploring mazes. It finds <em>a</em> path (not necessarily the shortest). Use BFS if you need the shortest path.</p>
+      </div>
+      <div class="analogy mt">
+        <h3>Analogy: Wall Follower</h3>
+        <p>DFS maze solving is like the "always follow the left wall" strategy. You explore one path completely before trying another.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 19: Time and Space Complexity ==================== -->
+<div class="slide" id="slide-19">
+  <h2>Time and Space Complexity</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>Time: O(V + E)</h3>
+      <div class="diagram small">
+  Why O(V + E)?
+
+  Each vertex is visited exactly ONCE:
+    visited[v] = true  &rarr;  O(V) total
+
+  Each edge is examined exactly ONCE
+  (directed) or TWICE (undirected):
+    for each neighbor v of u  &rarr;  O(E) total
+
+  Total: O(V) + O(E) = O(V + E)
+
+  ┌──────────────────────────────────┐
+  │ V = number of vertices           │
+  │ E = number of edges              │
+  │                                  │
+  │ Dense graph:  E ≈ V²  &rarr; O(V²)   │
+  │ Sparse graph: E ≈ V   &rarr; O(V)    │
+  └──────────────────────────────────┘
+      </div>
+    </div>
+    <div>
+      <h3>Space: O(V)</h3>
+      <div class="diagram small">
+  Space breakdown:
+
+  visited[] array:        O(V)
+  Stack (explicit):       O(V) worst case
+  Call stack (recursive): O(V) worst case
+
+  Worst case for stack depth:
+  ┌─────────────────────────────┐
+  │  Path graph: A-B-C-D-...-Z │
+  │  Stack depth = V            │
+  │                             │
+  │  A &rarr; B &rarr; C &rarr; ... &rarr; Z      │
+  │  Stack: [A, B, C, ..., Z]  │
+  └─────────────────────────────┘
+      </div>
+
+      <table style="width:100%;" class="mt">
+        <tr>
+          <th>Representation</th>
+          <th>DFS Time</th>
+          <th>DFS Space</th>
+        </tr>
+        <tr>
+          <td>Adjacency List</td>
+          <td>O(V + E)</td>
+          <td>O(V)</td>
+        </tr>
+        <tr>
+          <td>Adjacency Matrix</td>
+          <td>O(V<sup>2</sup>)</td>
+          <td>O(V)</td>
+        </tr>
+      </table>
+
+      <div class="warning mt">
+        <h3>Adjacency Matrix Penalty</h3>
+        <p>With an adjacency matrix, finding neighbors of a vertex takes O(V) instead of O(degree(v)), so total time becomes O(V<sup>2</sup>) regardless of the number of edges.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ==================== SLIDE 20: Summary & Cheat Sheet ==================== -->
+<div class="slide" id="slide-20">
+  <h2>Summary &amp; Cheat Sheet</h2>
+
+  <div class="two-col">
+    <div>
+      <h3>DFS at a Glance</h3>
+      <table style="width:100%;">
+        <tr>
+          <th>Property</th>
+          <th>Value</th>
+        </tr>
+        <tr>
+          <td>Data Structure</td>
+          <td><strong>Stack</strong> (or recursion)</td>
+        </tr>
+        <tr>
+          <td>Strategy</td>
+          <td>Go deep, then backtrack</td>
+        </tr>
+        <tr>
+          <td>Time</td>
+          <td>O(V + E)</td>
+        </tr>
+        <tr>
+          <td>Space</td>
+          <td>O(V)</td>
+        </tr>
+        <tr>
+          <td>Shortest Path?</td>
+          <td>No (use BFS)</td>
+        </tr>
+        <tr>
+          <td>Complete?</td>
+          <td>Yes (finite graphs)</td>
+        </tr>
+      </table>
+
+      <div class="key-idea mt">
+        <h3>Core Applications</h3>
+        <ul>
+          <li><strong>Cycle detection</strong> (back edge = cycle)</li>
+          <li><strong>Topological sort</strong> (reverse finish order)</li>
+          <li><strong>Connected components</strong> (undirected)</li>
+          <li><strong>Strongly connected components</strong> (Kosaraju/Tarjan)</li>
+          <li><strong>Path finding</strong> and backtracking</li>
+          <li><strong>Maze</strong> generation and solving</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <h3>Quick Reference: Pseudocode</h3>
+      <div class="code-block" style="font-size:0.8em;">
+<span class="cmt">// Recursive DFS</span>
+<span class="kw">function</span> <span class="fn">DFS-Visit</span>(u):
+    visited[u] = <span class="num">true</span>
+    d[u] = ++time
+    <span class="kw">for each</span> v <span class="kw">in</span> adj[u]:
+        <span class="kw">if not</span> visited[v]:
+            <span class="fn">DFS-Visit</span>(v)
+    f[u] = ++time
+
+<span class="cmt">// Iterative DFS</span>
+<span class="kw">function</span> <span class="fn">DFS-Iter</span>(source):
+    stack.<span class="fn">push</span>(source)
+    <span class="kw">while</span> stack not empty:
+        u = stack.<span class="fn">pop</span>()
+        <span class="kw">if not</span> visited[u]:
+            visited[u] = <span class="num">true</span>
+            <span class="kw">for each</span> v <span class="kw">in</span> adj[u]:
+                stack.<span class="fn">push</span>(v)
+
+<span class="cmt">// Topological Sort</span>
+<span class="cmt">// = reverse of DFS finish order</span>
+
+<span class="cmt">// Cycle Detection</span>
+<span class="cmt">// = edge to GRAY vertex (directed)</span>
+<span class="cmt">// = edge to visited non-parent (undirected)</span>
+      </div>
+
+      <div class="diagram small mt">
+  DFS Mental Model:
+
+  ┌──────────────────────────────┐
+  │  1. Push / Call              │
+  │  2. Pop / Enter function     │
+  │  3. Mark visited             │
+  │  4. Process                  │
+  │  5. Push neighbors / Recurse │
+  │  6. Backtrack when stuck     │
+  └──────────────────────────────┘
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- ==================== NAVIGATION ==================== -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#8592; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#8594;</button>
+</div>
+
+<script>
+let currentSlide = 1;
+const totalSlides = 20;
+
+function showSlide(n) {
+  if (n < 1 || n > totalSlides) return;
+  currentSlide = n;
+
+  // Hide all
+  document.querySelectorAll('.slide').forEach(s => {
+    s.classList.remove('active');
+  });
+
+  // Show current
+  const slide = document.getElementById('slide-' + n);
+  if (slide) {
+    slide.classList.add('active');
+    slide.classList.add('fade-in');
+    // Reset steps
+    slide.querySelectorAll('.step').forEach(s => s.classList.remove('visible'));
+  }
+
+  // Update progress bar
+  const progress = document.getElementById('progress');
+  progress.style.width = ((n / totalSlides) * 100) + '%';
+
+  // Update nav buttons
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+}
+
+function changeSlide(delta) {
+  showSlide(currentSlide + delta);
+}
+
+// Reveal next hidden step on current slide
+function revealNextStep() {
+  const slide = document.getElementById('slide-' + currentSlide);
+  if (!slide) return;
+  const hiddenSteps = slide.querySelectorAll('.step:not(.visible)');
+  if (hiddenSteps.length > 0) {
+    hiddenSteps[0].classList.add('visible');
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    revealNextStep();
+  }
+});
+
+// Initialize
+showSlide(1);
+</script>
+
+</body>
+</html>

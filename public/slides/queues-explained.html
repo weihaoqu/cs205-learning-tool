@@ -1,0 +1,1024 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Queues Explained - CS205 Data Structures</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+
+  /* Slide system */
+  .slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+  .slide.active { display: flex; flex-direction: column; justify-content: center; }
+  .slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+
+  /* Navigation */
+  .nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+  .nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+  .nav button:hover { background: #475569; }
+  .nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+  .progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+
+  /* Typography */
+  h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+  h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+  h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+  p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+  .subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+
+  /* Layout helpers */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+  .center { text-align: center; }
+  .mt { margin-top: 20px; }
+
+  /* Code / diagram blocks */
+  .diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+  .diagram.small { font-size: 0.85em; }
+
+  /* Highlight boxes */
+  .key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .key-idea h3 { margin-bottom: 8px; }
+  .warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .warning h3 { color: #fbbf24; }
+  .analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+  .analogy h3 { color: #34d399; }
+
+  /* Table */
+  table { border-collapse: collapse; margin: 16px 0; width: auto; }
+  th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+  th { background: #334155; color: #93c5fd; font-weight: 600; }
+  td { background: #1e293b; color: #e2e8f0; }
+  tr.highlight td { background: rgba(59,130,246,0.2); }
+
+  /* Animations */
+  .fade-in { animation: fadeIn 0.5s ease-in; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  ul { padding-left: 24px; }
+  ul li { margin-bottom: 8px; }
+
+  code { background: #334155; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active" id="s1">
+  <div class="center">
+    <h1>Queues</h1>
+    <p class="subtitle">First In, First Out (FIFO)</p>
+    <div class="diagram" style="display:inline-block; text-align:left;">
+                  FRONT                              REAR
+                    |                                  |
+                    v                                  v
+              +-----+-----+-----+-----+-----+-----+-----+
+  dequeue &lt;-- |  A  |  B  |  C  |  D  |  E  |  F  |  G  | &lt;-- enqueue
+              +-----+-----+-----+-----+-----+-----+-----+
+                 First in                          Last in
+                 First out                         Last out</div>
+    <p style="margin-top: 20px; color: #64748b;">CS205 Data Structures</p>
+    <p style="color: #64748b; font-size: 0.9em;">Arrow keys or Space to navigate</p>
+  </div>
+  <div class="slide-number">1 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 2: What is a Queue? ==================== -->
+<div class="slide" id="s2">
+  <h2>What is a Queue?</h2>
+  <div class="two-col">
+    <div>
+      <p>A <strong>queue</strong> is a collection of elements with a <strong>First-In, First-Out (FIFO)</strong> access policy.</p>
+      <ul class="mt">
+        <li>Elements are added at the <strong>rear</strong> (back)</li>
+        <li>Elements are removed from the <strong>front</strong></li>
+        <li>No access to elements in the middle</li>
+      </ul>
+      <div class="analogy">
+        <h3>Analogy: Coffee Shop Line</h3>
+        <p>The first person who lines up is the first person served. New arrivals join the back of the line. Cutting is not allowed!</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram">
+  Coffee Shop Queue:
+
+  COUNTER                            DOOR
+     |                                |
+     v                                v
+  +------+------+------+------+------+
+  | Alex | Beth | Carl | Dana | Evan |
+  +------+------+------+------+------+
+    ^                             ^
+    |                             |
+  FRONT                         REAR
+  (served next)             (just arrived)</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>FIFO = the element that has been waiting the <strong>longest</strong> gets served first. Fair and orderly!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 3: The Queue ADT ==================== -->
+<div class="slide" id="s3">
+  <h2>The Queue ADT</h2>
+  <div class="two-col">
+    <div>
+      <h3>Core Operations</h3>
+      <table>
+        <tr><th>Operation</th><th>Description</th><th>Time</th></tr>
+        <tr><td><code>enqueue(e)</code></td><td>Insert element at rear</td><td>O(1)</td></tr>
+        <tr><td><code>dequeue()</code></td><td>Remove &amp; return front element</td><td>O(1)</td></tr>
+        <tr><td><code>front()</code></td><td>Return front without removing</td><td>O(1)</td></tr>
+        <tr><td><code>isEmpty()</code></td><td>Is the queue empty?</td><td>O(1)</td></tr>
+        <tr><td><code>size()</code></td><td>Number of elements</td><td>O(1)</td></tr>
+      </table>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>All core queue operations are <strong>O(1)</strong> -- constant time, regardless of how many elements are stored.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Java Interface</h3>
+      <div class="diagram small">
+public interface Queue&lt;E&gt; {
+
+    /** Insert element at the rear. */
+    void enqueue(E element);
+
+    /** Remove and return front element.
+     *  Throws exception if empty. */
+    E dequeue();
+
+    /** Return front element without
+     *  removing it. */
+    E front();
+
+    /** Return number of elements. */
+    int size();
+
+    /** Is the queue empty? */
+    boolean isEmpty();
+}</div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 4: Enqueue Operation ==================== -->
+<div class="slide" id="s4">
+  <h2>Enqueue Operation</h2>
+  <p>Add a new element to the <strong>rear</strong> of the queue.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Before: enqueue("Z")</h3>
+      <div class="diagram">
+  front                   rear
+    |                       |
+    v                       v
+  +-----+-----+-----+-----+
+  |  A  |  B  |  C  |  D  |
+  +-----+-----+-----+-----+
+
+  size = 4</div>
+      <h3>After:</h3>
+      <div class="diagram">
+  front                         rear
+    |                             |
+    v                             v
+  +-----+-----+-----+-----+-----+
+  |  A  |  B  |  C  |  D  |  Z  |
+  +-----+-----+-----+-----+-----+
+
+  size = 5</div>
+    </div>
+    <div>
+      <h3>Code (Array-Based)</h3>
+      <div class="diagram small">
+public void enqueue(E element) {
+    if (size == data.length)
+        throw new IllegalStateException(
+            "Queue is full");
+
+    // Add at rear position
+    data[rear] = element;
+
+    // Advance rear (with wrap-around)
+    rear = (rear + 1) % data.length;
+
+    size++;
+}</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Enqueue always operates on the <strong>rear</strong> end. The front is untouched. This is O(1).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 5: Dequeue Operation ==================== -->
+<div class="slide" id="s5">
+  <h2>Dequeue Operation</h2>
+  <p>Remove and return the element at the <strong>front</strong> of the queue.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Before: dequeue() -> returns "A"</h3>
+      <div class="diagram">
+  front                         rear
+    |                             |
+    v                             v
+  +-----+-----+-----+-----+-----+
+  |  A  |  B  |  C  |  D  |  Z  |
+  +-----+-----+-----+-----+-----+</div>
+      <h3>After:</h3>
+      <div class="diagram">
+        front                   rear
+          |                       |
+          v                       v
+  +-----+-----+-----+-----+-----+
+  |     |  B  |  C  |  D  |  Z  |
+  +-----+-----+-----+-----+-----+
+
+  returned: "A"    size = 4</div>
+    </div>
+    <div>
+      <h3>Code (Array-Based)</h3>
+      <div class="diagram small">
+public E dequeue() {
+    if (isEmpty())
+        throw new NoSuchElementException(
+            "Queue is empty");
+
+    E result = data[front];
+    data[front] = null; // help GC
+
+    // Advance front (with wrap-around)
+    front = (front + 1) % data.length;
+
+    size--;
+    return result;
+}</div>
+      <div class="warning">
+        <h3>Warning: Always Check isEmpty!</h3>
+        <p>Calling <code>dequeue()</code> on an empty queue is an error. Always guard with <code>isEmpty()</code> or handle the exception.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 6: Stack vs Queue ==================== -->
+<div class="slide" id="s6">
+  <h2>Stack vs Queue</h2>
+  <div class="two-col">
+    <div>
+      <h3 style="color: #f59e0b;">Stack -- LIFO</h3>
+      <p><strong>Last In, First Out</strong></p>
+      <div class="diagram">
+  push(A), push(B), push(C):
+
+       +-----+
+       |  C  | &lt;-- top (pop here)
+       +-----+
+       |  B  |
+       +-----+
+       |  A  |
+       +-----+
+
+  pop() -> C  (last in, first out)</div>
+      <p>Think: <strong>stack of plates</strong>. You take the top plate off first.</p>
+      <table>
+        <tr><th>Operation</th><th>Stack</th></tr>
+        <tr><td>Insert</td><td><code>push(e)</code></td></tr>
+        <tr><td>Remove</td><td><code>pop()</code></td></tr>
+        <tr><td>Peek</td><td><code>top()</code></td></tr>
+      </table>
+    </div>
+    <div>
+      <h3 style="color: #3b82f6;">Queue -- FIFO</h3>
+      <p><strong>First In, First Out</strong></p>
+      <div class="diagram">
+  enqueue(A), enqueue(B), enqueue(C):
+
+  front                   rear
+    |                       |
+    v                       v
+  +-----+-----+-----+
+  |  A  |  B  |  C  |
+  +-----+-----+-----+
+
+  dequeue() -> A  (first in, first out)</div>
+      <p>Think: <strong>line at a store</strong>. The first person in line is served first.</p>
+      <table>
+        <tr><th>Operation</th><th>Queue</th></tr>
+        <tr><td>Insert</td><td><code>enqueue(e)</code></td></tr>
+        <tr><td>Remove</td><td><code>dequeue()</code></td></tr>
+        <tr><td>Peek</td><td><code>front()</code></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Key Idea</h3>
+    <p>Stack and Queue are both <strong>restricted-access</strong> data structures. The difference is <em>which end</em> you remove from. Stack: same end as insert. Queue: opposite end from insert.</p>
+  </div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 7: Array-Based (Naive) ==================== -->
+<div class="slide" id="s7">
+  <h2>Array-Based Queue (Naive Approach)</h2>
+  <p>Store elements in an array. Enqueue at the end, dequeue from index 0.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>The Problem: Dequeue Shifts O(n)</h3>
+      <div class="diagram small">
+  Before dequeue():
+
+  index:  0     1     2     3     4
+        +-----+-----+-----+-----+-----+
+        |  A  |  B  |  C  |  D  |  E  |
+        +-----+-----+-----+-----+-----+
+
+  After dequeue() -- must shift everything left:
+
+  index:  0     1     2     3     4
+        +-----+-----+-----+-----+-----+
+        |  B  |  C  |  D  |  E  |     |
+        +-----+-----+-----+-----+-----+
+          ^<<   ^<<   ^<<   ^<<
+          shift shift shift shift</div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Warning: O(n) Dequeue!</h3>
+        <p>Every <code>dequeue()</code> shifts <strong>all</strong> remaining elements one position to the left. For n elements, that is O(n) work per dequeue.</p>
+      </div>
+      <h3>Alternative: Move Front Pointer</h3>
+      <div class="diagram small">
+  Just advance the front index:
+
+  index:  0     1     2     3     4
+        +-----+-----+-----+-----+-----+
+        |     |  B  |  C  |  D  |  E  |
+        +-----+-----+-----+-----+-----+
+                ^                  ^
+              front               rear
+
+  O(1) dequeue! But... wasted space
+  grows forever. Array runs out.</div>
+      <p>This is better, but we waste all the space before <code>front</code>. Solution: <strong>wrap around!</strong></p>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 8: Circular Array ==================== -->
+<div class="slide" id="s8">
+  <h2>Circular Array Implementation</h2>
+  <p>When the rear reaches the end of the array, it <strong>wraps around</strong> to index 0 using modulo arithmetic.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>The Circular Idea</h3>
+      <div class="diagram">
+  Linear view (array of size 8):
+
+  index: 0   1   2   3   4   5   6   7
+       +---+---+---+---+---+---+---+---+
+       |   |   | C | D | E |   |   |   |
+       +---+---+---+---+---+---+---+---+
+               ^           ^
+             front        rear
+
+  After more enqueues fill to the end:
+
+  index: 0   1   2   3   4   5   6   7
+       +---+---+---+---+---+---+---+---+
+       |   |   | C | D | E | F | G | H |
+       +---+---+---+---+---+---+---+---+
+               ^                       ^
+             front                   rear
+
+  enqueue("I") -- rear wraps to index 0!
+
+  index: 0   1   2   3   4   5   6   7
+       +---+---+---+---+---+---+---+---+
+       | I |   | C | D | E | F | G | H |
+       +---+---+---+---+---+---+---+---+
+         ^     ^
+       rear  front</div>
+    </div>
+    <div>
+      <h3>The Magic Formula</h3>
+      <div class="diagram">
+  Advance front:
+    front = (front + 1) % N
+
+  Advance rear:
+    rear  = (rear + 1)  % N
+
+  where N = array capacity</div>
+      <div class="key-idea">
+        <h3>Key Idea: Modulo Wraps Around</h3>
+        <p>If <code>N = 8</code> and <code>rear = 7</code>:<br>
+        <code>(7 + 1) % 8 = 0</code><br>
+        The index wraps back to the beginning! The array is treated as a <strong>ring</strong>.</p>
+      </div>
+      <h3>Visualize as a Ring</h3>
+      <div class="diagram small">
+           7   0   1
+         +---+---+---+
+       6 | H | I |   | 2
+         +---+---+---+
+       5 | G |   | C | 3
+         +---+---+---+
+           F   E   D
+         +---+---+---+
+              4
+
+       front=2  rear=1  size=7</div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 9: Circular Array Step by Step ==================== -->
+<div class="slide" id="s9">
+  <h2>Circular Array: Step-by-Step Trace</h2>
+  <p>Trace operations on a circular array of capacity <strong>N = 5</strong>. Indices 0..4.</p>
+  <div class="diagram small">
+  Operation          Array State                         f   r   size
+  ─────────────────  ──────────────────────────────────  ──  ──  ────
+  (initial)          [  ,  ,  ,  ,  ]                    0   0    0
+
+  enqueue(A)         [ A,  ,  ,  ,  ]                    0   1    1
+
+  enqueue(B)         [ A, B,  ,  ,  ]                    0   2    2
+
+  enqueue(C)         [ A, B, C,  ,  ]                    0   3    3
+
+  dequeue() -> A     [  , B, C,  ,  ]                    1   3    2
+
+  dequeue() -> B     [  ,  , C,  ,  ]                    2   3    1
+
+  enqueue(D)         [  ,  , C, D,  ]                    2   4    2
+
+  enqueue(E)         [  ,  , C, D, E]                    2   0    3
+                                  ^--- rear wraps: (4+1)%5 = 0
+
+  enqueue(F)         [ F,  , C, D, E]                    2   1    4
+                       ^--- rear is now at index 1
+
+  dequeue() -> C     [ F,  ,  , D, E]                    3   1    3
+
+  dequeue() -> D     [ F,  ,  ,  , E]                    4   1    2
+
+  dequeue() -> E     [ F,  ,  ,  ,  ]                    0   1    1
+                                  ^--- front wraps: (4+1)%5 = 0</div>
+  <div class="key-idea">
+    <h3>Key Idea</h3>
+    <p>Both <code>front</code> and <code>rear</code> wrap around independently. The array is reused -- no wasted space, no shifting. Every enqueue and dequeue is <strong>O(1)</strong>.</p>
+  </div>
+  <div class="slide-number">9 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 10: Full vs Empty ==================== -->
+<div class="slide" id="s10">
+  <h2>Circular Array: Full vs Empty</h2>
+  <p>A tricky problem: when <code>front == rear</code>, is the queue <strong>empty</strong> or <strong>full</strong>?</p>
+  <div class="two-col mt">
+    <div>
+      <h3>The Ambiguity</h3>
+      <div class="diagram">
+  EMPTY queue (size = 0):
+  index: 0   1   2   3   4
+       +---+---+---+---+---+
+       |   |   |   |   |   |
+       +---+---+---+---+---+
+         ^
+       front = rear = 0
+
+  FULL queue (size = 5):
+  index: 0   1   2   3   4
+       +---+---+---+---+---+
+       | A | B | C | D | E |
+       +---+---+---+---+---+
+         ^
+       front = rear = 0    ???
+
+  Both look the same! front == rear</div>
+    </div>
+    <div>
+      <h3>Solution 1: Use a Count Variable</h3>
+      <div class="diagram small">
+  Maintain a `size` field separately.
+
+  isEmpty(): return size == 0
+  isFull():  return size == N
+
+  (This is the cleanest approach)</div>
+      <h3>Solution 2: Waste One Slot</h3>
+      <div class="diagram small">
+  Never let all N slots be used.
+  Maximum capacity = N - 1.
+
+  FULL when: (rear + 1) % N == front
+
+  index: 0   1   2   3   4
+       +---+---+---+---+---+
+       | A | B | C | D |   |
+       +---+---+---+---+---+
+         ^               ^
+       front            rear
+
+  (rear+1)%5 == 0 == front -> FULL
+  One slot is always empty.</div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>If you use neither solution, you cannot distinguish full from empty. This is a classic bug in circular buffer implementations.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 11: Linked-List Implementation ==================== -->
+<div class="slide" id="s11">
+  <h2>Linked-List-Based Queue</h2>
+  <p>Use a singly linked list with both <strong>head</strong> and <strong>tail</strong> pointers.</p>
+  <div class="diagram">
+  head                                                           tail
+    |                                                              |
+    v                                                              v
+  +------+---+    +------+---+    +------+---+    +------+------+
+  |  A   | --+--->|  B   | --+--->|  C   | --+--->|  D   | null |
+  +------+---+    +------+---+    +------+---+    +------+------+
+    ^                                                ^
+    |                                                |
+  FRONT (dequeue here)                         REAR (enqueue here)</div>
+  <div class="two-col mt">
+    <div>
+      <h3>Enqueue (add at tail) -- O(1)</h3>
+      <div class="diagram small">
+public void enqueue(E element) {
+    Node&lt;E&gt; newest = new Node&lt;&gt;(element);
+    if (isEmpty()) {
+        head = newest;
+    } else {
+        tail.next = newest;
+    }
+    tail = newest;
+    size++;
+}</div>
+    </div>
+    <div>
+      <h3>Dequeue (remove from head) -- O(1)</h3>
+      <div class="diagram small">
+public E dequeue() {
+    if (isEmpty())
+        throw new NoSuchElementException();
+    E result = head.data;
+    head = head.next;
+    size--;
+    if (isEmpty())
+        tail = null;  // queue is now empty
+    return result;
+}</div>
+    </div>
+  </div>
+  <div class="key-idea">
+    <h3>Key Idea: Why Head and Tail?</h3>
+    <p>We need <code>head</code> for O(1) dequeue (remove first node) and <code>tail</code> for O(1) enqueue (append at end). Without <code>tail</code>, enqueue would require traversing the entire list -- O(n)!</p>
+  </div>
+  <div class="slide-number">11 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 12: Deque ==================== -->
+<div class="slide" id="s12">
+  <h2>Deque (Double-Ended Queue)</h2>
+  <p>A generalization that allows insertion and removal at <strong>both</strong> ends.</p>
+  <div class="diagram">
+                          DEQUE
+           (pronounced "deck", not "dee-queue")
+
+  addFirst / removeFirst                addLast / removeLast
+          |                                      |
+          v                                      v
+     &lt;--------+                          +--------&gt;
+              |                          |
+        +-----+-----+-----+-----+-----+-----+
+        |  A  |  B  |  C  |  D  |  E  |  F  |
+        +-----+-----+-----+-----+-----+-----+
+        ^                                    ^
+      FRONT                                REAR
+        ^                                    ^
+     &lt;--------+                          +--------&gt;
+              |                          |
+   removeFirst / addFirst         removeLast / addLast</div>
+  <div class="two-col mt">
+    <div>
+      <h3>Deque Operations</h3>
+      <table>
+        <tr><th>Operation</th><th>Description</th></tr>
+        <tr><td><code>addFirst(e)</code></td><td>Insert at front</td></tr>
+        <tr><td><code>addLast(e)</code></td><td>Insert at rear</td></tr>
+        <tr><td><code>removeFirst()</code></td><td>Remove from front</td></tr>
+        <tr><td><code>removeLast()</code></td><td>Remove from rear</td></tr>
+        <tr><td><code>first()</code></td><td>Peek at front</td></tr>
+        <tr><td><code>last()</code></td><td>Peek at rear</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A Deque <strong>subsumes</strong> both Stack and Queue:</p>
+        <ul>
+          <li><strong>Stack</strong> = use only addFirst + removeFirst (or addLast + removeLast)</li>
+          <li><strong>Queue</strong> = use addLast + removeFirst</li>
+        </ul>
+      </div>
+      <p>Can be implemented with a <strong>doubly linked list</strong> or a <strong>circular array</strong>. Java provides <code>ArrayDeque</code> and <code>LinkedList</code> (both implement <code>Deque</code>).</p>
+    </div>
+  </div>
+  <div class="slide-number">12 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 13: Application - Print Queue ==================== -->
+<div class="slide" id="s13">
+  <h2>Application: Print Job Queue</h2>
+  <p>A shared printer uses a queue to manage incoming print jobs fairly.</p>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  Print Job Queue:
+
+  Users submit jobs:
+    Alice  -> "report.pdf"    (9:00 AM)
+    Bob    -> "slides.pptx"   (9:01 AM)
+    Carol  -> "photo.png"     (9:02 AM)
+    Dave   -> "essay.docx"    (9:03 AM)
+
+  Queue state:
+  FRONT                              REAR
+    |                                  |
+    v                                  v
+  +----------+----------+----------+----------+
+  | report   | slides   | photo    | essay    |
+  | (Alice)  | (Bob)    | (Carol)  | (Dave)   |
+  +----------+----------+----------+----------+
+
+  Printer processes:
+    1. report.pdf   (Alice)   -- PRINTING
+    2. slides.pptx  (Bob)     -- waiting
+    3. photo.png    (Carol)   -- waiting
+    4. essay.docx   (Dave)    -- waiting</div>
+    </div>
+    <div>
+      <div class="analogy">
+        <h3>Analogy: Fair Ordering</h3>
+        <p>Just like a line at a deli counter: first come, first served. The printer does not skip anyone -- jobs are processed in the <strong>exact order</strong> they were submitted.</p>
+      </div>
+      <h3>Why a Queue?</h3>
+      <ul>
+        <li><strong>Fairness</strong> -- no starvation, every job eventually prints</li>
+        <li><strong>Simplicity</strong> -- just enqueue on submit, dequeue when printer is ready</li>
+        <li><strong>Predictability</strong> -- users know their position in line</li>
+      </ul>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Any system that needs <strong>fair, ordered processing</strong> of requests is a natural fit for a queue: OS task scheduling, network packet buffers, message queues, etc.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 14: Application - BFS ==================== -->
+<div class="slide" id="s14">
+  <h2>Application: BFS (Breadth-First Search)</h2>
+  <p>A queue drives <strong>level-by-level</strong> traversal of a tree or graph.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Tree to Traverse</h3>
+      <div class="diagram">
+            (1) A
+           / | \
+         /   |   \
+      (2)B (3)C (4)D
+       / \       |
+    (5)E (6)F  (7)G
+
+  BFS visits by level:
+    Level 0:  A
+    Level 1:  B, C, D
+    Level 2:  E, F, G
+
+  Visit order: A B C D E F G</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>BFS explores all neighbors at the current depth <strong>before</strong> moving deeper. The queue ensures this level-by-level ordering.</p>
+      </div>
+    </div>
+    <div>
+      <h3>BFS Trace Using Queue</h3>
+      <div class="diagram small">
+  Step   Action         Queue (front...rear)  Visited
+  ────   ──────         ────────────────────  ───────
+   1     start at A     [A]                   {}
+   2     dequeue A      []                    {A}
+         enqueue B,C,D  [B, C, D]
+   3     dequeue B      [C, D]               {A,B}
+         enqueue E,F    [C, D, E, F]
+   4     dequeue C      [D, E, F]            {A,B,C}
+         (no children)
+   5     dequeue D      [E, F]               {A,B,C,D}
+         enqueue G      [E, F, G]
+   6     dequeue E      [F, G]               {A,B,C,D,E}
+   7     dequeue F      [G]                  {A,B,C,D,E,F}
+   8     dequeue G      []                   {A,B,C,D,E,F,G}
+         Queue empty -> DONE!</div>
+      <div class="diagram small">
+  BFS pseudocode:
+  ───────────────────────────────
+  queue.enqueue(start)
+  while not queue.isEmpty():
+      node = queue.dequeue()
+      visit(node)
+      for each child of node:
+          queue.enqueue(child)</div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 15: Application - Hot Potato ==================== -->
+<div class="slide" id="s15">
+  <h2>Application: Hot Potato / Josephus Problem</h2>
+  <p>Players stand in a circle. A "hot potato" is passed k times, and the person holding it is eliminated. Last one standing wins.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Algorithm Using a Queue</h3>
+      <div class="diagram small">
+  hotPotato(names, k):
+    queue = new Queue()
+    for each name in names:
+        queue.enqueue(name)
+
+    while queue.size() > 1:
+        // Pass potato k times
+        for i = 1 to k:
+            queue.enqueue(
+                queue.dequeue()
+            )
+        // Eliminate holder
+        eliminated = queue.dequeue()
+        print(eliminated + " is out!")
+
+    return queue.dequeue()  // winner!</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Dequeue + re-enqueue simulates <strong>circular passing</strong>. After k passes, dequeue without re-enqueue = <strong>elimination</strong>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Trace: Players = [A,B,C,D,E], k = 3</h3>
+      <div class="diagram small">
+  Queue             Pass / Eliminate
+  ───────────────   ──────────────────
+  [A, B, C, D, E]  Start
+
+  [B, C, D, E, A]  pass 1: A to back
+  [C, D, E, A, B]  pass 2: B to back
+  [D, E, A, B, C]  pass 3: C to back
+  [E, A, B, C]     D eliminated!
+
+  [A, B, C, E]     pass 1: E to back
+  [B, C, E, A]     pass 2: A to back
+  [C, E, A, B]     pass 3: B to back
+  [E, A, B]        C eliminated!
+
+  [A, B, E]        pass 1: E to back
+  [B, E, A]        pass 2: A to back
+  [E, A, B]        pass 3: B to back
+  [A, B]           E eliminated!
+
+  [B, A]           pass 1: A to back
+  [A, B]           pass 2: B to back
+  [B, A]           pass 3: A to back
+  [A]              B eliminated!
+
+  Winner: A</div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 16: Priority Queue Preview ==================== -->
+<div class="slide" id="s16">
+  <h2>Priority Queue Preview</h2>
+  <p>What if not everyone should wait equally? What if some elements are more <strong>urgent</strong>?</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Regular Queue (FIFO)</h3>
+      <div class="diagram">
+  Arrival order determines service:
+
+  FRONT                         REAR
+    |                             |
+    v                             v
+  +------+------+------+------+------+
+  | low  | high | med  | high | low  |
+  +------+------+------+------+------+
+
+  dequeue() -> "low"
+  (first in, regardless of priority)</div>
+      <h3>Priority Queue</h3>
+      <div class="diagram">
+  Priority determines service:
+
+  +------+------+------+------+------+
+  | high | high | med  | low  | low  |
+  +------+------+------+------+------+
+    ^
+    |
+  removeMin() -> highest priority first
+  (regardless of arrival order!)</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A <strong>Priority Queue</strong> is NOT a queue. It does not follow FIFO. Instead, the element with the <strong>highest priority</strong> (often the minimum key) is removed first.</p>
+      </div>
+      <h3>Real-World Examples</h3>
+      <ul>
+        <li><strong>Emergency Room</strong> -- critical patients treated first, not arrival order</li>
+        <li><strong>OS Scheduling</strong> -- high-priority processes preempt low-priority ones</li>
+        <li><strong>Dijkstra's Algorithm</strong> -- always expand the nearest unvisited node</li>
+      </ul>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>A regular queue is like a deli counter with numbered tickets. A priority queue is like an ER triage: the sickest patient goes first, even if they just walked in.</p>
+      </div>
+      <p style="color: #94a3b8;">Coming up: heaps, the efficient way to implement priority queues!</p>
+    </div>
+  </div>
+  <div class="slide-number">16 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 17: Common Pitfalls ==================== -->
+<div class="slide" id="s17">
+  <h2>Common Pitfalls</h2>
+  <div class="two-col mt">
+    <div>
+      <div class="warning">
+        <h3>1. Forgetting Circular Wrap-Around</h3>
+        <p>Writing <code>rear++</code> instead of <code>rear = (rear + 1) % N</code>. This causes an <strong>ArrayIndexOutOfBounds</strong> when rear exceeds the array length.</p>
+        <div class="diagram small" style="color: #fbbf24;">
+  // WRONG
+  rear++;
+
+  // CORRECT
+  rear = (rear + 1) % data.length;</div>
+      </div>
+      <div class="warning">
+        <h3>2. Dequeuing from an Empty Queue</h3>
+        <p>Always check <code>isEmpty()</code> before calling <code>dequeue()</code>. An empty dequeue is undefined behavior in some implementations, or throws an exception in others.</p>
+        <div class="diagram small" style="color: #fbbf24;">
+  // WRONG
+  E item = queue.dequeue();
+
+  // CORRECT
+  if (!queue.isEmpty()) {
+      E item = queue.dequeue();
+  }</div>
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>3. Confusing Front and Rear</h3>
+        <p>Enqueue at <strong>rear</strong>, dequeue from <strong>front</strong>. Mixing these up produces a stack-like structure or corrupted data.</p>
+        <div class="diagram small" style="color: #fbbf24;">
+  REMEMBER:
+  enqueue -> REAR  (back of the line)
+  dequeue -> FRONT (served next)</div>
+      </div>
+      <div class="warning">
+        <h3>4. Full vs Empty Confusion</h3>
+        <p>In a circular array without a <code>size</code> counter, both full and empty states have <code>front == rear</code>. Always use a count variable or waste-one-slot strategy.</p>
+      </div>
+      <div class="warning">
+        <h3>5. Forgetting to Null References</h3>
+        <p>After dequeuing, set <code>data[front] = null</code> to avoid <strong>memory leaks</strong> (loitering references prevent garbage collection).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 18: Summary & Cheat Sheet ==================== -->
+<div class="slide" id="s18">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Queue at a Glance</h3>
+      <table>
+        <tr><th>Property</th><th>Value</th></tr>
+        <tr><td>Access Policy</td><td>FIFO</td></tr>
+        <tr><td>enqueue</td><td>O(1)</td></tr>
+        <tr><td>dequeue</td><td>O(1)</td></tr>
+        <tr><td>front / peek</td><td>O(1)</td></tr>
+        <tr><td>isEmpty / size</td><td>O(1)</td></tr>
+      </table>
+      <h3 class="mt">Implementations Compared</h3>
+      <table>
+        <tr><th></th><th>Array (Circular)</th><th>Linked List</th></tr>
+        <tr><td>enqueue</td><td>O(1) amortized</td><td>O(1)</td></tr>
+        <tr><td>dequeue</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>Memory</td><td>Compact, cache-friendly</td><td>Extra pointer overhead</td></tr>
+        <tr><td>Resize</td><td>O(n) when full</td><td>Never needed</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Key Formulas (Circular Array)</h3>
+      <div class="diagram small">
+  Advance front:  f = (f + 1) % N
+  Advance rear:   r = (r + 1) % N
+  Is empty:       size == 0
+  Is full:        size == N</div>
+      <h3>Family of Queue ADTs</h3>
+      <div class="diagram small">
+  +-------------------+
+  |      Deque        |  Both ends
+  |  +-------------+  |
+  |  |    Queue    |  |  FIFO (rear in, front out)
+  |  +-------------+  |
+  |  +-------------+  |
+  |  |    Stack    |  |  LIFO (one end only)
+  |  +-------------+  |
+  +-------------------+
+
+  Priority Queue: a separate concept
+  (not FIFO -- based on key/priority)</div>
+      <h3>Applications Recap</h3>
+      <ul>
+        <li><strong>BFS</strong> -- level-order graph/tree traversal</li>
+        <li><strong>Print spooling</strong> -- fair job scheduling</li>
+        <li><strong>Hot Potato</strong> -- circular elimination games</li>
+        <li><strong>Buffering</strong> -- producer-consumer patterns</li>
+        <li><strong>OS scheduling</strong> -- round-robin CPU scheduling</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">18 / 18</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#9654;</button>
+</div>
+
+<script>
+const totalSlides = 18;
+let current = 1;
+
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const slide = document.getElementById('s' + n);
+  if (slide) {
+    slide.classList.add('active');
+    slide.classList.add('fade-in');
+  }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  document.getElementById('progress').style.width = ((n / totalSlides) * 100) + '%';
+}
+
+function changeSlide(delta) {
+  const next = current + delta;
+  if (next >= 1 && next <= totalSlides) {
+    current = next;
+    showSlide(current);
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  }
+});
+
+showSlide(1);
+</script>
+</body>
+</html>

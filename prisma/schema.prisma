@@ -1,0 +1,72 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+model User {
+  id          String   @id @default(uuid())
+  name        String
+  email       String   @unique
+  password    String
+  role        Role     @default(STUDENT)
+  createdAt   DateTime @default(now())
+  lastLoginAt DateTime @default(now())
+
+  pageVisits   PageVisit[]
+  quizAttempts QuizAttempt[]
+  slideViews   SlideView[]
+
+  @@index([email])
+}
+
+model PageVisit {
+  id        String    @id @default(uuid())
+  userId    String
+  path      String
+  duration  Int?
+  visitedAt DateTime  @default(now())
+  leftAt    DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([visitedAt])
+  @@index([path])
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  score       Int
+  totalPoints Int
+  percentage  Float
+  answers     Json
+  completedAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([quizId])
+  @@index([completedAt])
+}
+
+model SlideView {
+  id        String   @id @default(uuid())
+  userId    String
+  slideFile String
+  viewedAt  DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([viewedAt])
+}

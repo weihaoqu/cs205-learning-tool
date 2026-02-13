@@ -1,0 +1,1087 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maps (Dictionaries) - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: TITLE ==================== -->
+<div class="slide active" id="s1">
+  <div class="center">
+    <h1>Maps - Key-Value Storage</h1>
+    <p class="subtitle">CS205 Data Structures</p>
+    <div class="diagram" style="display:inline-block; text-align:left;">
+  Map&lt;String, Integer&gt;
+  +-------------------------------+
+  |  KEY        |     VALUE       |
+  |-------------|-----------------|
+  |  "apple"    |       3         |
+  |  "banana"   |       7         |
+  |  "cherry"   |       2         |
+  |  "date"     |       5         |
+  +-------------------------------+
+
+   get("banana")  -->  7
+   put("fig", 4)  -->  adds new entry
+    </div>
+    <p class="mt" style="color:#64748b;">Use arrow keys or buttons to navigate</p>
+  </div>
+  <div class="slide-number">1 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 2: WHAT IS A MAP? ==================== -->
+<div class="slide" id="s2">
+  <h2>What is a Map?</h2>
+  <p>A <strong>map</strong> (also called a <strong>dictionary</strong> or <strong>associative array</strong>) stores <strong>(key, value)</strong> pairs. Each key maps to exactly one value. Keys must be unique.</p>
+
+  <div class="diagram">
+  A map associates keys with values:
+
+  KEY (unique)         VALUE
+  +-----------+     +-----------+
+  | "cat"     |---->|   5       |
+  +-----------+     +-----------+
+  | "dog"     |---->|   3       |
+  +-----------+     +-----------+
+  | "fish"    |---->|   8       |
+  +-----------+     +-----------+
+  | "bird"    |---->|   2       |
+  +-----------+     +-----------+
+
+  Given a key, you can quickly find its value.
+  Keys are UNIQUE -- no two entries share the same key.
+  Values CAN be duplicated (5, 3, 8, 2... or 5, 5, 5).
+  </div>
+
+  <div class="two-col mt">
+    <div class="analogy">
+      <h3>Real-World Analogies</h3>
+      <ul>
+        <li><strong>Dictionary:</strong> word --> definition</li>
+        <li><strong>Phone book:</strong> name --> phone number</li>
+        <li><strong>Student ID:</strong> ID number --> student record</li>
+        <li><strong>DNS:</strong> domain name --> IP address</li>
+      </ul>
+    </div>
+    <div class="key-idea">
+      <h3>Core Insight</h3>
+      <p>A map is all about <strong>lookup by key</strong>. You trade the ability to access by index (like a list) for the ability to access by a <strong>meaningful identifier</strong>. You don't ask "what is at position 3?" -- you ask "what is the value for key <code>"banana"</code>?"</p>
+    </div>
+  </div>
+  <div class="slide-number">2 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 3: THE MAP ADT ==================== -->
+<div class="slide" id="s3">
+  <h2>The Map ADT</h2>
+  <p>The abstract interface that any map implementation must support:</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Core Operations</h3>
+      <div class="diagram small">
+  V  get(K key)
+     Return the value associated with key,
+     or null if key is not found.
+
+  V  put(K key, V value)
+     Insert (key, value). If key already
+     exists, replace old value and return it.
+     If new, return null.
+
+  V  remove(K key)
+     Remove the entry with this key.
+     Return its value, or null if not found.
+
+  boolean  containsKey(K key)
+     Does this key exist in the map?
+
+  int  size()
+     Number of entries in the map.
+
+  boolean  isEmpty()
+     Is the map empty?
+      </div>
+    </div>
+    <div>
+      <h3>Collection Views</h3>
+      <div class="diagram small">
+  Set&lt;K&gt;            keySet()
+     Return a set of all keys.
+
+  Collection&lt;V&gt;     values()
+     Return a collection of all values.
+
+  Set&lt;Entry&lt;K,V&gt;&gt;  entrySet()
+     Return a set of all (key, value) pairs.
+      </div>
+
+      <div class="key-idea mt">
+        <h3>The Entry Object</h3>
+        <p>Internally, each (key, value) pair is stored as an <strong>Entry</strong> object. An Entry simply bundles a key and a value together:</p>
+        <div class="diagram small" style="margin-top:8px;">
+class Entry&lt;K, V&gt; {
+    K key;
+    V value;
+}
+        </div>
+      </div>
+
+      <div class="warning mt">
+        <h3>Keys Must Be Unique</h3>
+        <p>If you call <code>put("apple", 5)</code> and then <code>put("apple", 9)</code>, the map will contain only <strong>one</strong> entry for "apple" with value 9. The old value 5 is replaced.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 4: MAP vs SET vs LIST ==================== -->
+<div class="slide" id="s4">
+  <h2>Map vs Set vs List</h2>
+  <p>Three fundamental collection types -- each organizes data differently.</p>
+
+  <div class="diagram">
+  LIST (ordered by index):
+  +-----+-----+-----+-----+-----+
+  |  0  |  1  |  2  |  3  |  4  |    &lt;-- index
+  | "a" | "b" | "c" | "d" | "e" |    &lt;-- values
+  +-----+-----+-----+-----+-----+
+  Access: list.get(2) --> "c"          Duplicates allowed.  Ordered.
+
+  SET (unique elements, no index):
+  { "a", "b", "c", "d", "e" }         No duplicates.  No index access.
+  Access: set.contains("c") --> true   Just "is it in there?"
+
+  MAP (key-value pairs):
+  { "name":"Alice", "age":"25", "city":"NYC" }
+  Access: map.get("age") --> "25"      Unique keys. Values via key lookup.
+  </div>
+
+  <table style="width:100%; margin-top:16px;">
+    <tr>
+      <th>Feature</th>
+      <th>List</th>
+      <th>Set</th>
+      <th>Map</th>
+    </tr>
+    <tr>
+      <td>Access by</td>
+      <td>Index (0, 1, 2...)</td>
+      <td>N/A (membership test)</td>
+      <td>Key</td>
+    </tr>
+    <tr>
+      <td>Duplicates</td>
+      <td>Allowed</td>
+      <td>Not allowed</td>
+      <td>Keys unique, values can repeat</td>
+    </tr>
+    <tr>
+      <td>Order</td>
+      <td>Maintained (insertion)</td>
+      <td>Depends on impl.</td>
+      <td>Depends on impl.</td>
+    </tr>
+    <tr class="highlight">
+      <td>Use when</td>
+      <td>Ordered sequence needed</td>
+      <td>Uniqueness matters</td>
+      <td>Need key-based lookup</td>
+    </tr>
+  </table>
+
+  <div class="analogy mt">
+    <h3>Quick Decision Guide</h3>
+    <p>Need to find items <strong>by position</strong>? Use a <strong>List</strong>. Need to check <strong>membership</strong>? Use a <strong>Set</strong>. Need to look up a <strong>value by its key</strong>? Use a <strong>Map</strong>.</p>
+  </div>
+  <div class="slide-number">4 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 5: IMPL 1 - UNSORTED LIST ==================== -->
+<div class="slide" id="s5">
+  <h2>Implementation 1: Unsorted List of Entries</h2>
+  <p>The simplest approach -- store entries in an unordered list (array or linked list).</p>
+
+  <div class="diagram">
+  Unsorted List Implementation:
+
+  entries[]
+  +----+-------------------+
+  | 0  | ("cat",  5)       |
+  +----+-------------------+
+  | 1  | ("dog",  3)       |
+  +----+-------------------+
+  | 2  | ("fish", 8)       |
+  +----+-------------------+
+  | 3  | ("bird", 2)       |
+  +----+-------------------+
+
+  get("fish"):  scan from index 0... 1... 2 FOUND!  --> 8
+  put("ant",6): scan all entries (no "ant")... append at end
+  remove("dog"):scan from 0... 1 FOUND! shift entries down
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Complexity</h3>
+      <table style="width:100%;">
+        <tr>
+          <th>Operation</th>
+          <th>Time</th>
+        </tr>
+        <tr>
+          <td>get(k)</td>
+          <td>O(n)</td>
+        </tr>
+        <tr>
+          <td>put(k,v)</td>
+          <td>O(n)</td>
+        </tr>
+        <tr>
+          <td>remove(k)</td>
+          <td>O(n)</td>
+        </tr>
+        <tr>
+          <td>containsKey(k)</td>
+          <td>O(n)</td>
+        </tr>
+      </table>
+      <p class="mt" style="font-size:0.95em; color:#94a3b8;"><code>put</code> is O(n) because we must first search for an existing key before inserting.</p>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Why O(n) for Everything?</h3>
+        <p>Without any ordering, the only way to find a key is <strong>linear scan</strong> -- check every entry one by one. For small maps this is fine, but for large datasets it becomes a bottleneck.</p>
+      </div>
+      <div class="key-idea">
+        <h3>When Is This Acceptable?</h3>
+        <p>When the map is <strong>very small</strong> (say, fewer than 20 entries), the simplicity of an unsorted list outweighs the O(n) cost. Cache-friendly sequential access can be fast in practice for tiny collections.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 6: IMPL 2 - SORTED ARRAY ==================== -->
+<div class="slide" id="s6">
+  <h2>Implementation 2: Sorted Array</h2>
+  <p>Keep entries <strong>sorted by key</strong> so we can use <strong>binary search</strong> for lookups.</p>
+
+  <div class="diagram">
+  Sorted Array (by key):
+
+  entries[] (sorted alphabetically by key)
+  +----+-------------------+
+  | 0  | ("ant",  6)       |    Binary search for "dog":
+  +----+-------------------+
+  | 1  | ("bird", 2)       |    lo=0, hi=4, mid=2  "cat" &lt; "dog" --> go right
+  +----+-------------------+
+  | 2  | ("cat",  5)       |    lo=3, hi=4, mid=3  "dog" == "dog" --> FOUND!
+  +----+-------------------+
+  | 3  | ("dog",  3)       |    Result: value = 3
+  +----+-------------------+
+  | 4  | ("fish", 8)       |    Only 2 comparisons instead of 4!
+  +----+-------------------+
+  </div>
+
+  <div class="two-col mt">
+    <div>
+      <h3>Complexity</h3>
+      <table style="width:100%;">
+        <tr>
+          <th>Operation</th>
+          <th>Time</th>
+        </tr>
+        <tr class="highlight">
+          <td>get(k)</td>
+          <td><strong>O(log n)</strong></td>
+        </tr>
+        <tr>
+          <td>put(k,v) - existing key</td>
+          <td>O(log n)</td>
+        </tr>
+        <tr>
+          <td>put(k,v) - new key</td>
+          <td>O(n)</td>
+        </tr>
+        <tr>
+          <td>remove(k)</td>
+          <td>O(n)</td>
+        </tr>
+      </table>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Binary Search Wins for Lookups</h3>
+        <p>Finding a key is now <strong>O(log n)</strong> -- much better than O(n). But insertion of a new key still requires <strong>shifting elements</strong> to maintain sorted order, which costs O(n).</p>
+      </div>
+      <div class="warning">
+        <h3>The Shifting Problem</h3>
+        <div class="diagram small" style="margin-top:8px;">
+Insert ("cow", 4) into sorted array:
+  [ant] [bird] [cat] [dog] [fish]
+                 ^
+          cow goes here (index 3)
+
+Shift dog and fish right:
+  [ant] [bird] [cat] [___] [dog] [fish]
+
+Insert:
+  [ant] [bird] [cat] [cow] [dog] [fish]
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 7: MULTIMAP ==================== -->
+<div class="slide" id="s7">
+  <h2>Multimap</h2>
+  <p>A variation where a single key can map to <strong>multiple values</strong>.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Standard Map (one value per key):
+  +----------+---------+
+  | "Alice"  |  "CS"   |    One value only!
+  +----------+---------+
+
+  Multimap (multiple values per key):
+  +----------+-------------------+
+  | "Alice"  | ["CS", "Math",   |
+  |          |  "Physics"]      |
+  +----------+-------------------+
+  | "Bob"    | ["CS", "English"]|
+  +----------+-------------------+
+  | "Carol"  | ["Math"]         |
+  +----------+-------------------+
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy: Student Course Enrollment</h3>
+        <p>A student (key) can be enrolled in <strong>many courses</strong> (values). A regular map would only let you store one course per student. A multimap stores all of them.</p>
+      </div>
+    </div>
+    <div>
+      <h3>How to Simulate a Multimap</h3>
+      <p>Java does not have a built-in Multimap. Use a <code>Map&lt;K, List&lt;V&gt;&gt;</code>:</p>
+      <div class="diagram small">
+Map&lt;String, List&lt;String&gt;&gt; courses
+    = new HashMap&lt;&gt;();
+
+// Add a course for Alice
+courses.computeIfAbsent("Alice",
+    k -> new ArrayList&lt;&gt;()).add("CS");
+
+courses.computeIfAbsent("Alice",
+    k -> new ArrayList&lt;&gt;()).add("Math");
+
+// Get all of Alice's courses
+List&lt;String&gt; aliceCourses =
+    courses.get("Alice");
+// --> ["CS", "Math"]
+      </div>
+
+      <div class="key-idea mt">
+        <h3>When to Use a Multimap</h3>
+        <ul>
+          <li>One-to-many relationships</li>
+          <li>Grouping items by category</li>
+          <li>Index of words to their positions in text</li>
+          <li>Graph adjacency lists (vertex --> neighbors)</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 8: put() OPERATION ==================== -->
+<div class="slide" id="s8">
+  <h2>put() Operation</h2>
+  <p>Two cases: <strong>update</strong> an existing key, or <strong>insert</strong> a brand new entry.</p>
+
+  <div class="diagram">
+  CASE 1: Key already exists --> UPDATE the value
+
+  Before put("banana", 10):                After:
+  +-----------+---------+                  +-----------+---------+
+  | "apple"   |    3    |                  | "apple"   |    3    |
+  +-----------+---------+                  +-----------+---------+
+  | "banana"  |    7    | &lt;-- found!       | "banana"  |   10    | &lt;-- updated!
+  +-----------+---------+                  +-----------+---------+
+  | "cherry"  |    2    |                  | "cherry"  |    2    |
+  +-----------+---------+                  +-----------+---------+
+  Returns: 7 (the old value)
+
+
+  CASE 2: Key does NOT exist --> INSERT new entry
+
+  Before put("date", 5):                  After:
+  +-----------+---------+                  +-----------+---------+
+  | "apple"   |    3    |                  | "apple"   |    3    |
+  +-----------+---------+                  +-----------+---------+
+  | "banana"  |    7    |                  | "banana"  |    7    |
+  +-----------+---------+                  +-----------+---------+
+  | "cherry"  |    2    |                  | "cherry"  |    2    |
+  +-----------+---------+                  +-----------+---------+
+  Key "date" not found!                    | "date"    |    5    | &lt;-- new!
+                                           +-----------+---------+
+  Returns: null (no previous value)
+  </div>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// Pseudocode for put(key, value):
+public V put(K key, V value) {
+    // Step 1: Search for existing key
+    for (Entry e : entries) {
+        if (e.key.equals(key)) {
+            V old = e.value;
+            e.value = value;  // update
+            return old;
+        }
+    }
+    // Step 2: Key not found, insert new
+    entries.add(new Entry(key, value));
+    size++;
+    return null;
+}
+    </div>
+    <div class="key-idea">
+      <h3>put() Always Searches First</h3>
+      <p>Even for insertion, <code>put()</code> must scan all entries to check if the key exists. This is why <code>put()</code> in an unsorted list is <strong>O(n)</strong>, not O(1). The search dominates the cost.</p>
+      <p class="mt">The return value tells you whether it was an update (returns old value) or an insert (returns null).</p>
+    </div>
+  </div>
+  <div class="slide-number">8 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 9: get() OPERATION ==================== -->
+<div class="slide" id="s9">
+  <h2>get() Operation</h2>
+  <p>Search for a key and return its associated value, or <code>null</code> if not found.</p>
+
+  <div class="diagram">
+  Map contents:
+  +-----------+---------+
+  | "apple"   |    3    |
+  +-----------+---------+
+  | "banana"  |    7    |
+  +-----------+---------+
+  | "cherry"  |    2    |
+  +-----------+---------+
+
+  get("banana"):
+  +-----------+---------+
+  | "apple"   |    3    |   "apple" == "banana"?  No.
+  +-----------+---------+
+  | "banana"  |    7    |   "banana" == "banana"? YES! --> return 7
+  +-----------+---------+
+  | "cherry"  |    2    |   (never reached)
+  +-----------+---------+
+
+  get("grape"):
+  +-----------+---------+
+  | "apple"   |    3    |   "apple" == "grape"?  No.
+  +-----------+---------+
+  | "banana"  |    7    |   "banana" == "grape"? No.
+  +-----------+---------+
+  | "cherry"  |    2    |   "cherry" == "grape"? No.
+  +-----------+---------+
+  End of list --> return null (not found)
+  </div>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// Pseudocode for get(key):
+public V get(K key) {
+    for (Entry e : entries) {
+        if (e.key.equals(key)) {
+            return e.value;   // found!
+        }
+    }
+    return null;  // key not in map
+}
+    </div>
+    <div>
+      <div class="warning">
+        <h3>null Can Be Ambiguous</h3>
+        <p>If <code>get("grape")</code> returns <code>null</code>, does that mean the key is absent, or that the key exists with a <code>null</code> value? Use <code>containsKey()</code> to disambiguate:</p>
+        <div class="diagram small" style="margin-top:8px;">
+if (map.containsKey("grape")) {
+    // key exists, value might be null
+    V val = map.get("grape");
+} else {
+    // key truly does not exist
+}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 10: remove() OPERATION ==================== -->
+<div class="slide" id="s10">
+  <h2>remove() Operation</h2>
+  <p>Find the entry by key, remove it, and return the old value.</p>
+
+  <div class="diagram">
+  Before remove("banana"):
+
+  entries[]
+  +----+-------------------+
+  | 0  | ("apple",  3)     |
+  +----+-------------------+
+  | 1  | ("banana", 7)     |  &lt;-- found at index 1
+  +----+-------------------+
+  | 2  | ("cherry", 2)     |
+  +----+-------------------+
+  | 3  | ("date",   5)     |
+  +----+-------------------+
+
+  Option A: Shift entries up          Option B: Swap with last entry
+  +----+-------------------+          +----+-------------------+
+  | 0  | ("apple",  3)     |          | 0  | ("apple",  3)     |
+  +----+-------------------+          +----+-------------------+
+  | 1  | ("cherry", 2)     | shifted  | 1  | ("date",   5)     | swapped
+  +----+-------------------+          +----+-------------------+
+  | 2  | ("date",   5)     | shifted  | 2  | ("cherry", 2)     |
+  +----+-------------------+          +----+-------------------+
+  O(n) shifting                       O(1) swap (order doesn't matter!)
+
+  Returns: 7 (the removed value)
+  </div>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// Pseudocode for remove(key):
+public V remove(K key) {
+    for (int i = 0; i &lt; size; i++) {
+        if (entries[i].key.equals(key)) {
+            V old = entries[i].value;
+            // Swap with last entry
+            entries[i] = entries[size - 1];
+            entries[size - 1] = null;
+            size--;
+            return old;
+        }
+    }
+    return null;  // key not found
+}
+    </div>
+    <div class="key-idea">
+      <h3>Swap-with-Last Trick</h3>
+      <p>Since an unsorted list has <strong>no required order</strong>, we can replace the removed entry with the last entry in O(1), avoiding the O(n) shifting cost. The search is still O(n), but the actual removal step is O(1).</p>
+      <p class="mt"><strong>This trick does NOT work for sorted arrays</strong> -- swapping would break the sorted order.</p>
+    </div>
+  </div>
+  <div class="slide-number">10 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 11: ORDERED / SORTED MAP ==================== -->
+<div class="slide" id="s11">
+  <h2>Ordered Map / Sorted Map</h2>
+  <p>A map that maintains keys in <strong>sorted order</strong>, enabling range queries and ordered traversal.</p>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram">
+  Sorted Map (keys in alphabetical order):
+
+  +-----------+---------+
+  | "ant"     |    6    |  &lt;-- firstKey()
+  +-----------+---------+
+  | "bird"    |    2    |
+  +-----------+---------+
+  | "cat"     |    5    |
+  +-----------+---------+  subMap("bird","dog")
+  | "dog"     |    3    |  returns {bird:2, cat:5}
+  +-----------+---------+
+  | "fish"    |    8    |  &lt;-- lastKey()
+  +-----------+---------+
+      </div>
+
+      <h3 class="mt">Extra Operations</h3>
+      <div class="diagram small">
+  K  firstKey()
+     Smallest key in the map.
+
+  K  lastKey()
+     Largest key in the map.
+
+  SortedMap  subMap(K from, K to)
+     All entries with keys in [from, to).
+
+  SortedMap  headMap(K to)
+     All entries with keys &lt; to.
+
+  SortedMap  tailMap(K from)
+     All entries with keys >= from.
+      </div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Why Maintain Sorted Order?</h3>
+        <ul>
+          <li><strong>Range queries:</strong> "Give me all entries between 'C' and 'M'"</li>
+          <li><strong>Ordered iteration:</strong> process keys from smallest to largest</li>
+          <li><strong>Min/max:</strong> find smallest or largest key in O(log n)</li>
+          <li><strong>Floor/ceiling:</strong> find nearest key to a given value</li>
+        </ul>
+      </div>
+
+      <div class="analogy">
+        <h3>Analogy: Filing Cabinet</h3>
+        <p>An <strong>unsorted map</strong> is like tossing files into a box -- fast to add, slow to find. A <strong>sorted map</strong> is like an alphabetized filing cabinet -- slightly slower to insert (you must find the right slot) but finding files and browsing ranges is fast.</p>
+      </div>
+
+      <div class="warning mt">
+        <h3>Requirement: Comparable Keys</h3>
+        <p>Keys must implement <code>Comparable</code> (or you must provide a <code>Comparator</code>) so the map knows how to sort them. You can't sort keys that have no natural ordering.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 12: IMPLEMENTATION PREVIEW ==================== -->
+<div class="slide" id="s12">
+  <h2>Implementation Preview: What's Coming Next</h2>
+  <p>The unsorted list and sorted array are just the beginning. Two powerful implementations are ahead:</p>
+
+  <div class="two-col">
+    <div>
+      <h3>Hash Table (coming soon!)</h3>
+      <div class="diagram small">
+  Key --> hash function --> bucket index
+
+  buckets[]
+  +----+--------------------+
+  | 0  | --> ("cat",5)      |
+  +----+--------------------+
+  | 1  |                    |
+  +----+--------------------+
+  | 2  | --> ("dog",3)      |
+  +----+--------------------+
+  | 3  | --> ("ant",6)      |
+  +----+--------------------+
+  | 4  | --> ("fish",8)     |
+  +----+--------------------+
+
+  Average case:
+    get()    O(1)
+    put()    O(1)
+    remove() O(1)
+
+  No ordering of keys.
+      </div>
+      <div class="key-idea">
+        <h3>The Dream: O(1) Average</h3>
+        <p>By computing an index directly from the key, hash tables bypass the need to search. The trade-off: keys are unordered, and worst case is O(n) due to collisions.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Binary Search Tree</h3>
+      <div class="diagram small">
+            (dog, 3)
+           /         \
+      (cat, 5)     (fish, 8)
+       /
+  (ant, 6)
+
+  Balanced BST:
+    get()    O(log n)
+    put()    O(log n)
+    remove() O(log n)
+
+  Keys are maintained in sorted order!
+  Supports range queries.
+      </div>
+      <div class="key-idea">
+        <h3>Best of Both Worlds</h3>
+        <p>BSTs give O(log n) for all operations <strong>and</strong> maintain sorted order. This is why Java's <code>TreeMap</code> uses a Red-Black Tree (a self-balancing BST) internally.</p>
+      </div>
+    </div>
+  </div>
+
+  <table style="width:100%; margin-top:16px;">
+    <tr>
+      <th>Implementation</th>
+      <th>get()</th>
+      <th>put()</th>
+      <th>remove()</th>
+      <th>Ordered?</th>
+    </tr>
+    <tr>
+      <td>Unsorted List</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>No</td>
+    </tr>
+    <tr>
+      <td>Sorted Array</td>
+      <td>O(log n)</td>
+      <td>O(n)</td>
+      <td>O(n)</td>
+      <td>Yes</td>
+    </tr>
+    <tr class="highlight">
+      <td>Hash Table</td>
+      <td><strong>O(1) avg</strong></td>
+      <td><strong>O(1) avg</strong></td>
+      <td><strong>O(1) avg</strong></td>
+      <td>No</td>
+    </tr>
+    <tr class="highlight">
+      <td>Balanced BST</td>
+      <td>O(log n)</td>
+      <td>O(log n)</td>
+      <td>O(log n)</td>
+      <td><strong>Yes</strong></td>
+    </tr>
+  </table>
+  <div class="slide-number">12 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 13: APPLICATION - WORD FREQUENCY ==================== -->
+<div class="slide" id="s13">
+  <h2>Application: Word Frequency Counter</h2>
+  <p>Count how many times each word appears in a text. A classic map use case.</p>
+
+  <div class="diagram small">
+  Input text: "the cat sat on the mat the cat"
+
+  Processing word by word:
+
+  Word      | Action                         | Map State
+  ----------|--------------------------------|----------------------------------
+  "the"     | not in map, put("the", 1)      | { the:1 }
+  "cat"     | not in map, put("cat", 1)      | { the:1, cat:1 }
+  "sat"     | not in map, put("sat", 1)      | { the:1, cat:1, sat:1 }
+  "on"      | not in map, put("on", 1)       | { the:1, cat:1, sat:1, on:1 }
+  "the"     | already in map! put("the", 2)  | { the:2, cat:1, sat:1, on:1 }
+  "mat"     | not in map, put("mat", 1)      | { the:2, cat:1, sat:1, on:1, mat:1 }
+  "the"     | already in map! put("the", 3)  | { the:3, cat:1, sat:1, on:1, mat:1 }
+  "cat"     | already in map! put("cat", 2)  | { the:3, cat:2, sat:1, on:1, mat:1 }
+
+  Final result: "the" appears 3 times, "cat" appears 2 times, rest appear once.
+  </div>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// Java implementation
+Map&lt;String, Integer&gt; freq = new HashMap&lt;&gt;();
+
+String[] words = text.split(" ");
+
+for (String word : words) {
+    if (freq.containsKey(word)) {
+        freq.put(word, freq.get(word) + 1);
+    } else {
+        freq.put(word, 1);
+    }
+}
+
+// Cleaner with getOrDefault:
+for (String word : words) {
+    freq.put(word,
+        freq.getOrDefault(word, 0) + 1);
+}
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Why a Map Is Perfect Here</h3>
+        <p>We need to associate each <strong>unique word</strong> (key) with its <strong>count</strong> (value). A map gives us:</p>
+        <ul>
+          <li>Fast lookup to check if word seen before</li>
+          <li>Fast update to increment the count</li>
+          <li>Automatic uniqueness of keys</li>
+        </ul>
+      </div>
+      <div class="analogy mt">
+        <h3>Analogy: Tally Sheet</h3>
+        <p>Imagine reading words aloud and keeping a tally sheet. Each row has a word and tally marks. Seen a new word? Add a row. Seen it again? Add a tally mark. The map IS the tally sheet.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 14: APPLICATION - TWO SUM ==================== -->
+<div class="slide" id="s14">
+  <h2>Application: Two-Sum Problem</h2>
+  <p>Given an array and a target sum, find two numbers that add up to the target. A classic interview question solved elegantly with a map.</p>
+
+  <div class="diagram small">
+  Problem: nums = [2, 7, 11, 15], target = 9
+  Find two numbers that add up to 9.  Return their indices.
+
+  BRUTE FORCE (O(n^2)):  Check every pair. Slow!
+
+  MAP APPROACH (O(n)):   For each number, check if (target - number) is in the map.
+
+  Step   | num | complement    | Map contains        | Action
+         |     | (target-num)  | complement?          |
+  -------|-----|---------------|----------------------|-----------------------------
+    1    |  2  | 9 - 2 = 7    | {} --> No            | Store 2 at index 0:  {2:0}
+    2    |  7  | 9 - 7 = 2    | {2:0} --> YES!       | Found! indices [0, 1]
+         |     |               | map.get(2) = 0       | return [0, 1]
+
+  Answer: nums[0] + nums[1] = 2 + 7 = 9
+  </div>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// Java solution
+public int[] twoSum(int[] nums,
+                    int target) {
+    // Map: value --> index
+    Map&lt;Integer, Integer&gt; seen
+        = new HashMap&lt;&gt;();
+
+    for (int i = 0; i &lt; nums.length; i++) {
+        int complement =
+            target - nums[i];
+
+        if (seen.containsKey(complement)) {
+            return new int[] {
+                seen.get(complement), i
+            };
+        }
+        seen.put(nums[i], i);
+    }
+    throw new IllegalArgumentException(
+        "No two-sum solution");
+}
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>The Key Insight</h3>
+        <p>Instead of checking every pair (O(n^2)), we store each number we've seen so far in a map. For each new number, we compute its <strong>complement</strong> (target - num) and check if we've already seen it. One pass through the array = <strong>O(n)</strong>.</p>
+      </div>
+      <div class="analogy">
+        <h3>Analogy: Looking for a Dance Partner</h3>
+        <p>Imagine people entering a room one at a time, each wearing a number. Each person asks: "Is someone here whose number plus mine equals the target?" If yes -- pair found! If no -- sit down and wait. The <strong>map is the room's registry</strong> of who's already inside.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 15: JAVA'S MAP INTERFACE ==================== -->
+<div class="slide" id="s15">
+  <h2>Java's Map Interface</h2>
+  <p>Java provides several Map implementations, each with different trade-offs.</p>
+
+  <div class="diagram">
+               Map&lt;K,V&gt;  (interface)
+              /    |     \
+           /       |       \
+  HashMap    TreeMap    LinkedHashMap
+  (Hash      (Red-Black  (Hash Table
+   Table)     Tree)       + Linked List)
+  </div>
+
+  <table style="width:100%; margin-top:16px;">
+    <tr>
+      <th>Implementation</th>
+      <th>Ordering</th>
+      <th>get/put/remove</th>
+      <th>null keys?</th>
+      <th>Use when</th>
+    </tr>
+    <tr class="highlight">
+      <td><strong>HashMap</strong></td>
+      <td>None (arbitrary)</td>
+      <td>O(1) average</td>
+      <td>Yes (one)</td>
+      <td>Default choice. Fastest.</td>
+    </tr>
+    <tr>
+      <td><strong>TreeMap</strong></td>
+      <td>Sorted by key</td>
+      <td>O(log n)</td>
+      <td>No</td>
+      <td>Need sorted keys / ranges.</td>
+    </tr>
+    <tr>
+      <td><strong>LinkedHashMap</strong></td>
+      <td>Insertion order</td>
+      <td>O(1) average</td>
+      <td>Yes (one)</td>
+      <td>Need insertion order preserved.</td>
+    </tr>
+  </table>
+
+  <div class="two-col mt">
+    <div class="diagram small">
+// HashMap -- most common
+Map&lt;String, Integer&gt; map
+    = new HashMap&lt;&gt;();
+map.put("apple", 3);
+map.put("banana", 7);
+map.get("apple");     // 3
+map.containsKey("cherry"); // false
+map.size();           // 2
+
+// Iterate over entries
+for (Map.Entry&lt;String, Integer&gt; e
+        : map.entrySet()) {
+    System.out.println(
+        e.getKey() + ": " + e.getValue());
+}
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Decision Flowchart</h3>
+        <p>Need <strong>fastest lookups</strong> and don't care about order? Use <strong>HashMap</strong>.</p>
+        <p>Need keys in <strong>sorted order</strong> or range queries? Use <strong>TreeMap</strong>.</p>
+        <p>Need to <strong>remember insertion order</strong> (e.g., LRU cache)? Use <strong>LinkedHashMap</strong>.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Common Mistake</h3>
+        <p>Don't assume HashMap entries come out in any particular order. If you iterate over a HashMap, the order can change when entries are added or removed. If you need ordering, use TreeMap or LinkedHashMap.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 16</div>
+</div>
+
+<!-- ==================== SLIDE 16: SUMMARY & CHEAT SHEET ==================== -->
+<div class="slide" id="s16">
+  <h2>Summary & Cheat Sheet</h2>
+
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+  MAP = collection of (key, value) pairs
+  Keys must be UNIQUE
+  Values can repeat
+
+  CORE OPERATIONS:
+    get(key)       --> value or null
+    put(key, val)  --> old value or null
+    remove(key)    --> old value or null
+    containsKey(k) --> boolean
+    size()         --> int
+    isEmpty()      --> boolean
+
+  VIEWS:
+    keySet()   --> Set of all keys
+    values()   --> Collection of all values
+    entrySet() --> Set of Entry objects
+
+  IMPLEMENTATIONS:
+    Unsorted List   O(n) / O(n) / O(n)
+    Sorted Array    O(log n) / O(n) / O(n)
+    Hash Table      O(1) avg / O(1) / O(1)
+    Balanced BST    O(log n) all ops, sorted
+
+  JAVA CLASSES:
+    HashMap         --> fast, unordered
+    TreeMap         --> sorted by key
+    LinkedHashMap   --> insertion order
+      </div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>When to Use a Map</h3>
+        <ul>
+          <li>Need to <strong>look up values by a key</strong> (not by index)</li>
+          <li>Need to <strong>count occurrences</strong> (word frequency)</li>
+          <li>Need to <strong>associate related data</strong> (ID to record)</li>
+          <li>Need to <strong>check for existence</strong> quickly</li>
+          <li>Need to <strong>eliminate duplicates</strong> while tracking info</li>
+        </ul>
+      </div>
+      <div class="analogy">
+        <h3>The Big Picture</h3>
+        <p><strong>Lists</strong> are about <em>ordering</em>. <strong>Sets</strong> are about <em>uniqueness</em>. <strong>Maps</strong> are about <em>association</em> -- connecting a key to its value. Maps are arguably the most widely used data structure in real-world programming.</p>
+      </div>
+      <div class="key-idea mt">
+        <h3>Coming Next</h3>
+        <p><strong>Hash Tables</strong> -- how to achieve O(1) average-case performance using hash functions and buckets. We'll see how collisions are handled and why the load factor matters.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 16</div>
+</div>
+
+<!-- NAVIGATION -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&larr; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &rarr;</button>
+</div>
+
+<script>
+const totalSlides = 16;
+let current = 1;
+function showSlide(n) {
+  document.querySelectorAll('.slide').forEach(s => s.classList.remove('active'));
+  const slide = document.getElementById('s' + n);
+  if (slide) { slide.classList.add('active'); slide.classList.add('fade-in'); }
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+  document.getElementById('progress').style.width = ((n / totalSlides) * 100) + '%';
+}
+function changeSlide(delta) {
+  const next = current + delta;
+  if (next >= 1 && next <= totalSlides) { current = next; showSlide(current); }
+}
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') { e.preventDefault(); changeSlide(1); }
+  else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') { e.preventDefault(); changeSlide(-1); }
+});
+showSlide(1);
+</script>
+
+</body>
+</html>

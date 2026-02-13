@@ -1,0 +1,1215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Stacks - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+.step { opacity: 0; transition: opacity 0.4s ease, transform 0.4s ease; transform: translateY(8px); }
+.step.visible { opacity: 1; transform: translateY(0); }
+.code-block { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 20px 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 0.9em; line-height: 1.7; white-space: pre; overflow-x: auto; margin: 16px 0; color: #e2e8f0; }
+.code-block .kw { color: #c084fc; }
+.code-block .type { color: #67e8f9; }
+.code-block .str { color: #86efac; }
+.code-block .cmt { color: #64748b; }
+.code-block .fn { color: #93c5fd; }
+.code-block .num { color: #fbbf24; }
+.three-col { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 30px; align-items: start; }
+.tag { display: inline-block; background: #334155; color: #93c5fd; padding: 2px 10px; border-radius: 6px; font-size: 0.85em; margin-right: 6px; }
+.tag.green { background: rgba(16,185,129,0.2); color: #34d399; }
+.tag.yellow { background: rgba(245,158,11,0.2); color: #fbbf24; }
+.tag.red { background: rgba(239,68,68,0.2); color: #f87171; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ==================== SLIDE 1: Title ==================== -->
+<div class="slide active" id="slide-1">
+  <div class="center" style="width:100%;">
+    <h1 style="font-size:3.2em;">Stacks</h1>
+    <p class="subtitle" style="font-size:1.6em;">Last In, First Out (LIFO)</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:1.1em; margin-top:20px;">
+    TOP --&gt;  |  D  |
+             |  C  |
+             |  B  |
+             |  A  |
+             +-----+
+    </div>
+    <p class="subtitle" style="margin-top:30px;">CS205 Data Structures</p>
+    <p style="color:#64748b; font-size:0.95em;">Use arrow keys or buttons to navigate &bull; Press S to reveal steps</p>
+  </div>
+  <div class="slide-number">1 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 2: What is a Stack? ==================== -->
+<div class="slide" id="slide-2">
+  <h2>What is a Stack?</h2>
+  <div class="two-col mt">
+    <div>
+      <p>A <strong>stack</strong> is a collection of elements with a <strong>LIFO</strong> access policy:</p>
+      <ul class="mt">
+        <li>The <strong>last</strong> element inserted is the <strong>first</strong> one removed</li>
+        <li>Access is restricted to one end called the <strong>top</strong></li>
+        <li>You can only add or remove from the top</li>
+      </ul>
+      <div class="analogy mt">
+        <h3>Analogy: Stack of Plates</h3>
+        <p>Think of a spring-loaded plate dispenser in a cafeteria. You always take the <strong>top plate</strong>. When clean plates are added, they go on <strong>top</strong>. You never pull from the bottom.</p>
+      </div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>LIFO = <strong>L</strong>ast <strong>I</strong>n, <strong>F</strong>irst <strong>O</strong>ut. The most recently added element is always the next one to leave.</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram">
+             +-------+
+  TOP --&gt;   |   E   |  &lt;-- most recent
+             +-------+
+             |   D   |
+             +-------+
+             |   C   |
+             +-------+
+             |   B   |
+             +-------+
+             |   A   |  &lt;-- oldest
+             +-------+
+
+  push(F) adds F above E
+  pop()   removes and returns E
+      </div>
+      <div class="diagram small" style="margin-top:10px;">
+  Cafeteria Plate Dispenser:
+
+     ___________
+    |  plate 5  |  &lt;-- take this one
+    |  plate 4  |
+    |  plate 3  |
+    |  plate 2  |
+    |  plate 1  |
+    |___________|
+    |  spring   |
+    +===========+
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 3: The Stack ADT ==================== -->
+<div class="slide" id="slide-3">
+  <h2>The Stack ADT (Abstract Data Type)</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Core Operations</h3>
+      <table style="width:100%;">
+        <tr><th>Method</th><th>Description</th><th>Time</th></tr>
+        <tr><td><code>push(e)</code></td><td>Add element <em>e</em> to top</td><td>O(1)</td></tr>
+        <tr><td><code>pop()</code></td><td>Remove &amp; return top</td><td>O(1)</td></tr>
+        <tr><td><code>top()</code> / <code>peek()</code></td><td>Return top without removing</td><td>O(1)</td></tr>
+        <tr><td><code>isEmpty()</code></td><td>Is the stack empty?</td><td>O(1)</td></tr>
+        <tr><td><code>size()</code></td><td>Number of elements</td><td>O(1)</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Every operation is <strong>O(1)</strong> -- constant time. A stack does very little, but does it blazing fast.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Java Interface</h3>
+      <div class="code-block"><span class="kw">public interface</span> <span class="type">Stack</span>&lt;<span class="type">E</span>&gt; {
+
+    <span class="cmt">// Add element to the top</span>
+    <span class="kw">void</span> <span class="fn">push</span>(<span class="type">E</span> element);
+
+    <span class="cmt">// Remove and return the top</span>
+    <span class="type">E</span> <span class="fn">pop</span>();
+
+    <span class="cmt">// Return top without removing</span>
+    <span class="type">E</span> <span class="fn">top</span>();
+
+    <span class="cmt">// Is the stack empty?</span>
+    <span class="kw">boolean</span> <span class="fn">isEmpty</span>();
+
+    <span class="cmt">// Number of elements</span>
+    <span class="kw">int</span> <span class="fn">size</span>();
+
+}</div>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p><code>pop()</code> and <code>top()</code> on an empty stack should throw an <strong>EmptyStackException</strong> (or return null, depending on design).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">3 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 4: Push Operation ==================== -->
+<div class="slide" id="slide-4">
+  <h2>Push Operation</h2>
+  <p class="subtitle">Add an element to the top of the stack</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Before &amp; After: <code>push(D)</code></h3>
+      <div class="diagram">
+   BEFORE              AFTER push(D)
+
+                        +-------+
+                TOP --&gt; |   D   | &lt;-- new!
+   +-------+            +-------+
+   |   C   | &lt;-- TOP    |   C   |
+   +-------+            +-------+
+   |   B   |            |   B   |
+   +-------+            +-------+
+   |   A   |            |   A   |
+   +-------+            +-------+
+
+   size: 3              size: 4
+      </div>
+      <div class="diagram small" style="margin-top:10px;">
+   Step by step:
+   1. Create space at top
+   2. Place element D there
+   3. Update top pointer
+   4. Increment size
+      </div>
+    </div>
+    <div>
+      <h3>Array-Based Push</h3>
+      <div class="code-block"><span class="cmt">// t is the index of the top element
+// starts at -1 (empty stack)</span>
+
+<span class="kw">public void</span> <span class="fn">push</span>(<span class="type">E</span> element) {
+    <span class="kw">if</span> (size() == data.length)
+        <span class="kw">throw new</span> <span class="type">FullStackException</span>();
+    t++;                <span class="cmt">// advance top index</span>
+    data[t] = element;  <span class="cmt">// store element</span>
+}</div>
+
+      <h3 class="mt">Linked-List Push</h3>
+      <div class="code-block"><span class="kw">public void</span> <span class="fn">push</span>(<span class="type">E</span> element) {
+    <span class="type">Node</span>&lt;<span class="type">E</span>&gt; newest = <span class="kw">new</span> <span class="type">Node</span>&lt;&gt;(element);
+    newest.next = top;  <span class="cmt">// link to old top</span>
+    top = newest;       <span class="cmt">// update top</span>
+    size++;
+}</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Push is always <strong>O(1)</strong>. It never needs to shift or move existing elements.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 5: Pop Operation ==================== -->
+<div class="slide" id="slide-5">
+  <h2>Pop Operation</h2>
+  <p class="subtitle">Remove and return the top element</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Before &amp; After: <code>pop()</code> returns D</h3>
+      <div class="diagram">
+   BEFORE              AFTER pop()
+
+   +-------+
+   |   D   | &lt;-- TOP    +-------+
+   +-------+    removed  |   C   | &lt;-- TOP
+   |   C   |   --------&gt; +-------+
+   +-------+   returns D |   B   |
+   |   B   |             +-------+
+   +-------+             |   A   |
+   |   A   |             +-------+
+   +-------+
+                          returned: D
+   size: 4               size: 3
+      </div>
+      <div class="warning mt">
+        <h3>Warning: Always Check isEmpty!</h3>
+        <p>Calling <code>pop()</code> on an empty stack is a runtime error. Always guard with <code>isEmpty()</code> or handle the exception.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Array-Based Pop</h3>
+      <div class="code-block"><span class="kw">public</span> <span class="type">E</span> <span class="fn">pop</span>() {
+    <span class="kw">if</span> (isEmpty())
+        <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+    <span class="type">E</span> answer = data[t]; <span class="cmt">// save top element</span>
+    data[t] = <span class="kw">null</span>;     <span class="cmt">// help garbage collection</span>
+    t--;                 <span class="cmt">// shrink stack</span>
+    <span class="kw">return</span> answer;
+}</div>
+
+      <h3 class="mt">Linked-List Pop</h3>
+      <div class="code-block"><span class="kw">public</span> <span class="type">E</span> <span class="fn">pop</span>() {
+    <span class="kw">if</span> (isEmpty())
+        <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+    <span class="type">E</span> answer = top.data; <span class="cmt">// save data</span>
+    top = top.next;      <span class="cmt">// bypass old top</span>
+    size--;
+    <span class="kw">return</span> answer;
+}</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Pop is <strong>O(1)</strong>. Setting <code>data[t] = null</code> in the array version avoids memory leaks by allowing garbage collection.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 6: Peek / Top ==================== -->
+<div class="slide" id="slide-6">
+  <h2>Peek / Top</h2>
+  <p class="subtitle">Look at the top element without removing it</p>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+   peek() returns D
+   but the stack is UNCHANGED
+
+             +-------+
+  TOP --&gt;    |   D   |  &lt;-- returned!
+             +-------+
+             |   C   |
+             +-------+
+             |   B   |
+             +-------+       D is still
+             |   A   |       on top after
+             +-------+       peek()
+
+   size before: 4
+   size after:  4  (no change!)
+      </div>
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p><code>peek()</code> is like <strong>looking</strong> at the top plate without picking it up. <code>pop()</code> is actually <strong>taking</strong> it.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Implementation</h3>
+      <div class="code-block"><span class="cmt">// Array-based</span>
+<span class="kw">public</span> <span class="type">E</span> <span class="fn">top</span>() {
+    <span class="kw">if</span> (isEmpty())
+        <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+    <span class="kw">return</span> data[t]; <span class="cmt">// no modification</span>
+}
+
+<span class="cmt">// Linked-list-based</span>
+<span class="kw">public</span> <span class="type">E</span> <span class="fn">top</span>() {
+    <span class="kw">if</span> (isEmpty())
+        <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+    <span class="kw">return</span> top.data; <span class="cmt">// no modification</span>
+}</div>
+      <h3 class="mt">Comparison: top() vs pop()</h3>
+      <table style="width:100%;">
+        <tr><th>Aspect</th><th><code>top()</code></th><th><code>pop()</code></th></tr>
+        <tr><td>Returns top?</td><td>Yes</td><td>Yes</td></tr>
+        <tr><td>Removes top?</td><td><strong>No</strong></td><td><strong>Yes</strong></td></tr>
+        <tr><td>Changes size?</td><td>No</td><td>Yes (-1)</td></tr>
+        <tr><td>Destructive?</td><td>No</td><td>Yes</td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="slide-number">6 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 7: Array-Based Implementation ==================== -->
+<div class="slide" id="slide-7">
+  <h2>Array-Based Implementation</h2>
+  <p class="subtitle">Store elements in an array, track the top index</p>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  Array data[] with capacity N = 8
+  top index t = 3  (4 elements)
+
+  Index:  0     1     2     3     4     5     6     7
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+  data | "A" | "B" | "C" | "D" |     |     |     |     |
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+                             ^
+                             |
+                          t = 3
+                         (top)
+
+  push("E"):  data[4] = "E";  t = 4;
+  pop():      temp = data[3]; data[3] = null; t = 2;
+      </div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>The stack "grows right" in the array. Index 0 is the bottom, index <code>t</code> is the top. An empty stack has <code>t = -1</code>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Complete Java Class</h3>
+      <div class="code-block" style="font-size:0.82em;"><span class="kw">public class</span> <span class="type">ArrayStack</span>&lt;<span class="type">E</span>&gt;
+        <span class="kw">implements</span> <span class="type">Stack</span>&lt;<span class="type">E</span>&gt; {
+
+    <span class="kw">private</span> <span class="type">E</span>[] data;
+    <span class="kw">private int</span> t = -<span class="num">1</span>; <span class="cmt">// top index</span>
+
+    <span class="kw">public</span> <span class="fn">ArrayStack</span>(<span class="kw">int</span> capacity) {
+        data = (<span class="type">E</span>[]) <span class="kw">new</span> Object[capacity];
+    }
+
+    <span class="kw">public int</span> <span class="fn">size</span>()    { <span class="kw">return</span> t + <span class="num">1</span>; }
+    <span class="kw">public boolean</span> <span class="fn">isEmpty</span>() {
+        <span class="kw">return</span> t == -<span class="num">1</span>;
+    }
+
+    <span class="kw">public void</span> <span class="fn">push</span>(<span class="type">E</span> e) {
+        <span class="kw">if</span> (size() == data.length)
+            <span class="kw">throw new</span> <span class="type">FullStackException</span>();
+        data[++t] = e;
+    }
+
+    <span class="kw">public</span> <span class="type">E</span> <span class="fn">pop</span>() {
+        <span class="kw">if</span> (isEmpty())
+            <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+        <span class="type">E</span> ans = data[t];
+        data[t] = <span class="kw">null</span>;
+        t--;
+        <span class="kw">return</span> ans;
+    }
+
+    <span class="kw">public</span> <span class="type">E</span> <span class="fn">top</span>() {
+        <span class="kw">if</span> (isEmpty())
+            <span class="kw">throw new</span> <span class="type">EmptyStackException</span>();
+        <span class="kw">return</span> data[t];
+    }
+}</div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 8: When Array is Full ==================== -->
+<div class="slide" id="slide-8">
+  <h2>Array-Based: When the Array is Full</h2>
+  <p class="subtitle">What happens when we push onto a full array?</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Option 1: Throw Exception</h3>
+      <p>Simple but limiting. Caller must know the max size in advance.</p>
+      <h3 class="mt">Option 2: Dynamic Resizing (Doubling)</h3>
+      <div class="diagram small">
+  BEFORE push("E") -- array is FULL
+
+  Index:  0     1     2     3
+       +-----+-----+-----+-----+
+  data | "A" | "B" | "C" | "D" |  capacity = 4
+       +-----+-----+-----+-----+  t = 3 (FULL!)
+
+  Step 1: Allocate new array of size 2N = 8
+  Step 2: Copy all elements over
+  Step 3: Push "E"
+
+  Index:  0     1     2     3     4     5     6     7
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+  data | "A" | "B" | "C" | "D" | "E" |     |     |     |
+       +-----+-----+-----+-----+-----+-----+-----+-----+
+                                   ^
+                                t = 4   capacity = 8
+      </div>
+    </div>
+    <div>
+      <h3>Amortized Analysis</h3>
+      <p>Doubling seems expensive (O(n) copy), but it happens <strong>rarely</strong>.</p>
+      <div class="diagram small">
+  Push #   Cost    Array Size
+  -----   ------  ----------
+    1       1         1
+    2       1+1=2     2     (resize 1-&gt;2, copy 1)
+    3       1+2=3     4     (resize 2-&gt;4, copy 2)
+    4       1         4
+    5       1+4=5     8     (resize 4-&gt;8, copy 4)
+    6       1         8
+    7       1         8
+    8       1         8
+    ...
+  Total cost for n pushes:
+    n + (1 + 2 + 4 + ... + n) = n + 2n - 1 = 3n - 1
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea: Amortized O(1)</h3>
+        <p>Total cost of n pushes is O(n), so each push is <strong>O(1) amortized</strong>. The occasional expensive resize is "paid for" by all the cheap pushes that preceded it.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>Never grow by a constant (e.g. +10). That gives <strong>O(n) amortized</strong> per push. Always <strong>double</strong> for O(1) amortized.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 9: Linked-List Implementation ==================== -->
+<div class="slide" id="slide-9">
+  <h2>Linked-List-Based Implementation</h2>
+  <p class="subtitle">Push and pop at the head of a singly linked list</p>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram">
+  The stack as a linked list:
+  (top of stack = head of list)
+
+  top
+   |
+   v
+  +---+---+    +---+---+    +---+---+    +---+---+
+  | D | *-+-&gt;  | C | *-+-&gt;  | B | *-+-&gt;  | A | / |
+  +---+---+    +---+---+    +---+---+    +---+---+
+
+  push(E): insert new node at HEAD
+
+  top
+   |
+   v
+  +---+---+    +---+---+    +---+---+
+  | E | *-+-&gt;  | D | *-+-&gt;  | C | *-+-&gt; ...
+  +---+---+    +---+---+    +---+---+
+
+  pop(): remove HEAD node, return E
+
+  top
+   |
+   v
+  +---+---+    +---+---+
+  | D | *-+-&gt;  | C | *-+-&gt; ...
+  +---+---+    +---+---+
+      </div>
+    </div>
+    <div>
+      <h3>Complete Java Class</h3>
+      <div class="code-block" style="font-size:0.82em;"><span class="kw">public class</span> <span class="type">LinkedStack</span>&lt;<span class="type">E</span>&gt;
+        <span class="kw">implements</span> <span class="type">Stack</span>&lt;<span class="type">E</span>&gt; {
+
+    <span class="kw">private</span> <span class="type">SinglyLinkedList</span>&lt;<span class="type">E</span>&gt; list
+        = <span class="kw">new</span> <span class="type">SinglyLinkedList</span>&lt;&gt;();
+
+    <span class="kw">public int</span> <span class="fn">size</span>() {
+        <span class="kw">return</span> list.size();
+    }
+    <span class="kw">public boolean</span> <span class="fn">isEmpty</span>() {
+        <span class="kw">return</span> list.isEmpty();
+    }
+
+    <span class="kw">public void</span> <span class="fn">push</span>(<span class="type">E</span> e) {
+        list.addFirst(e); <span class="cmt">// O(1)</span>
+    }
+
+    <span class="kw">public</span> <span class="type">E</span> <span class="fn">pop</span>() {
+        <span class="kw">return</span> list.removeFirst(); <span class="cmt">// O(1)</span>
+    }
+
+    <span class="kw">public</span> <span class="type">E</span> <span class="fn">top</span>() {
+        <span class="kw">return</span> list.first(); <span class="cmt">// O(1)</span>
+    }
+}</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Push/pop at the <strong>head</strong> of a singly linked list is O(1). No resizing needed. No wasted capacity. No fixed limit.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 10: Array vs Linked List ==================== -->
+<div class="slide" id="slide-10">
+  <h2>Array vs Linked List Implementation</h2>
+  <p class="subtitle">Tradeoffs between the two approaches</p>
+  <div style="max-width: 900px; margin: 0 auto;">
+    <table style="width:100%; margin-top:20px;">
+      <tr>
+        <th style="width:30%;">Criterion</th>
+        <th style="width:35%;">Array-Based</th>
+        <th style="width:35%;">Linked-List-Based</th>
+      </tr>
+      <tr>
+        <td><strong>push / pop</strong></td>
+        <td><span class="tag green">O(1)</span> amortized</td>
+        <td><span class="tag green">O(1)</span> worst-case</td>
+      </tr>
+      <tr>
+        <td><strong>Memory per element</strong></td>
+        <td><span class="tag green">Low</span> -- just the element</td>
+        <td><span class="tag yellow">Higher</span> -- element + pointer</td>
+      </tr>
+      <tr>
+        <td><strong>Wasted space</strong></td>
+        <td><span class="tag yellow">Up to N unused slots</span></td>
+        <td><span class="tag green">None</span></td>
+      </tr>
+      <tr>
+        <td><strong>Resize cost</strong></td>
+        <td><span class="tag yellow">O(n) occasionally</span></td>
+        <td><span class="tag green">Never needed</span></td>
+      </tr>
+      <tr>
+        <td><strong>Maximum size</strong></td>
+        <td>Fixed (unless dynamic)</td>
+        <td>Limited only by memory</td>
+      </tr>
+      <tr>
+        <td><strong>Cache performance</strong></td>
+        <td><span class="tag green">Excellent</span> -- contiguous</td>
+        <td><span class="tag red">Poor</span> -- scattered nodes</td>
+      </tr>
+      <tr>
+        <td><strong>Implementation</strong></td>
+        <td>Simpler</td>
+        <td>Slightly more complex</td>
+      </tr>
+    </table>
+    <div class="two-col mt" style="margin-top:30px;">
+      <div class="key-idea">
+        <h3>When to Use Array</h3>
+        <p>When you know the <strong>maximum size</strong> in advance, or need <strong>best cache performance</strong>. Most practical implementations use arrays (e.g., <code>java.util.Stack</code>).</p>
+      </div>
+      <div class="key-idea">
+        <h3>When to Use Linked List</h3>
+        <p>When the stack size is <strong>highly unpredictable</strong>, or you need <strong>guaranteed O(1)</strong> worst-case per operation (no amortized spikes).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 11: Parenthesis Matching ==================== -->
+<div class="slide" id="slide-11">
+  <h2>Application: Parenthesis Matching</h2>
+  <p class="subtitle">Check if <code>( { [ ] } )</code> is balanced using a stack</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Algorithm</h3>
+      <ul>
+        <li>Scan left to right</li>
+        <li>Opening bracket <code>( [ {</code> : <strong>push</strong> it</li>
+        <li>Closing bracket <code>) ] }</code> : <strong>pop</strong> and check match</li>
+        <li>At end: stack must be <strong>empty</strong></li>
+      </ul>
+      <h3 class="mt">Trace: <code>( { [ ] } )</code></h3>
+      <div class="diagram small">
+Char  Action       Stack (top on right)
+----  -----------  --------------------
+ (    push '('     <span style="color:#86efac;">(</span>
+ {    push '{'     <span style="color:#86efac;">( {</span>
+ [    push '['     <span style="color:#86efac;">( { [</span>
+ ]    pop '[',     <span style="color:#86efac;">( {</span>
+      match ']'
+      with '['?
+      YES!
+ }    pop '{',     <span style="color:#86efac;">(</span>
+      match '}'
+      with '{'?
+      YES!
+ )    pop '(',     <span style="color:#86efac;">(empty)</span>
+      match ')'
+      with '('?
+      YES!
+END   stack empty  <span style="color:#86efac;">BALANCED!</span>
+      </div>
+    </div>
+    <div>
+      <h3>Stack State at Each Step (Vertical)</h3>
+      <div class="diagram small">
+Step 1: '('    Step 2: '{'    Step 3: '['
++-----+        +-----+        +-----+
+|     |        |     |        |  [  | &lt;- top
++-----+        +-----+        +-----+
+|     |        |  {  | &lt;- top |  {  |
++-----+        +-----+        +-----+
+|  (  | &lt;- top |  (  |        |  (  |
++-----+        +-----+        +-----+
+
+Step 4: ']'    Step 5: '}'    Step 6: ')'
+pop '['        pop '{'        pop '('
++-----+        +-----+        +-----+
+|     |        |     |        |     |
++-----+        +-----+        +-----+
+|  {  | &lt;- top |     |        |     |
++-----+        +-----+        +-----+
+|  (  |        |  (  | &lt;- top |     | EMPTY
++-----+        +-----+        +-----+
+                                VALID!
+      </div>
+      <h3 class="mt">Failing Example: <code>( [ ) ]</code></h3>
+      <div class="diagram small">
+Char  Action          Stack
+----  --------------  -----
+ (    push '('        <span style="color:#86efac;">(</span>
+ [    push '['        <span style="color:#86efac;">( [</span>
+ )    pop '[',        <span style="color:#f87171;">MISMATCH!</span>
+      match ')' with
+      '['? <span style="color:#f87171;">NO!</span>
+      --&gt; INVALID
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 12: Postfix Evaluation ==================== -->
+<div class="slide" id="slide-12">
+  <h2>Application: Evaluating Postfix Expressions</h2>
+  <p class="subtitle">Evaluate <code>3 4 + 2 *</code> using a stack</p>
+  <div class="two-col mt">
+    <div>
+      <h3>What is Postfix (Reverse Polish)?</h3>
+      <p>Operators come <strong>after</strong> their operands. No parentheses needed!</p>
+      <table>
+        <tr><th>Infix</th><th>Postfix</th></tr>
+        <tr><td><code>3 + 4</code></td><td><code>3 4 +</code></td></tr>
+        <tr><td><code>(3 + 4) * 2</code></td><td><code>3 4 + 2 *</code></td></tr>
+        <tr><td><code>3 + 4 * 2</code></td><td><code>3 4 2 * +</code></td></tr>
+      </table>
+      <h3 class="mt">Algorithm</h3>
+      <ul>
+        <li><strong>Number:</strong> push it</li>
+        <li><strong>Operator:</strong> pop two operands, compute, push result</li>
+        <li>Final answer is the last value on the stack</li>
+      </ul>
+    </div>
+    <div>
+      <h3>Trace: <code>3 4 + 2 *</code></h3>
+      <div class="diagram">
+Token  Action          Stack (vertical)
+
+  3    push 3          +---+
+                       | 3 |
+                       +---+
+
+  4    push 4          +---+
+                       | 4 |
+                       +---+
+                       | 3 |
+                       +---+
+
+  +    pop 4, pop 3    +---+
+       push 3+4=7      | 7 |
+                       +---+
+
+  2    push 2          +---+
+                       | 2 |
+                       +---+
+                       | 7 |
+                       +---+
+
+  *    pop 2, pop 7    +----+
+       push 7*2=14     | 14 |
+                       +----+
+
+Result: <span style="color:#86efac;">14</span>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 13: Infix to Postfix ==================== -->
+<div class="slide" id="slide-13">
+  <h2>Application: Infix to Postfix Conversion</h2>
+  <p class="subtitle">Shunting-Yard Algorithm (Dijkstra)</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Algorithm Rules</h3>
+      <ul>
+        <li><strong>Number:</strong> output it immediately</li>
+        <li><strong><code>(</code></strong> : push onto operator stack</li>
+        <li><strong><code>)</code></strong> : pop and output until <code>(</code> is found</li>
+        <li><strong>Operator:</strong> while top of stack has higher or equal precedence, pop and output. Then push current operator.</li>
+      </ul>
+      <div class="diagram small" style="margin-top:16px;">
+  Precedence:
+    * /  --&gt;  2  (higher)
+    + -  --&gt;  1  (lower)
+      </div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>The operator stack holds operators "waiting" for their right operand. Higher-precedence operators are flushed first, ensuring correct evaluation order.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Trace: <code>3 + 4 * 2</code></h3>
+      <div class="diagram small">
+Token  Op Stack    Output
+-----  ---------  --------
+  3    (empty)    3
+
+  +    +          3
+
+  4    +          3 4
+
+  *    + *        3 4
+       (* has higher prec
+        than +, so push)
+
+  2    + *        3 4 2
+
+ END   pop all    3 4 2 * +
+       * first,
+       then +
+
+Result: <span style="color:#86efac;">3 4 2 * +</span>
+      </div>
+      <h3 class="mt">Verify: <code>3 4 2 * +</code></h3>
+      <div class="diagram small">
+  3            push 3
+  4            push 4
+  2            push 2
+  *   4*2=8    push 8
+  +   3+8=11   push 11
+
+  Answer: <span style="color:#86efac;">11</span>
+  Same as 3 + (4*2) = 11  &#x2713;
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 14: Function Call Stack ==================== -->
+<div class="slide" id="slide-14">
+  <h2>Application: Function Call Stack</h2>
+  <p class="subtitle">How your computer manages function calls with a stack</p>
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <p>Every time a function is <strong>called</strong>, a new <strong>stack frame</strong> is pushed. When the function <strong>returns</strong>, its frame is popped.</p>
+      <div class="code-block" style="font-size:0.85em;"><span class="kw">int</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> x = <span class="fn">factorial</span>(<span class="num">3</span>);  <span class="cmt">// call</span>
+}
+
+<span class="kw">int</span> <span class="fn">factorial</span>(<span class="kw">int</span> n) {
+    <span class="kw">if</span> (n == <span class="num">0</span>) <span class="kw">return</span> <span class="num">1</span>;
+    <span class="kw">return</span> n * <span class="fn">factorial</span>(n - <span class="num">1</span>);
+}</div>
+      <div class="key-idea mt">
+        <h3>Key Idea</h3>
+        <p>Recursion is just the call stack in action. Each recursive call pushes a frame. Deep recursion = tall stack.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Call Stack for <code>factorial(3)</code></h3>
+      <div class="diagram">
+  Step 1: call factorial(3)
+  +---------------------+
+  | factorial(3)        |  &lt;- top
+  +---------------------+
+  | main()              |
+  +---------------------+
+
+  Step 2: call factorial(2)
+  +---------------------+
+  | factorial(2)        |  &lt;- top
+  +---------------------+
+  | factorial(3)        |
+  +---------------------+
+  | main()              |
+  +---------------------+
+
+  Step 3: call factorial(1)
+  +---------------------+
+  | factorial(1)        |  &lt;- top
+  +---------------------+
+  | factorial(2)        |
+  +---------------------+
+  | factorial(3)        |
+  +---------------------+
+  | main()              |
+  +---------------------+
+
+  Step 4: call factorial(0) returns 1
+  Now frames pop one by one:
+  factorial(1) returns 1*1 = 1
+  factorial(2) returns 2*1 = 2
+  factorial(3) returns 3*2 = <span style="color:#86efac;">6</span>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 15: Undo/Redo ==================== -->
+<div class="slide" id="slide-15">
+  <h2>Application: Undo / Redo</h2>
+  <p class="subtitle">Two stacks power every editor's undo system</p>
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <ul>
+        <li><strong>Perform action:</strong> push onto Undo stack, clear Redo stack</li>
+        <li><strong>Undo:</strong> pop from Undo, push onto Redo</li>
+        <li><strong>Redo:</strong> pop from Redo, push onto Undo</li>
+      </ul>
+      <div class="diagram small" style="margin-top:12px;">
+  UNDO STACK          REDO STACK
+  +----------+        +----------+
+  | bold     | &lt;-top  |          |
+  +----------+        +----------+
+  | type "b" |        |          |
+  +----------+        +----------+
+  | type "a" |        |          |
+  +----------+        +----------+
+
+  User presses Ctrl+Z (UNDO):
+  pop "bold" from Undo, push to Redo
+
+  UNDO STACK          REDO STACK
+  +----------+        +----------+
+  | type "b" | &lt;-top  | bold     | &lt;-top
+  +----------+        +----------+
+  | type "a" |        |          |
+  +----------+        +----------+
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+  User presses Ctrl+Z again (UNDO):
+  pop "type b" from Undo, push to Redo
+
+  UNDO STACK          REDO STACK
+  +----------+        +----------+
+  | type "a" | &lt;-top  | type "b" | &lt;-top
+  +----------+        +----------+
+  |          |        | bold     |
+  +----------+        +----------+
+
+  User presses Ctrl+Y (REDO):
+  pop "type b" from Redo, push to Undo
+
+  UNDO STACK          REDO STACK
+  +----------+        +----------+
+  | type "b" | &lt;-top  | bold     | &lt;-top
+  +----------+        +----------+
+  | type "a" |        |          |
+  +----------+        +----------+
+
+  User performs NEW action "italic":
+  push to Undo, CLEAR Redo
+
+  UNDO STACK          REDO STACK
+  +----------+        +----------+
+  | italic   | &lt;-top  |          | (cleared!)
+  +----------+        +----------+
+  | type "b" |        |          |
+  +----------+        +----------+
+  | type "a" |        |          |
+  +----------+        +----------+
+      </div>
+      <div class="warning mt">
+        <h3>Warning</h3>
+        <p>A new action <strong>clears the Redo stack</strong>. Once you do something new after undoing, you lose the redo history.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 16: Browser Back/Forward ==================== -->
+<div class="slide" id="slide-16">
+  <h2>Application: Browser Back / Forward</h2>
+  <p class="subtitle">Navigation history uses two stacks</p>
+  <div class="two-col mt">
+    <div>
+      <h3>How It Works</h3>
+      <ul>
+        <li><strong>Visit new page:</strong> push current onto Back stack, clear Forward stack</li>
+        <li><strong>Back button:</strong> push current onto Forward, pop Back to become current</li>
+        <li><strong>Forward button:</strong> push current onto Back, pop Forward to become current</li>
+      </ul>
+      <div class="diagram small" style="margin-top:16px;">
+  Visit: Google -&gt; Reddit -&gt; YouTube
+
+  BACK STACK      Current     FORWARD STACK
+  +----------+                +----------+
+  | Reddit   |   YouTube     |          |
+  +----------+                +----------+
+  | Google   |               |          |
+  +----------+                +----------+
+
+  Press BACK:
+
+  BACK STACK      Current     FORWARD STACK
+  +----------+                +----------+
+  | Google   |   Reddit      | YouTube  |
+  +----------+                +----------+
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+  Press BACK again:
+
+  BACK STACK      Current     FORWARD STACK
+  +----------+                +----------+
+  |          |   Google      | Reddit   |
+  +----------+                +----------+
+                              | YouTube  |
+                              +----------+
+
+  Press FORWARD:
+
+  BACK STACK      Current     FORWARD STACK
+  +----------+                +----------+
+  | Google   |   Reddit      | YouTube  |
+  +----------+                +----------+
+
+  Visit NEW page (Twitter):
+
+  BACK STACK      Current     FORWARD STACK
+  +----------+                +----------+
+  | Reddit   |   Twitter     |          | (cleared!)
+  +----------+                +----------+
+  | Google   |               |          |
+  +----------+                +----------+
+      </div>
+      <div class="analogy mt">
+        <h3>Analogy</h3>
+        <p>Same pattern as Undo/Redo! The Back stack is the Undo stack, the Forward stack is the Redo stack, and the current page is the document state.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 17: Common Pitfalls ==================== -->
+<div class="slide" id="slide-17">
+  <h2>Common Pitfalls</h2>
+  <p class="subtitle">Mistakes to avoid when working with stacks</p>
+  <div class="three-col mt">
+    <div>
+      <div class="warning">
+        <h3>1. Popping an Empty Stack</h3>
+        <p>The #1 stack bug. Always check <code>isEmpty()</code> before <code>pop()</code> or <code>top()</code>.</p>
+      </div>
+      <div class="code-block" style="font-size:0.8em;"><span class="cmt">// BAD</span>
+<span class="type">E</span> val = stack.<span class="fn">pop</span>();  <span class="cmt">// crash!</span>
+
+<span class="cmt">// GOOD</span>
+<span class="kw">if</span> (!stack.<span class="fn">isEmpty</span>()) {
+    <span class="type">E</span> val = stack.<span class="fn">pop</span>();
+}</div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>2. Stack Overflow</h3>
+        <p>Deep recursion = deep call stack. Each call pushes a frame. Too deep and you get <code>StackOverflowError</code>.</p>
+      </div>
+      <div class="code-block" style="font-size:0.8em;"><span class="cmt">// Infinite recursion!</span>
+<span class="kw">int</span> <span class="fn">bad</span>(<span class="kw">int</span> n) {
+    <span class="kw">return</span> <span class="fn">bad</span>(n - <span class="num">1</span>);
+    <span class="cmt">// no base case!</span>
+    <span class="cmt">// StackOverflowError</span>
+}</div>
+      <div class="diagram small" style="margin-top:8px;">
+  +-------------+
+  | bad(-9999)  | &lt;- BOOM!
+  +-------------+
+  | bad(-9998)  |
+  +-------------+
+  |    ...      |
+  +-------------+
+  | bad(0)      |
+  +-------------+
+  | bad(1)      |
+  +-------------+
+  | main()      |
+  +-------------+
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>3. Wrong Order in Pop</h3>
+        <p>In postfix evaluation, operand order matters for <code>-</code> and <code>/</code>.</p>
+      </div>
+      <div class="code-block" style="font-size:0.8em;"><span class="cmt">// For "5 3 -"</span>
+b = stack.<span class="fn">pop</span>(); <span class="cmt">// 3</span>
+a = stack.<span class="fn">pop</span>(); <span class="cmt">// 5</span>
+
+<span class="cmt">// Correct: a - b = 5 - 3 = 2</span>
+<span class="cmt">// Wrong:   b - a = 3 - 5 = -2</span></div>
+      <div class="key-idea" style="margin-top:12px;">
+        <h3>Remember</h3>
+        <p>First popped = <strong>second</strong> operand. Second popped = <strong>first</strong> operand.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 18</div>
+</div>
+
+<!-- ==================== SLIDE 18: Summary ==================== -->
+<div class="slide" id="slide-18">
+  <h2>Summary &amp; Cheat Sheet</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Stack at a Glance</h3>
+      <div class="diagram small">
+  +------- STACK --------+
+  |                       |
+  |  LIFO: Last In,       |
+  |        First Out      |
+  |                       |
+  |   +-------+           |
+  |   |  top  | &lt;- push/  |
+  |   +-------+    pop    |
+  |   |       |    here   |
+  |   +-------+           |
+  |   |       |           |
+  |   +-------+           |
+  |   | bottom|           |
+  |   +-------+           |
+  +-----------------------+
+      </div>
+      <h3 class="mt">Operations Cheat Sheet</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Time</th><th>Notes</th></tr>
+        <tr><td><code>push(e)</code></td><td>O(1)*</td><td>Add to top</td></tr>
+        <tr><td><code>pop()</code></td><td>O(1)</td><td>Remove &amp; return top</td></tr>
+        <tr><td><code>top()</code></td><td>O(1)</td><td>Return top (no remove)</td></tr>
+        <tr><td><code>isEmpty()</code></td><td>O(1)</td><td>Check if empty</td></tr>
+        <tr><td><code>size()</code></td><td>O(1)</td><td>Element count</td></tr>
+      </table>
+      <p style="font-size:0.85em; color:#64748b; margin-top:8px;">* O(1) amortized for dynamic array</p>
+    </div>
+    <div>
+      <h3>Implementations</h3>
+      <div class="key-idea">
+        <h3>Array-Based</h3>
+        <p>Simple, fast, great cache performance. Use when size is bounded or mostly known. Amortized O(1) with doubling.</p>
+      </div>
+      <div class="key-idea">
+        <h3>Linked-List-Based</h3>
+        <p>No size limit, guaranteed O(1) worst-case. Extra memory for node pointers.</p>
+      </div>
+      <h3 class="mt">Applications</h3>
+      <table style="width:100%;">
+        <tr><th>Application</th><th>How Stacks Help</th></tr>
+        <tr><td>Parenthesis matching</td><td>Push open, pop on close</td></tr>
+        <tr><td>Postfix evaluation</td><td>Push nums, pop for ops</td></tr>
+        <tr><td>Infix to postfix</td><td>Operator stack (shunting-yard)</td></tr>
+        <tr><td>Function calls</td><td>Call stack / recursion</td></tr>
+        <tr><td>Undo / Redo</td><td>Two stacks</td></tr>
+        <tr><td>Browser history</td><td>Back &amp; Forward stacks</td></tr>
+      </table>
+      <div class="analogy mt">
+        <h3>One Sentence Summary</h3>
+        <p>A stack is a <strong>restricted list</strong> where you can only touch the top -- and that restriction is what makes it powerful, fast, and useful everywhere.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 18</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#9654;</button>
+</div>
+
+<script>
+const totalSlides = 18;
+let currentSlide = 1;
+
+function showSlide(n) {
+  // Clamp
+  if (n < 1) n = 1;
+  if (n > totalSlides) n = totalSlides;
+  currentSlide = n;
+
+  // Hide all slides
+  document.querySelectorAll('.slide').forEach(s => {
+    s.classList.remove('active');
+  });
+
+  // Show current
+  const slide = document.getElementById('slide-' + n);
+  if (slide) {
+    slide.classList.add('active');
+    slide.classList.add('fade-in');
+    // Reset steps
+    slide.querySelectorAll('.step').forEach(s => s.classList.remove('visible'));
+  }
+
+  // Update progress bar
+  const progress = document.getElementById('progress');
+  progress.style.width = ((n / totalSlides) * 100) + '%';
+
+  // Update nav buttons
+  document.getElementById('prevBtn').disabled = (n === 1);
+  document.getElementById('nextBtn').disabled = (n === totalSlides);
+}
+
+function changeSlide(delta) {
+  showSlide(currentSlide + delta);
+}
+
+// Reveal next hidden step on current slide
+function revealNextStep() {
+  const slide = document.getElementById('slide-' + currentSlide);
+  if (!slide) return;
+  const hiddenSteps = slide.querySelectorAll('.step:not(.visible)');
+  if (hiddenSteps.length > 0) {
+    hiddenSteps[0].classList.add('visible');
+  }
+}
+
+// Keyboard navigation
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 's' || e.key === 'S') {
+    e.preventDefault();
+    revealNextStep();
+  }
+});
+
+// Initialize
+showSlide(1);
+</script>
+
+</body>
+</html>

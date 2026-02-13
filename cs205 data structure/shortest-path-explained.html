@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shortest Path Algorithms - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; color: #a5f3fc; font-size: 0.95em; }
+.highlight-green { color: #4ade80; font-weight: 600; }
+.highlight-yellow { color: #fbbf24; font-weight: 600; }
+.highlight-red { color: #f87171; font-weight: 600; }
+.highlight-blue { color: #60a5fa; font-weight: 600; }
+.highlight-purple { color: #c084fc; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ========== SLIDE 1: Title ========== -->
+<div class="slide active">
+  <div class="center">
+    <h1>Shortest Path Algorithms</h1>
+    <p class="subtitle">Dijkstra's & Bellman-Ford</p>
+    <div class="diagram" style="display:inline-block; text-align:left; font-size:0.85em;">
+       A ---4--- B ---2--- E
+       |         |       / |
+       2         1     3   6
+       |         |   /     |
+       C ---5--- D ---1--- F
+    </div>
+    <p class="subtitle" style="margin-top:20px;">CS205 Data Structures</p>
+    <p style="color:#64748b; font-size:0.95em;">Use arrow keys or buttons to navigate</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ========== SLIDE 2: The Shortest Path Problem ========== -->
+<div class="slide">
+  <h2>The Shortest Path Problem</h2>
+  <div class="two-col">
+    <div>
+      <p>Given a <span class="highlight-blue">weighted graph</span>, find the path from a source vertex to a destination vertex that has the <span class="highlight-green">minimum total weight</span>.</p>
+      <ul class="mt">
+        <li>Edges have numeric <strong>weights</strong> (costs, distances, times)</li>
+        <li>The "shortest" path = lowest <em>sum of edge weights</em></li>
+        <li>Not necessarily the fewest edges!</li>
+      </ul>
+      <div class="analogy">
+        <h3>Analogy: GPS Navigation</h3>
+        <p>Your GPS doesn't find the route with the fewest turns -- it finds the route with the <strong>least total travel time</strong>. Each road segment has a "weight" (time to drive it). The shortest path algorithm finds the optimal route.</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+  A weighted directed graph:
+
+       A
+      / \
+     4   2
+    /     \
+   B       C
+    \     / \
+     3   1   6
+      \ /     \
+       D --5-- E
+
+  Path A->B->D     = 4 + 3 = 7
+  Path A->C->D     = 2 + 1 = 3  <-- shortest!
+  Path A->C->E     = 2 + 6 = 8
+  Path A->C->D->E  = 2 + 1 + 5 = 8
+      </div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A->C->D costs only 3, even though A->B->D has fewer intermediate steps. Weights matter more than hop count.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ========== SLIDE 3: Single-Source vs All-Pairs ========== -->
+<div class="slide">
+  <h2>Single-Source vs All-Pairs</h2>
+  <div class="two-col">
+    <div>
+      <h3>Single-Source Shortest Path (SSSP)</h3>
+      <p>Find shortest paths from <span class="highlight-blue">one source vertex</span> to <strong>all other vertices</strong>.</p>
+      <div class="diagram small">
+  Source = A
+
+  A -> B : 4
+  A -> C : 2
+  A -> D : 3   (via C)
+  A -> E : 8   (via C->D or C)
+      </div>
+      <ul>
+        <li><span class="highlight-green">Dijkstra's Algorithm</span> -- greedy, fast, no negative weights</li>
+        <li><span class="highlight-yellow">Bellman-Ford</span> -- slower, handles negative weights</li>
+      </ul>
+    </div>
+    <div>
+      <h3>All-Pairs Shortest Path (APSP)</h3>
+      <p>Find shortest paths between <span class="highlight-purple">every pair</span> of vertices.</p>
+      <div class="diagram small">
+      A    B    C    D    E
+  A [ 0    4    2    3    8 ]
+  B [ -    0    -    3    8 ]
+  C [ -    -    0    1    6 ]
+  D [ -    -    -    0    5 ]
+  E [ -    -    -    -    0 ]
+      </div>
+      <ul>
+        <li><span class="highlight-purple">Floyd-Warshall</span> -- O(V^3), dynamic programming</li>
+        <li>Or: run Dijkstra from every vertex</li>
+      </ul>
+    </div>
+  </div>
+  <div class="key-idea mt">
+    <h3>Our Focus</h3>
+    <p>This deck covers <strong>single-source</strong> algorithms: Dijkstra's and Bellman-Ford. These solve the most common shortest-path scenario.</p>
+  </div>
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ========== SLIDE 4: Greedy Approach: Dijkstra's ========== -->
+<div class="slide">
+  <h2>Greedy Approach: Dijkstra's Algorithm</h2>
+  <div class="two-col">
+    <div>
+      <p>Invented by Edsger Dijkstra in 1956. The core idea is a <span class="highlight-green">greedy</span> strategy:</p>
+      <ul class="mt">
+        <li>Maintain a set of vertices whose shortest distance is <strong>finalized</strong></li>
+        <li>Always pick the <span class="highlight-blue">unvisited vertex with the smallest known distance</span></li>
+        <li>Use it to <strong>relax</strong> (improve) distances to its neighbors</li>
+        <li>Mark it as finalized and repeat</li>
+      </ul>
+      <div class="analogy mt">
+        <h3>Analogy: Expanding Cloud</h3>
+        <p>Imagine a "cloud" of certainty expanding from the source. At each step, the closest unvisited vertex joins the cloud. Once inside the cloud, its shortest distance is <strong>guaranteed correct</strong>.</p>
+      </div>
+    </div>
+    <div>
+      <div class="diagram small">
+  Step-by-step "cloud" expansion:
+
+  Start: only source in cloud
+  +---------+
+  | S (d=0) | --> explore neighbors
+  +---------+
+
+  Step 1: closest neighbor joins
+  +----------------+
+  | S (0)  A (2)   | --> explore A's neighbors
+  +----------------+
+
+  Step 2: next closest joins
+  +-----------------------+
+  | S (0)  A (2)  B (4)  | --> explore B's neighbors
+  +-----------------------+
+
+  ... until all vertices are in the cloud
+      </div>
+      <div class="key-idea">
+        <h3>Why Greedy Works</h3>
+        <p>If all edge weights are non-negative, there's no way a later vertex could provide a shorter path to an already-finalized vertex.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ========== SLIDE 5: Dijkstra's Pseudocode ========== -->
+<div class="slide">
+  <h2>Dijkstra's Algorithm -- Pseudocode</h2>
+  <div class="two-col">
+    <div>
+      <div class="diagram small">
+DIJKSTRA(G, source):
+  for each vertex v in G:
+      dist[v]   = INFINITY
+      parent[v] = NULL
+      visited[v] = false
+
+  dist[source] = 0
+  PQ = min-priority-queue
+  PQ.insert(source, 0)
+
+  while PQ is not empty:
+      u = PQ.extractMin()
+
+      if visited[u]: continue
+      visited[u] = true
+
+      for each neighbor v of u:
+          w = weight(u, v)
+
+          // RELAXATION STEP
+          if dist[u] + w < dist[v]:
+              dist[v] = dist[u] + w
+              parent[v] = u
+              PQ.insert(v, dist[v])
+
+  return dist[], parent[]
+      </div>
+    </div>
+    <div>
+      <h3>Three Key Data Structures</h3>
+      <ul>
+        <li><code>dist[]</code> -- current best-known distance from source to each vertex</li>
+        <li><code>parent[]</code> -- predecessor of each vertex on the shortest path (for path reconstruction)</li>
+        <li><code>PQ</code> -- min-priority queue ordered by distance (tells us which vertex to process next)</li>
+      </ul>
+      <div class="key-idea mt">
+        <h3>Initialization</h3>
+        <p><code>dist[source] = 0</code> and all others = infinity. We "know" the source is distance 0 from itself.</p>
+      </div>
+      <div class="warning mt">
+        <h3>Relaxation</h3>
+        <p>The heart of the algorithm: "Can we improve the path to <code>v</code> by going through <code>u</code>?" If yes, update.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ========== SLIDE 6: Edge Relaxation ========== -->
+<div class="slide">
+  <h2>Edge Relaxation</h2>
+  <p class="subtitle">The fundamental operation in shortest-path algorithms</p>
+  <div class="two-col">
+    <div>
+      <p><strong>Relaxing edge (u, v)</strong> means checking:</p>
+      <div class="diagram" style="font-size:1.1em; text-align:center;">
+  Is  dist[u] + w(u,v)  &lt;  dist[v]  ?
+      </div>
+      <p>If <span class="highlight-green">yes</span>: we found a shorter path to <code>v</code> via <code>u</code>. Update!</p>
+      <p>If <span class="highlight-red">no</span>: the current path to <code>v</code> is already better. Do nothing.</p>
+
+      <div class="key-idea mt">
+        <h3>Why "Relaxation"?</h3>
+        <p>Think of <code>dist[v]</code> as an overestimate that we gradually "relax" (tighten) downward until it reaches the true shortest distance.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Before Relaxation</h3>
+      <div class="diagram small">
+         dist[u] = 3       dist[v] = 10
+            (u) ----7---- (v)
+
+  Check: 3 + 7 = 10.  10 &lt; 10?  NO.
+  No update. Current path to v is tied.
+      </div>
+      <h3>Successful Relaxation</h3>
+      <div class="diagram small">
+         dist[u] = 3       dist[v] = 12
+            (u) ----7---- (v)
+
+  Check: 3 + 7 = 10.  10 &lt; 12?  YES!
+  Update: dist[v] = 10, parent[v] = u
+
+         dist[u] = 3       dist[v] = 10
+            (u) ----7---- (v)
+                           ^ updated!
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ========== SLIDE 7: Dijkstra's Step-by-Step Example ========== -->
+<div class="slide">
+  <h2>Dijkstra's Step-by-Step Example</h2>
+  <div class="two-col">
+    <div>
+      <h3>Our Graph (source = A)</h3>
+      <div class="diagram small">
+         A ---4--- B
+         |  \      |
+         2    1    3
+         |      \  |
+         C ---5--- D ---2--- E
+      </div>
+      <p style="font-size:0.95em;">Edges: A-B:4, A-C:2, A-D:1, B-D:3, C-D:5, D-E:2</p>
+
+      <h3 class="mt">Initialization</h3>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td class="highlight-green">0</td><td>&infin;</td><td>&infin;</td><td>&infin;</td><td>&infin;</td></tr>
+        <tr><td><strong>parent[]</strong></td><td>-</td><td>-</td><td>-</td><td>-</td><td>-</td></tr>
+        <tr><td><strong>visited</strong></td><td>F</td><td>F</td><td>F</td><td>F</td><td>F</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {(A, 0)}</p>
+    </div>
+    <div>
+      <h3>Step 1: Process A (dist=0)</h3>
+      <p>Extract <span class="highlight-green">A</span> from PQ. Mark visited. Relax neighbors:</p>
+      <div class="diagram small">
+  Relax A->B: dist[A]+4 = 4 &lt; inf  YES
+    dist[B] = 4, parent[B] = A
+
+  Relax A->C: dist[A]+2 = 2 &lt; inf  YES
+    dist[C] = 2, parent[C] = A
+
+  Relax A->D: dist[A]+1 = 1 &lt; inf  YES
+    dist[D] = 1, parent[D] = A
+      </div>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td>0</td><td>4</td><td>2</td><td>1</td><td>&infin;</td></tr>
+        <tr><td><strong>parent[]</strong></td><td>-</td><td>A</td><td>A</td><td>A</td><td>-</td></tr>
+        <tr><td><strong>visited</strong></td><td class="highlight-green">T</td><td>F</td><td>F</td><td>F</td><td>F</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {(<span class="highlight-blue">D,1</span>), (C,2), (B,4)}</p>
+    </div>
+  </div>
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ========== SLIDE 8: Dijkstra's Trace (continued) ========== -->
+<div class="slide">
+  <h2>Dijkstra's Trace (continued)</h2>
+  <div class="two-col">
+    <div>
+      <h3>Step 2: Process D (dist=1)</h3>
+      <p>Extract <span class="highlight-green">D</span> (smallest in PQ). Mark visited. Relax:</p>
+      <div class="diagram small">
+  Relax D->B: dist[D]+3 = 4.  4 &lt; 4?  NO
+    (tied, no update)
+
+  Relax D->C: dist[D]+5 = 6.  6 &lt; 2?  NO
+    (current path to C is better)
+
+  Relax D->E: dist[D]+2 = 3.  3 &lt; inf?  YES
+    dist[E] = 3, parent[E] = D
+      </div>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td>0</td><td>4</td><td>2</td><td>1</td><td>3</td></tr>
+        <tr><td><strong>parent[]</strong></td><td>-</td><td>A</td><td>A</td><td>A</td><td>D</td></tr>
+        <tr><td><strong>visited</strong></td><td>T</td><td>F</td><td>F</td><td class="highlight-green">T</td><td>F</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {(<span class="highlight-blue">C,2</span>), (E,3), (B,4)}</p>
+    </div>
+    <div>
+      <h3>Step 3: Process C (dist=2)</h3>
+      <p>Extract <span class="highlight-green">C</span>. Mark visited. Relax:</p>
+      <div class="diagram small">
+  Relax C->D: dist[C]+5 = 7.  7 &lt; 1?  NO
+    (D already has shorter path)
+
+  C's only unvisited neighbor via edge
+  C-D is already finalized. No updates.
+      </div>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td>0</td><td>4</td><td>2</td><td>1</td><td>3</td></tr>
+        <tr><td><strong>parent[]</strong></td><td>-</td><td>A</td><td>A</td><td>A</td><td>D</td></tr>
+        <tr><td><strong>visited</strong></td><td>T</td><td>F</td><td class="highlight-green">T</td><td>T</td><td>F</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {(<span class="highlight-blue">E,3</span>), (B,4)}</p>
+
+      <div class="key-idea mt">
+        <h3>Notice</h3>
+        <p>C's neighbors are all either visited (D) or lead to no improvement. The cloud grows with no distance changes.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ========== SLIDE 9: Dijkstra's Trace (complete) ========== -->
+<div class="slide">
+  <h2>Dijkstra's Trace (complete)</h2>
+  <div class="two-col">
+    <div>
+      <h3>Step 4: Process E (dist=3)</h3>
+      <p>Extract <span class="highlight-green">E</span>. Mark visited. E's neighbor D is already visited. No updates.</p>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td>0</td><td>4</td><td>2</td><td>1</td><td>3</td></tr>
+        <tr><td><strong>visited</strong></td><td>T</td><td>F</td><td>T</td><td>T</td><td class="highlight-green">T</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {(<span class="highlight-blue">B,4</span>)}</p>
+
+      <h3 class="mt">Step 5: Process B (dist=4)</h3>
+      <p>Extract <span class="highlight-green">B</span>. Mark visited. B's neighbor D is visited. No updates.</p>
+      <table style="width:100%;">
+        <tr><th>Vertex</th><th>A</th><th>B</th><th>C</th><th>D</th><th>E</th></tr>
+        <tr><td><strong>dist[]</strong></td><td>0</td><td>4</td><td>2</td><td>1</td><td>3</td></tr>
+        <tr><td><strong>visited</strong></td><td>T</td><td class="highlight-green">T</td><td>T</td><td>T</td><td>T</td></tr>
+      </table>
+      <p style="font-size:0.95em;"><strong>PQ:</strong> {} (empty -- done!)</p>
+    </div>
+    <div>
+      <h3>Final Shortest Path Tree</h3>
+      <div class="diagram">
+  Source: A        Final distances:
+                   A=0, B=4, C=2, D=1, E=3
+
+  Shortest Path Tree (parent edges):
+
+         A (0)
+        /|\
+       / | \
+      4  2  1
+     /   |   \
+   B(4) C(2) D(1)
+               \
+                2
+                 \
+                 E(3)
+
+  Paths from A:
+    A -> B         = 4
+    A -> C         = 2
+    A -> D         = 1
+    A -> D -> E    = 3
+      </div>
+      <div class="key-idea">
+        <h3>Processing Order</h3>
+        <p>A(0) -> D(1) -> C(2) -> E(3) -> B(4). The vertices were processed in increasing order of their shortest distance from the source.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ========== SLIDE 10: Reconstructing the Path ========== -->
+<div class="slide">
+  <h2>Reconstructing the Path</h2>
+  <div class="two-col">
+    <div>
+      <p>Dijkstra gives us the <span class="highlight-blue">distance</span> to every vertex, but how do we find the <span class="highlight-green">actual path</span>?</p>
+      <p>Use the <code>parent[]</code> array! Trace backwards from the destination to the source.</p>
+
+      <div class="diagram small">
+  parent[] from our example:
+    parent[A] = -   (source)
+    parent[B] = A
+    parent[C] = A
+    parent[D] = A
+    parent[E] = D
+      </div>
+
+      <h3 class="mt">Algorithm</h3>
+      <div class="diagram small">
+PATH(parent, destination):
+  path = empty stack
+  v = destination
+
+  while v != NULL:
+      path.push(v)
+      v = parent[v]
+
+  return path  // pop for correct order
+      </div>
+    </div>
+    <div>
+      <h3>Example: Path to E</h3>
+      <div class="diagram small">
+  Goal: find path A -> ... -> E
+
+  Start at E:
+    E -> parent[E] = D
+    D -> parent[D] = A
+    A -> parent[A] = NULL (stop!)
+
+  Stack contents: [E, D, A]
+  Pop to get path: A -> D -> E
+
+  Total distance: dist[E] = 3  (correct!)
+      </div>
+
+      <h3 class="mt">Example: Path to B</h3>
+      <div class="diagram small">
+  Goal: find path A -> ... -> B
+
+  Start at B:
+    B -> parent[B] = A
+    A -> parent[A] = NULL (stop!)
+
+  Stack contents: [B, A]
+  Pop to get path: A -> B
+
+  Total distance: dist[B] = 4  (correct!)
+      </div>
+
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The parent pointers form a <strong>tree</strong> rooted at the source. Every path in this tree is a shortest path.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ========== SLIDE 11: Dijkstra's Correctness ========== -->
+<div class="slide">
+  <h2>Dijkstra's Correctness</h2>
+  <p class="subtitle">Why the greedy choice is safe</p>
+  <div class="two-col">
+    <div>
+      <h3>The Claim</h3>
+      <p>When Dijkstra's extracts vertex <code>u</code> from the priority queue, <code>dist[u]</code> equals the true shortest-path distance.</p>
+
+      <h3 class="mt">Proof Sketch (by contradiction)</h3>
+      <ul>
+        <li>Suppose vertex <code>u</code> is the <strong>first</strong> vertex extracted with an incorrect distance</li>
+        <li>There must be a true shortest path S -> ... -> x -> y -> ... -> u where <code>y</code> is the first vertex on this path <em>not yet visited</em></li>
+        <li>Since x is visited, <code>dist[y] &le; dist[x] + w(x,y)</code> = true distance to y</li>
+        <li>Since all weights &ge; 0: <code>dist[y] &le; true dist to u</code></li>
+        <li>But u was extracted before y, so <code>dist[u] &le; dist[y]</code></li>
+        <li>Combining: <code>dist[u] &le; true dist to u</code></li>
+        <li>But dist[u] &ge; true dist (it's an overestimate). Contradiction!</li>
+      </ul>
+    </div>
+    <div>
+      <div class="diagram small">
+  Proof visualization:
+
+  Visited cloud         Unvisited
+  +-------------+
+  |  S ... x    |--w(x,y)--  y ... u
+  +-------------+
+        ^                       ^
+     correct              first "wrong"?
+     distances            Impossible!
+
+  Since w(x,y) >= 0 and w(y...u) >= 0:
+    dist[y] <= dist to u (true)
+    dist[u] <= dist[y]   (u extracted first)
+    => dist[u] <= true dist to u
+    => dist[u] IS correct (contradiction)
+      </div>
+
+      <div class="warning mt">
+        <h3>Critical Assumption</h3>
+        <p>This proof <strong>requires all edge weights to be non-negative</strong>. If any edge weight is negative, the "cloud" property breaks down -- a later vertex could create a shortcut through a negative edge.</p>
+      </div>
+
+      <div class="key-idea">
+        <h3>Invariant</h3>
+        <p>Every vertex extracted from the PQ has its correct final shortest distance. This is the loop invariant that makes Dijkstra's correct.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ========== SLIDE 12: Dijkstra's Time Complexity ========== -->
+<div class="slide">
+  <h2>Dijkstra's Time Complexity</h2>
+  <div class="two-col">
+    <div>
+      <h3>With Binary Heap (Min-Priority Queue)</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Count</th><th>Cost Each</th><th>Total</th></tr>
+        <tr><td>extractMin</td><td>V</td><td>O(log V)</td><td>O(V log V)</td></tr>
+        <tr><td>insert / decreaseKey</td><td>E</td><td>O(log V)</td><td>O(E log V)</td></tr>
+      </table>
+      <div class="key-idea mt">
+        <h3>Total: O((V + E) log V)</h3>
+        <p>For connected graphs where E &ge; V, this simplifies to <span class="highlight-green">O(E log V)</span>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>With Simple Array (No Heap)</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Count</th><th>Cost Each</th><th>Total</th></tr>
+        <tr><td>findMin (scan)</td><td>V</td><td>O(V)</td><td>O(V^2)</td></tr>
+        <tr><td>update dist</td><td>E</td><td>O(1)</td><td>O(E)</td></tr>
+      </table>
+      <div class="warning mt">
+        <h3>Total: O(V^2)</h3>
+        <p>Simpler to implement but slower. Better only for <strong>dense graphs</strong> where E is close to V^2.</p>
+      </div>
+    </div>
+  </div>
+  <div class="mt" style="max-width:800px;">
+    <h3>Which to Use?</h3>
+    <div class="diagram small">
+  Sparse graph (E ~ V):
+    Heap:  O(V log V)  <<  Array: O(V^2)    --> Use heap!
+
+  Dense graph (E ~ V^2):
+    Heap:  O(V^2 log V)  >  Array: O(V^2)   --> Use array!
+
+  Most real-world graphs are sparse, so the heap version wins.
+
+  Even better: Fibonacci Heap gives O(V log V + E) -- optimal!
+  (But rarely used in practice due to complexity.)
+    </div>
+  </div>
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ========== SLIDE 13: Dijkstra's Limitation ========== -->
+<div class="slide">
+  <h2>Dijkstra's Limitation: Negative Weights</h2>
+  <div class="two-col">
+    <div>
+      <div class="warning">
+        <h3>Dijkstra FAILS with Negative Edge Weights!</h3>
+        <p>Once a vertex is "finalized," Dijkstra never reconsiders it. A negative edge can create a shorter path <em>after</em> finalization.</p>
+      </div>
+
+      <h3 class="mt">Counterexample</h3>
+      <div class="diagram">
+         A ---1--- B
+          \        |
+           4      -6
+            \      |
+             C --- D
+             (C-D has weight 0)
+      </div>
+      <p>Edges: A->B:1, A->C:4, B->D:-6, C->D:0</p>
+      <p>Source: <span class="highlight-blue">A</span>, Destination: <span class="highlight-green">D</span></p>
+    </div>
+    <div>
+      <h3>What Dijkstra Does (WRONG)</h3>
+      <div class="diagram small">
+  Init: dist = [A:0, B:inf, C:inf, D:inf]
+
+  Step 1: Process A (d=0)
+    Relax A->B: dist[B] = 1
+    Relax A->C: dist[C] = 4
+    PQ: {(B,1), (C,4)}
+
+  Step 2: Process B (d=1)  -- FINALIZED!
+    Relax B->D: dist[D] = 1+(-6) = -5
+    PQ: {(C,4), (D,-5)}
+
+  Step 3: Process D (d=-5) -- FINALIZED!
+    PQ: {(C,4)}
+
+  Step 4: Process C (d=4) -- FINALIZED!
+    Relax C->D: 4+0 = 4. 4 &lt; -5? NO.
+
+  Dijkstra says: dist[D] = -5  &#10004;
+      </div>
+      <p>Wait, that looks correct here. Let's tweak it:</p>
+      <div class="diagram small">
+  Revised: A->B:1, A->C:3, B->D:5, C->D:1, C->B:-4
+
+        A ---1--- B
+         \       ^|
+          3   -4/ |5
+           \  /   |
+            C --1- D
+
+  Dijkstra processes A(0), then B(1):
+    Finalizes B with dist=1.
+  Then C(3):
+    Relax C->B: 3+(-4)= -1 &lt; 1? YES!
+    But B is already finalized!
+    Dijkstra WON'T fix B's distance!
+
+  Dijkstra: dist[B]=1, dist[D]=6
+  Correct:  dist[B]=-1, dist[D]=4
+      </div>
+      <div class="key-idea">
+        <h3>The Problem</h3>
+        <p>Dijkstra finalized B with dist=1, but the path A->C->B costs -1. Once finalized, it is never reconsidered.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ========== SLIDE 14: Bellman-Ford Algorithm ========== -->
+<div class="slide">
+  <h2>Bellman-Ford Algorithm</h2>
+  <div class="two-col">
+    <div>
+      <p><span class="highlight-green">Handles negative edge weights!</span> Invented independently by Richard Bellman (1958) and Lester Ford Jr. (1956).</p>
+
+      <h3 class="mt">Core Idea</h3>
+      <ul>
+        <li>Instead of being greedy, relax <strong>ALL edges</strong> in each iteration</li>
+        <li>Repeat for <span class="highlight-blue">V - 1</span> iterations</li>
+        <li>Why V-1? A shortest path has at most V-1 edges</li>
+        <li>Each iteration guarantees one more "level" of correctness</li>
+      </ul>
+
+      <div class="analogy mt">
+        <h3>Analogy: Ripple Effect</h3>
+        <p>Imagine dropping a stone in a pond. Each "ripple" extends the correct distances by one hop. After V-1 ripples, every vertex is reached.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Pseudocode</h3>
+      <div class="diagram small">
+BELLMAN-FORD(G, source):
+  for each vertex v in G:
+      dist[v]   = INFINITY
+      parent[v] = NULL
+
+  dist[source] = 0
+
+  // Main loop: V-1 iterations
+  for i = 1 to |V| - 1:
+      for each edge (u, v, w) in G:
+          // Relaxation
+          if dist[u] + w &lt; dist[v]:
+              dist[v] = dist[u] + w
+              parent[v] = u
+
+  // Negative cycle detection
+  for each edge (u, v, w) in G:
+      if dist[u] + w &lt; dist[v]:
+          return "NEGATIVE CYCLE!"
+
+  return dist[], parent[]
+      </div>
+      <div class="warning">
+        <h3>Time Complexity: O(V * E)</h3>
+        <p>Slower than Dijkstra's, but works with negative weights and can detect negative cycles.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ========== SLIDE 15: Bellman-Ford Step-by-Step ========== -->
+<div class="slide">
+  <h2>Bellman-Ford Step-by-Step</h2>
+  <div class="two-col">
+    <div>
+      <h3>Graph (source = A)</h3>
+      <div class="diagram small">
+        A ---1--- B
+         \       ^|
+          3   -4/ |5
+           \  /   |
+            C --1- D
+
+  Edges (processed in this order):
+    (A,B,1) (A,C,3) (B,D,5)
+    (C,B,-4) (C,D,1)
+      </div>
+
+      <h3>Iteration 1 (of V-1 = 3)</h3>
+      <div class="diagram small">
+  Relax (A,B,1): 0+1=1 &lt; inf   YES
+    dist[B]=1, parent[B]=A
+  Relax (A,C,3): 0+3=3 &lt; inf   YES
+    dist[C]=3, parent[C]=A
+  Relax (B,D,5): 1+5=6 &lt; inf   YES
+    dist[D]=6, parent[D]=B
+  Relax (C,B,-4): 3+(-4)=-1 &lt; 1 YES
+    dist[B]=-1, parent[B]=C
+  Relax (C,D,1): 3+1=4 &lt; 6     YES
+    dist[D]=4, parent[D]=C
+      </div>
+      <table style="width:100%;font-size:0.95em;">
+        <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+        <tr><td><strong>dist</strong></td><td>0</td><td class="highlight-green">-1</td><td>3</td><td class="highlight-green">4</td></tr>
+        <tr><td><strong>par</strong></td><td>-</td><td>C</td><td>A</td><td>C</td></tr>
+      </table>
+    </div>
+    <div>
+      <h3>Iteration 2</h3>
+      <div class="diagram small">
+  Relax (A,B,1): 0+1=1 &lt; -1?   NO
+  Relax (A,C,3): 0+3=3 &lt; 3?    NO
+  Relax (B,D,5): -1+5=4 &lt; 4?   NO
+  Relax (C,B,-4): 3+(-4)=-1&lt;-1? NO
+  Relax (C,D,1): 3+1=4 &lt; 4?    NO
+
+  No changes! Algorithm has converged.
+      </div>
+      <table style="width:100%;font-size:0.95em;">
+        <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+        <tr><td><strong>dist</strong></td><td>0</td><td>-1</td><td>3</td><td>4</td></tr>
+        <tr><td><strong>par</strong></td><td>-</td><td>C</td><td>A</td><td>C</td></tr>
+      </table>
+
+      <h3 class="mt">Iteration 3</h3>
+      <p>Same as iteration 2. No changes.</p>
+
+      <div class="key-idea mt">
+        <h3>Final Shortest Paths</h3>
+        <div class="diagram small">
+  A -> B : A -> C -> B       dist = -1
+  A -> C : A -> C            dist = 3
+  A -> D : A -> C -> D       dist = 4
+
+  Bellman-Ford finds the correct -1
+  for B that Dijkstra missed!
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ========== SLIDE 16: Detecting Negative Cycles ========== -->
+<div class="slide">
+  <h2>Bellman-Ford: Detecting Negative Cycles</h2>
+  <div class="two-col">
+    <div>
+      <h3>The Extra Pass</h3>
+      <p>After V-1 iterations, do <span class="highlight-yellow">one more relaxation pass</span> over all edges.</p>
+      <ul class="mt">
+        <li>If <strong>no distance decreases</strong>: all shortest paths are correct</li>
+        <li>If <strong>any distance decreases</strong>: there is a <span class="highlight-red">negative cycle</span> reachable from the source!</li>
+      </ul>
+
+      <div class="diagram mt">
+  // After main V-1 loop:
+  for each edge (u, v, w) in G:
+      if dist[u] + w &lt; dist[v]:
+          return "NEGATIVE CYCLE DETECTED!"
+      </div>
+
+      <div class="key-idea mt">
+        <h3>Why V-1 Iterations Suffice</h3>
+        <p>A shortest path (without cycles) visits at most V vertices, so it has at most <strong>V-1 edges</strong>. Each iteration correctly extends paths by one edge. After V-1 iterations, all shortest paths are found -- <em>unless a negative cycle exists</em>.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Example: Negative Cycle Detected</h3>
+      <div class="diagram small">
+  Graph with negative cycle:
+
+        A --1-- B
+                |
+               -2
+                |
+        D --3-- C
+        |
+       -4
+        |
+        B (B->C->D->B = -2+3+(-4) = -3)
+
+  Cycle: B -> C -> D -> B  cost = -3
+  Each trip around = -3 more!
+      </div>
+      <div class="diagram small">
+  After V-1 = 3 iterations:
+    dist[B] keeps getting smaller...
+
+  V-th pass check:
+    Relax B->C: dist[B]+(-2) &lt; dist[C]?
+    YES! Distance still decreasing!
+
+    ==> NEGATIVE CYCLE DETECTED
+      </div>
+
+      <div class="warning">
+        <h3>What to Report</h3>
+        <p>When a negative cycle is detected, the algorithm should report that no valid shortest path exists (for vertices reachable through the cycle). The distance is effectively <strong>negative infinity</strong>.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ========== SLIDE 17: Negative Cycles ========== -->
+<div class="slide">
+  <h2>Negative Cycles Explained</h2>
+  <div class="two-col">
+    <div>
+      <h3>What Is a Negative Cycle?</h3>
+      <p>A cycle in the graph where the <span class="highlight-red">total weight of all edges is negative</span>.</p>
+      <div class="diagram">
+  A negative cycle:
+
+     B --(-2)--> C
+     ^           |
+     |           v
+     +----3-----D
+          ^     |
+          |     v
+          +-(-4)-+
+
+  B -> C -> D -> B
+  cost: -2 + 3 + (-4) = -3
+  Going around once = -3
+  Going around twice = -6
+  Going around n times = -3n
+  As n -> infinity, cost -> -infinity
+      </div>
+    </div>
+    <div>
+      <h3>Why This Breaks Shortest Path</h3>
+      <p>If you can reach a negative cycle from the source, and your destination is reachable from the cycle, then:</p>
+      <div class="diagram small">
+  Source --> ... --> [negative cycle] --> ... --> Dest
+
+  Path cost = (prefix) + n*(-3) + (suffix)
+
+  Want shorter? Just go around more!
+    n=1:  prefix + (-3)  + suffix
+    n=2:  prefix + (-6)  + suffix
+    n=10: prefix + (-30) + suffix
+    n=inf: -INFINITY
+
+  The "shortest path" is undefined!
+      </div>
+
+      <div class="analogy mt">
+        <h3>Analogy: Infinite Money Glitch</h3>
+        <p>Imagine currency exchange where converting USD -> EUR -> GBP -> USD gives you <em>more</em> money than you started with. You'd loop forever, making infinite money. That's a negative cycle in a currency exchange graph!</p>
+      </div>
+
+      <div class="warning mt">
+        <h3>Important Distinction</h3>
+        <p>Negative <em>edges</em> are fine (Bellman-Ford handles them). Negative <em>cycles</em> make the problem ill-defined.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ========== SLIDE 18: Dijkstra vs Bellman-Ford ========== -->
+<div class="slide">
+  <h2>Dijkstra vs Bellman-Ford</h2>
+  <p class="subtitle">Choosing the right algorithm</p>
+  <div style="display:flex; justify-content:center;">
+    <table style="font-size:1.05em;">
+      <tr>
+        <th style="text-align:left;">Property</th>
+        <th>Dijkstra's</th>
+        <th>Bellman-Ford</th>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Strategy</strong></td>
+        <td>Greedy</td>
+        <td>Dynamic Programming (relaxation)</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Time (binary heap)</strong></td>
+        <td class="highlight-green">O((V+E) log V)</td>
+        <td>O(V * E)</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Time (array)</strong></td>
+        <td>O(V^2)</td>
+        <td>O(V * E)</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Negative edge weights</strong></td>
+        <td class="highlight-red">NOT supported</td>
+        <td class="highlight-green">Supported</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Negative cycle detection</strong></td>
+        <td class="highlight-red">No</td>
+        <td class="highlight-green">Yes</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Space</strong></td>
+        <td>O(V) + PQ</td>
+        <td>O(V)</td>
+      </tr>
+      <tr>
+        <td style="text-align:left;"><strong>Best for</strong></td>
+        <td>Non-negative weights, speed</td>
+        <td>Negative weights, cycle detection</td>
+      </tr>
+    </table>
+  </div>
+
+  <div class="two-col mt" style="margin-top:30px;">
+    <div class="key-idea">
+      <h3>When to Use Dijkstra's</h3>
+      <ul>
+        <li>All edge weights are non-negative</li>
+        <li>You need the fastest algorithm</li>
+        <li>GPS navigation, network routing, game pathfinding</li>
+      </ul>
+    </div>
+    <div class="warning">
+      <h3>When to Use Bellman-Ford</h3>
+      <ul>
+        <li>Graph may have negative edge weights</li>
+        <li>You need to detect negative cycles</li>
+        <li>Currency arbitrage, some network protocols (RIP)</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ========== SLIDE 19: Applications ========== -->
+<div class="slide">
+  <h2>Real-World Applications</h2>
+  <div class="two-col">
+    <div>
+      <h3>GPS Navigation</h3>
+      <div class="diagram small">
+  Vertices = intersections
+  Edges    = road segments
+  Weights  = travel time (or distance)
+
+  +--School--+
+  |    2min   |
+  Home       3min  --> Dijkstra's
+  |    5min   |       finds fastest
+  +---Mall---+        route!
+      </div>
+      <p>Google Maps, Apple Maps, Waze all use variants of Dijkstra's with optimizations (A*, contraction hierarchies).</p>
+
+      <h3 class="mt">Network Routing (OSPF)</h3>
+      <div class="diagram small">
+  Routers = vertices
+  Links   = edges (weight = latency/cost)
+
+  Router A ---10ms--- Router B
+    |                    |
+   5ms                 15ms
+    |                    |
+  Router C ---8ms---- Router D
+
+  OSPF protocol uses Dijkstra's to
+  compute shortest paths between routers.
+      </div>
+    </div>
+    <div>
+      <h3>Game AI Pathfinding</h3>
+      <div class="diagram small">
+  Grid map with terrain costs:
+
+  . . . # # . .     . = grass (1)
+  . . . # . . .     # = wall  (inf)
+  S . . . . . .     ~ = water (3)
+  ~ ~ . . # . .     S = start
+  ~ ~ ~ . # . G     G = goal
+
+  Dijkstra (or A*) finds cheapest
+  path from S to G, avoiding walls
+  and preferring grass over water.
+      </div>
+
+      <h3 class="mt">Currency Arbitrage</h3>
+      <div class="diagram small">
+  Convert weights to -log(exchange_rate)
+  Then negative cycle = arbitrage opportunity!
+
+  USD --0.85--> EUR --0.78--> GBP
+   ^                           |
+   +--------1.30---------------+
+
+  If 1 * 0.85 * 0.78 * 1.30 > 1.0
+  ==> Profit! (Bellman-Ford detects this)
+      </div>
+
+      <div class="analogy">
+        <h3>Bellman-Ford in Practice</h3>
+        <p>The RIP (Routing Information Protocol) uses a distributed version of Bellman-Ford. Each router shares its distance table with neighbors.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ========== SLIDE 20: Summary & Cheat Sheet ========== -->
+<div class="slide">
+  <h2>Summary & Cheat Sheet</h2>
+  <div class="two-col">
+    <div>
+      <h3>Dijkstra's Algorithm</h3>
+      <div class="diagram small">
+  1. dist[src] = 0, all others = inf
+  2. PQ.insert(src, 0)
+  3. While PQ not empty:
+     a. u = PQ.extractMin()
+     b. Skip if visited
+     c. For each neighbor v of u:
+        if dist[u]+w &lt; dist[v]:
+          dist[v] = dist[u]+w
+          parent[v] = u
+          PQ.insert(v, dist[v])
+  4. Use parent[] to reconstruct path
+
+  Time: O((V+E) log V) with heap
+  Requires: non-negative weights
+      </div>
+
+      <h3 class="mt">Edge Relaxation</h3>
+      <div class="key-idea">
+        <p style="font-size:1.1em; text-align:center;">
+          <code>if dist[u] + w(u,v) &lt; dist[v]:</code><br>
+          <code>&nbsp;&nbsp;dist[v] = dist[u] + w(u,v)</code>
+        </p>
+        <p>Can I improve the path to v by going through u?</p>
+      </div>
+    </div>
+    <div>
+      <h3>Bellman-Ford Algorithm</h3>
+      <div class="diagram small">
+  1. dist[src] = 0, all others = inf
+  2. Repeat V-1 times:
+     For each edge (u, v, w):
+       if dist[u]+w &lt; dist[v]:
+         dist[v] = dist[u]+w
+         parent[v] = u
+  3. One more pass: if any dist
+     decreases -> NEGATIVE CYCLE!
+
+  Time: O(V * E)
+  Handles: negative weights + detection
+      </div>
+
+      <h3 class="mt">Decision Flowchart</h3>
+      <div class="diagram small">
+  Need shortest path?
+    |
+    +-- All weights >= 0?
+    |     YES --> Dijkstra's (faster)
+    |     NO  --> Bellman-Ford
+    |
+    +-- Need negative cycle detection?
+    |     YES --> Bellman-Ford
+    |
+    +-- All-pairs needed?
+          YES --> Floyd-Warshall (or
+                  run Dijkstra from
+                  every vertex)
+      </div>
+
+      <div class="warning">
+        <h3>Common Exam Pitfalls</h3>
+        <ul>
+          <li>Using Dijkstra with negative weights</li>
+          <li>Forgetting V-1 iterations in Bellman-Ford</li>
+          <li>Confusing negative edges with negative cycles</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="navigate(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="navigate(1)">Next &#9654;</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const progress = document.getElementById('progress');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = Math.max(0, Math.min(n, total - 1));
+  slides[current].classList.add('active');
+  slides[current].classList.add('fade-in');
+  setTimeout(() => slides[current].classList.remove('fade-in'), 500);
+  progress.style.width = ((current + 1) / total * 100) + '%';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === total - 1;
+}
+
+function navigate(dir) {
+  showSlide(current + dir);
+}
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    navigate(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    navigate(-1);
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    showSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    showSlide(total - 1);
+  }
+});
+
+// Initialize
+showSlide(0);
+</script>
+</body>
+</html>

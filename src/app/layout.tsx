@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout";
+import { TrackingProvider } from "@/components/tracking";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -26,10 +27,15 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background`}
+        className={`${geistSans.variable} ${geistMono.variable} antialiased min-h-screen bg-background flex flex-col`}
       >
         <Header />
-        <main>{children}</main>
+        <TrackingProvider>
+          <main className="flex-1">{children}</main>
+        </TrackingProvider>
+        <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+          <p>&copy; {new Date().getFullYear()} Designed and implemented by Dr. Weihao Qu and LearnAI team.</p>
+        </footer>
       </body>
     </html>
   );

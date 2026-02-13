@@ -1,7 +1,31 @@
 services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: cs205
+      POSTGRES_USER: cs205user
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cs205user -d cs205"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    networks:
+      - web
+
   app:
     build: .
     restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://cs205user:${DB_PASSWORD}@db:5432/cs205?schema=public
+      JWT_SECRET: ${JWT_SECRET}
+      ADMIN_EMAIL: ${ADMIN_EMAIL:-wqu@monmouth.edu}
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - web
 
@@ -26,3 +50,4 @@ networks:
 volumes:
   caddy_data:
   caddy_config:
+  pgdata:

@@ -6,8 +6,13 @@ import { stackQueueQuizzes } from '@/content/quizzes/stack-queue';
 import { complexityQuizzes } from '@/content/quizzes/complexity';
 import { sortingQuizzes } from '@/content/quizzes/sorting';
 import { mapsQuizzes } from '@/content/quizzes/maps';
+import { searchingQuizzes } from '@/content/quizzes/searching';
+import { treesQuizzes } from '@/content/quizzes/trees';
+import { heapsQuizzes } from '@/content/quizzes/heaps';
+import { graphsQuizzes } from '@/content/quizzes/graphs';
+import { dpQuizzes } from '@/content/quizzes/dynamic-programming';
 
-const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes, ...sortingQuizzes, ...mapsQuizzes];
+const combinedQuizzes = [...allQuizzes, ...listQuizzes, ...recursionQuizzes, ...stackQueueQuizzes, ...complexityQuizzes, ...sortingQuizzes, ...mapsQuizzes, ...searchingQuizzes, ...treesQuizzes, ...heapsQuizzes, ...graphsQuizzes, ...dpQuizzes];
 
 export default function QuizPage() {
   return (

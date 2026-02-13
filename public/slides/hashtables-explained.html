@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Hash Tables - CS205 Data Structures</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0f172a; color: #e2e8f0; }
+.slide { display: none; min-height: 100vh; padding: 40px 60px; position: relative; }
+.slide.active { display: flex; flex-direction: column; justify-content: center; }
+.slide-number { position: absolute; bottom: 20px; right: 40px; color: #64748b; font-size: 14px; }
+.nav { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); display: flex; gap: 12px; z-index: 100; }
+.nav button { background: #334155; border: 1px solid #475569; color: #e2e8f0; padding: 8px 20px; border-radius: 8px; cursor: pointer; font-size: 14px; transition: all 0.2s; }
+.nav button:hover { background: #475569; }
+.nav button:disabled { opacity: 0.3; cursor: not-allowed; }
+.progress { position: fixed; top: 0; left: 0; height: 3px; background: linear-gradient(90deg, #3b82f6, #8b5cf6); transition: width 0.3s; z-index: 100; }
+h1 { font-size: 2.8em; margin-bottom: 20px; background: linear-gradient(135deg, #3b82f6, #8b5cf6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; line-height: 1.2; }
+h2 { font-size: 2em; margin-bottom: 16px; color: #93c5fd; }
+h3 { font-size: 1.4em; margin-bottom: 12px; color: #a5b4fc; }
+p, li { font-size: 1.15em; line-height: 1.7; color: #cbd5e1; margin-bottom: 10px; }
+.subtitle { font-size: 1.3em; color: #94a3b8; margin-bottom: 30px; }
+.two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: start; }
+.center { text-align: center; }
+.mt { margin-top: 20px; }
+.diagram { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 1em; line-height: 1.6; white-space: pre; overflow-x: auto; margin: 16px 0; color: #a5f3fc; }
+.diagram.small { font-size: 0.85em; }
+.key-idea { background: linear-gradient(135deg, rgba(59,130,246,0.15), rgba(139,92,246,0.15)); border-left: 4px solid #3b82f6; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.key-idea h3 { margin-bottom: 8px; }
+.warning { background: rgba(245,158,11,0.12); border-left: 4px solid #f59e0b; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.warning h3 { color: #fbbf24; }
+.analogy { background: rgba(16,185,129,0.12); border-left: 4px solid #10b981; border-radius: 0 12px 12px 0; padding: 20px 24px; margin: 16px 0; }
+.analogy h3 { color: #34d399; }
+table { border-collapse: collapse; margin: 16px 0; width: auto; }
+th, td { border: 1px solid #475569; padding: 10px 16px; text-align: center; }
+th { background: #334155; color: #93c5fd; font-weight: 600; }
+td { background: #1e293b; color: #e2e8f0; }
+tr.highlight td { background: rgba(59,130,246,0.2); }
+.fade-in { animation: fadeIn 0.5s ease-in; }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+ul { padding-left: 24px; }
+ul li { margin-bottom: 8px; }
+code { background: #1e293b; color: #a5f3fc; padding: 2px 8px; border-radius: 4px; font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace; font-size: 0.95em; }
+.badge { display: inline-block; background: #334155; color: #93c5fd; padding: 4px 12px; border-radius: 20px; font-size: 0.85em; margin-right: 8px; }
+.badge.green { background: rgba(16,185,129,0.2); color: #34d399; }
+.badge.red { background: rgba(239,68,68,0.2); color: #f87171; }
+.badge.yellow { background: rgba(245,158,11,0.2); color: #fbbf24; }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress"></div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 1: Title -->
+<!-- ============================================================ -->
+<div class="slide active fade-in">
+  <div class="center">
+    <h1>Hash Tables</h1>
+    <p class="subtitle">O(1) Average Lookup</p>
+    <div class="diagram" style="display:inline-block; text-align:left; margin-top:20px;">
+   key: "alice"                     value: 95
+        |                               ^
+        v                               |
+  +============+     +=========+     +========+
+  | Hash Func  |---->| Index 3 |---->| Bucket |
+  +============+     +=========+     +========+
+
+  put("alice", 95)  -->  O(1) average
+  get("alice")      -->  O(1) average
+  remove("alice")   -->  O(1) average</div>
+    <p style="margin-top: 30px; color: #64748b;">CS205 Data Structures</p>
+    <p style="color: #64748b; font-size: 0.9em;">Use arrow keys or buttons to navigate</p>
+  </div>
+  <div class="slide-number">1 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 2: The Problem -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>The Problem: Fast Key-Value Access</h2>
+  <div class="two-col mt">
+    <div>
+      <p>We want <strong>O(1)</strong> for <code>get</code>, <code>put</code>, and <code>remove</code>.</p>
+      <p>Arrays give O(1) access by <em>integer index</em>:</p>
+      <div class="diagram small">arr[3] = "hello"   // O(1)
+arr[3]              // O(1)</div>
+      <p>But what if keys are <strong>strings</strong>, <strong>objects</strong>, or <strong>arbitrary data</strong>?</p>
+      <div class="diagram small">map["alice"]  = 95     // ???
+map["bob"]    = 87     // ???
+map["carlos"] = 72     // ???</div>
+    </div>
+    <div>
+      <h3>What other structures offer:</h3>
+      <table>
+        <tr><th>Structure</th><th>get</th><th>put</th></tr>
+        <tr><td>Unsorted Array</td><td>O(n)</td><td>O(1)</td></tr>
+        <tr><td>Sorted Array</td><td>O(log n)</td><td>O(n)</td></tr>
+        <tr><td>Linked List</td><td>O(n)</td><td>O(1)</td></tr>
+        <tr><td>BST (balanced)</td><td>O(log n)</td><td>O(log n)</td></tr>
+        <tr class="highlight"><td><strong>Hash Table</strong></td><td><strong>O(1)*</strong></td><td><strong>O(1)*</strong></td></tr>
+      </table>
+      <p style="font-size: 0.9em; color: #94a3b8;">* average case</p>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Convert any key into an array index using a <strong>hash function</strong>, then store the value at that index.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">2 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 3: Hash Function Idea -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>The Hash Function Idea</h2>
+  <p>Transform any key into a valid array index in two steps:</p>
+  <div class="diagram">
+                         HASH TABLE PIPELINE
+  ========================================================================
+
+              hash code             compression
+   Key  ------------------>  Integer  ------------------>  Index
+                                                        (0 to N-1)
+
+  "alice"  ---> hashCode() ---> 97_429_158 ---> mod 11 ---> 3
+  "bob"    ---> hashCode() ---> 66_837     ---> mod 11 ---> 7
+  "carlos" ---> hashCode() ---> 84_201_559 ---> mod 11 ---> 0
+
+  ========================================================================
+  Step 1: Hash Code     - Turn the key into a (large) integer
+  Step 2: Compression   - Squeeze that integer into range [0, N-1]</div>
+  <div class="analogy">
+    <h3>Analogy: Coat Check Room</h3>
+    <p>You hand your coat (key-value pair) to the attendant. They give you a <strong>ticket number</strong> (the hash). When you return with the ticket, they go <em>directly</em> to the right hook -- no searching through all coats. The ticket number <em>is</em> the position. That is exactly what a hash function does: it computes a "ticket number" (index) for each key so you can retrieve it instantly.</p>
+  </div>
+  <div class="slide-number">3 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 4: Hash Functions - Requirements -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Hash Function Requirements</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Three Requirements</h3>
+      <ul>
+        <li><strong>Deterministic</strong> -- Same key always produces the same hash code. If <code>h("alice") = 42</code> now, it must be 42 forever.</li>
+        <li><strong>Uniform Distribution</strong> -- Spread keys evenly across all indices. Avoid clustering many keys into the same bucket.</li>
+        <li><strong>Fast to Compute</strong> -- The whole point is O(1); a slow hash function defeats the purpose.</li>
+      </ul>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>A bad hash function that maps everything to index 0 turns the hash table into a linked list -- O(n) for everything!</p>
+      </div>
+    </div>
+    <div>
+      <h3>Common Compression Methods</h3>
+      <div class="key-idea">
+        <h3>Division Method (Modulo)</h3>
+        <p><code>index = hashCode % N</code></p>
+        <p>Simple and fast. Works best when N is prime.</p>
+      </div>
+      <div class="key-idea">
+        <h3>MAD Method (Multiply-Add-Divide)</h3>
+        <p><code>index = ((a * hashCode + b) mod p) mod N</code></p>
+        <p>Where <code>p</code> is a prime &gt; N, <code>a,b</code> are random integers with <code>a &gt; 0</code>. Better distribution than simple modulo.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">4 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 5: Hash Codes for Different Types -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Hash Codes for Different Types</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Integers</h3>
+      <p>Use the integer itself (or <code>i mod N</code>).</p>
+      <div class="diagram small">h(42) = 42
+h(-7) = -7  (handle sign!)</div>
+
+      <h3 class="mt">Strings: Polynomial Hash</h3>
+      <p>Treat each character as a coefficient in a polynomial:</p>
+      <div class="diagram small">h(s) = s[0]*x^(n-1) + s[1]*x^(n-2)
+       + ... + s[n-1]*x^0
+
+where x is a constant (e.g., 31, 37, 41)
+
+Example: h("abc") with x = 31
+  = 'a'*31^2 + 'b'*31^1 + 'c'*31^0
+  = 97*961  + 98*31   + 99*1
+  = 93217   + 3038    + 99
+  = 96354</div>
+      <p style="font-size:0.95em; color:#94a3b8;">Use <strong>Horner's method</strong> to evaluate efficiently: <code>((97*31 + 98)*31 + 99)</code></p>
+    </div>
+    <div>
+      <h3>Why Polynomial Hashing?</h3>
+      <ul>
+        <li>Uses <em>position</em> of characters, not just content</li>
+        <li><code>"abc"</code> and <code>"cba"</code> get different hashes</li>
+        <li>Java's <code>String.hashCode()</code> uses x = 31</li>
+      </ul>
+
+      <h3 class="mt">Objects: Combine Field Hashes</h3>
+      <div class="diagram small">class Student {
+  String name;
+  int id;
+
+  int hashCode() {
+    int h = 17;           // start
+    h = 31*h + name.hashCode();
+    h = 31*h + id;
+    return h;
+  }
+}</div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>If two objects are <code>equals()</code>, they <strong>must</strong> have the same <code>hashCode()</code>. The reverse is not required (collisions are allowed).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">5 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 6: Compression Functions -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Compression Functions in Detail</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Simple Modulo: <code>h(k) mod N</code></h3>
+      <div class="diagram small">Hash codes:  96354, 42, 10007, 555
+
+Table size N = 7:
+  96354 mod 7  =  2
+     42 mod 7  =  0
+  10007 mod 7  =  4
+    555 mod 7  =  2  <-- collision!</div>
+      <div class="warning">
+        <h3>Why N Should Be Prime</h3>
+        <p>If N = 10 and keys are multiples of 5:
+        {5, 10, 15, 20, 25, ...} all map to indices {0, 5} -- only 2 of 10 buckets used!</p>
+        <p>A prime N (e.g., 7, 11, 13, 97) minimizes patterns in the keys creating index clusters.</p>
+      </div>
+    </div>
+    <div>
+      <h3>MAD: <code>((a*h(k)+b) mod p) mod N</code></h3>
+      <div class="diagram small">Parameters:
+  N = 7  (table size)
+  p = 11 (prime > N)
+  a = 3, b = 5
+
+h(k) = 42:
+  (3*42 + 5) mod 11  =  131 mod 11  =  10
+  10 mod 7 = 3
+
+h(k) = 555:
+  (3*555 + 5) mod 11 = 1670 mod 11 = 10
+  10 mod 7 = 3
+
+h(k) = 96354:
+  (3*96354 + 5) mod 11 = 289067 mod 11 = 5
+  5 mod 7 = 5</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>MAD spreads keys more uniformly because the multiply-add step "scrambles" the hash code before compressing.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">6 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 7: Collisions -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Collisions Are Inevitable</h2>
+  <p>A <strong>collision</strong> occurs when two different keys map to the same index.</p>
+  <div class="diagram">
+              h("alice") = 3          h("dave") = 3
+                    |                       |
+                    v                       v
+  Index:   [ 0 ]  [ 1 ]  [ 2 ]  [ 3 ]  [ 4 ]  [ 5 ]  [ 6 ]
+                                   ^
+                                   |
+                              COLLISION!
+                        Both keys want slot 3</div>
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>Pigeonhole Principle</h3>
+        <p>If you have more keys than array slots, <em>at least</em> two keys must share a slot. Even with fewer keys, collisions are likely (cf. Birthday Paradox: with 23 people, there's a 50% chance two share a birthday).</p>
+      </div>
+    </div>
+    <div>
+      <h3>Two Main Solutions:</h3>
+      <ul>
+        <li><span class="badge">1</span> <strong>Separate Chaining</strong> -- Store a list at each bucket</li>
+        <li><span class="badge">2</span> <strong>Open Addressing</strong> -- Find another open slot in the array</li>
+      </ul>
+      <div class="diagram small">  Chaining:            Open Addressing:
+
+  [3] -> A -> D        [3] = A
+                        [4] = D  (probed)</div>
+    </div>
+  </div>
+  <div class="slide-number">7 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 8: Separate Chaining -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Collision Handling 1: Separate Chaining</h2>
+  <p>Each bucket holds a <strong>linked list</strong> (or chain) of all entries that hash to that index.</p>
+  <div class="diagram">
+  Index
+  +-----+
+  |  0  | --> [ "carlos":72 ] --> null
+  +-----+
+  |  1  | --> null
+  +-----+
+  |  2  | --> [ "eve":91 ] --> [ "frank":68 ] --> null
+  +-----+
+  |  3  | --> [ "alice":95 ] --> [ "dave":80 ] --> null
+  +-----+
+  |  4  | --> null
+  +-----+
+  |  5  | --> [ "bob":87 ] --> null
+  +-----+
+  |  6  | --> null
+  +-----+</div>
+  <div class="two-col">
+    <div>
+      <h3>Operations</h3>
+      <ul>
+        <li><strong>put(k, v)</strong>: hash k to index i, prepend (k,v) to list at bucket[i]</li>
+        <li><strong>get(k)</strong>: hash k to index i, search list at bucket[i] for key k</li>
+        <li><strong>remove(k)</strong>: hash k to index i, remove node with key k from list at bucket[i]</li>
+      </ul>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>The array itself never "fills up." Each bucket can hold an unlimited number of entries. The tradeoff: long chains degrade to O(n) search within that chain.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">8 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 9: Separate Chaining Example -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Separate Chaining: Step-by-Step Example</h2>
+  <p>Table size N = 7. Hash function: <code>h(k) = k mod 7</code>. Insert keys: <strong>10, 22, 31, 4, 15</strong></p>
+  <div class="diagram small">
+  Insert 10:  10 mod 7 = 3          Insert 22:  22 mod 7 = 1
+  +---+                              +---+
+  | 0 |-> null                       | 0 |-> null
+  | 1 |-> null                       | 1 |-> [22] -> null
+  | 2 |-> null                       | 2 |-> null
+  | 3 |-> [10] -> null               | 3 |-> [10] -> null
+  | 4 |-> null                       | 4 |-> null
+  | 5 |-> null                       | 5 |-> null
+  | 6 |-> null                       | 6 |-> null
+  +---+                              +---+
+
+  Insert 31:  31 mod 7 = 3 (!)      Insert 4:  4 mod 7 = 4
+  +---+                              +---+
+  | 0 |-> null                       | 0 |-> null
+  | 1 |-> [22] -> null               | 1 |-> [22] -> null
+  | 2 |-> null                       | 2 |-> null
+  | 3 |-> [31] -> [10] -> null       | 3 |-> [31] -> [10] -> null
+  | 4 |-> null                       | 4 |-> [4] -> null
+  | 5 |-> null                       | 5 |-> null
+  | 6 |-> null                       | 6 |-> null
+  +---+                              +---+
+
+  Insert 15:  15 mod 7 = 1 (!)      FINAL STATE:
+  +---+                              Bucket 1 has chain: [15] -> [22]
+  | 0 |-> null                       Bucket 3 has chain: [31] -> [10]
+  | 1 |-> [15] -> [22] -> null       All others: single or empty
+  | 2 |-> null
+  | 3 |-> [31] -> [10] -> null       get(31): hash to 3, traverse chain,
+  | 4 |-> [4] -> null                         found at 1st node. O(1)!
+  | 5 |-> null
+  | 6 |-> null
+  +---+</div>
+  <div class="slide-number">9 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 10: Linear Probing -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Collision Handling 2: Open Addressing</h2>
+  <h3>Linear Probing</h3>
+  <p>All entries live <strong>directly in the array</strong>. If the target slot is taken, try the <strong>next</strong> slot (wrapping around).</p>
+  <div class="diagram">
+  Probe sequence for h(k) = 3:
+
+     Try index 3  -->  occupied?  -->  Try index 4  -->  occupied?  -->  Try index 5  -->  empty!
+
+  +-------+-------+-------+-------+-------+-------+-------+
+  |   0   |   1   |   2   |  [X]  |  [X]  |       |   6   |
+  +-------+-------+-------+-------+-------+-------+-------+
+     0       1       2       3       4       5       6
+                              ^       ^       ^
+                              |       |       |
+                           try #1  try #2  INSERT HERE</div>
+  <div class="two-col mt">
+    <div>
+      <h3>Probe Formula</h3>
+      <div class="diagram small">probe(k, i) = (h(k) + i) mod N
+
+  i = 0, 1, 2, 3, ...</div>
+      <p>Search: probe until you find the key or an <em>empty</em> slot.</p>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Clustering Problem</h3>
+        <p><strong>Primary clustering</strong>: occupied slots form long contiguous runs. New keys that hash anywhere in the cluster must probe to the end of it, making the cluster even longer. Performance degrades.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">10 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 11: Linear Probing Example -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Linear Probing: Step-by-Step</h2>
+  <p>N = 7, h(k) = k mod 7. Insert: <strong>10, 22, 31, 4, 15</strong></p>
+  <div class="diagram small">
+  Step 1: Insert 10.  h(10) = 3.  Slot 3 is empty --> place it.
+  +------+------+------+------+------+------+------+
+  |      |      |      |  10  |      |      |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+
+  Step 2: Insert 22.  h(22) = 1.  Slot 1 is empty --> place it.
+  +------+------+------+------+------+------+------+
+  |      |  22  |      |  10  |      |      |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+
+  Step 3: Insert 31.  h(31) = 3.  Slot 3 is OCCUPIED (10).
+          Try slot 4 --> empty --> place it.
+  +------+------+------+------+------+------+------+
+  |      |  22  |      |  10  |  31  |      |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+
+  Step 4: Insert 4.   h(4) = 4.   Slot 4 is OCCUPIED (31).
+          Try slot 5 --> empty --> place it.
+  +------+------+------+------+------+------+------+
+  |      |  22  |      |  10  |  31  |   4  |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+
+  Step 5: Insert 15.  h(15) = 1.  Slot 1 OCCUPIED (22).
+          Try slot 2 --> empty --> place it.
+  +------+------+------+------+------+------+------+
+  |      |  22  |  15  |  10  |  31  |   4  |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+                              ^^^^^^^^^^^^^^^^
+                              PRIMARY CLUSTER (slots 2-5)</div>
+  <div class="warning">
+    <h3>Warning</h3>
+    <p>Notice how slots 2-5 form a cluster. Any future key hashing to 2, 3, 4, or 5 must probe to slot 6, extending the cluster further.</p>
+  </div>
+  <div class="slide-number">11 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 12: Quadratic Probing -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Open Addressing: Quadratic Probing</h2>
+  <p>Instead of probing the <em>next</em> slot, probe at increasing <strong>squared</strong> offsets.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Probe Formula</h3>
+      <div class="diagram small">probe(k, i) = (h(k) + i^2) mod N
+
+  i = 0:  h(k) + 0  = h(k)
+  i = 1:  h(k) + 1
+  i = 2:  h(k) + 4
+  i = 3:  h(k) + 9
+  i = 4:  h(k) + 16
+  ...</div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Quadratic probing <strong>jumps farther</strong> with each attempt, breaking up clusters. Reduces primary clustering.</p>
+      </div>
+    </div>
+    <div>
+      <h3>Linear vs Quadratic Comparison</h3>
+      <div class="diagram small">h(k) = 3, table size = 11
+
+Linear probing:
+  3, 4, 5, 6, 7, 8, 9, 10, 0, 1, 2
+  ^  ^  ^  ^  ^
+  Consecutive! Creates clusters.
+
+Quadratic probing:
+  3, 4, 7, 1, 8, 6, ...
+  ^  ^     ^        ^
+  Jumps around! Breaks clusters.
+
+Offsets:  +0  +1  +4  +9  +16  +25
+           3   4   7  12   19   28
+         mod 11:
+           3   4   7   1    8    6</div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>Quadratic probing may <strong>not visit all slots</strong>. It is guaranteed to work when N is prime and the table is less than half full.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">12 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 13: Double Hashing -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Open Addressing: Double Hashing</h2>
+  <p>Use a <strong>second hash function</strong> to determine the step size. Each key gets its own unique probe sequence.</p>
+  <div class="two-col mt">
+    <div>
+      <h3>Probe Formula</h3>
+      <div class="diagram small">probe(k, i) = (h1(k) + i * h2(k)) mod N
+
+Common choice:
+  h1(k) = k mod N
+  h2(k) = q - (k mod q)
+  where q is a prime < N
+
+Example: N = 11, q = 7
+  key = 20:
+    h1(20) = 20 mod 11 = 9
+    h2(20) = 7 - (20 mod 7) = 7 - 6 = 1
+    Probe: 9, 10, 0, 1, 2, ...
+
+  key = 31:
+    h1(31) = 31 mod 11 = 9
+    h2(31) = 7 - (31 mod 7) = 7 - 3 = 4
+    Probe: 9, 2, 6, 10, 3, ...</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Even though keys 20 and 31 both start at index 9, their <em>step sizes differ</em> (1 vs 4), so they explore completely different sequences. This eliminates <strong>secondary clustering</strong>.</p>
+      </div>
+      <h3>Comparison of Probing Strategies</h3>
+      <table>
+        <tr><th>Method</th><th>Primary Clustering</th><th>Secondary Clustering</th></tr>
+        <tr><td>Linear</td><td><span class="badge red">Yes</span></td><td><span class="badge red">Yes</span></td></tr>
+        <tr><td>Quadratic</td><td><span class="badge green">No</span></td><td><span class="badge red">Yes</span></td></tr>
+        <tr class="highlight"><td>Double Hash</td><td><span class="badge green">No</span></td><td><span class="badge green">No</span></td></tr>
+      </table>
+    </div>
+  </div>
+  <div class="slide-number">13 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 14: Deletion in Open Addressing -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Deletion in Open Addressing</h2>
+  <p>You <strong>cannot simply empty</strong> a slot -- it breaks the probe chain for other keys!</p>
+  <div class="diagram">
+  PROBLEM: Insert 10 (->3), Insert 31 (->3, probe to 4). Then delete 10.
+
+  Before delete 10:              Naive delete of 10:
+  +------+------+------+------+  +------+------+------+------+
+  |      |      |  10  |  31  |  |      |      |      |  31  |
+  +------+------+------+------+  +------+------+------+------+
+     0      1      2      3         0      1      2      3
+
+  Now search for 31:             Now search for 31:
+  h(31)=2 -> found 10, not 31   h(31)=2 -> EMPTY -> "not found"!
+  -> try 3 -> found 31!           WRONG! 31 is at index 3 but we
+                                   stopped because slot 2 is empty.</div>
+  <div class="two-col mt">
+    <div>
+      <h3>Solution: Tombstones (DELETED markers)</h3>
+      <div class="diagram small">  After marking 10 as DELETED:
+  +------+------+---------+------+
+  |      |      |   DEL   |  31  |
+  +------+------+---------+------+
+     0      1       2        3
+
+  Search for 31:
+  h(31)=2 -> DEL (skip, keep going)
+  -> try 3 -> found 31!  Correct!</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>A <strong>DELETED</strong> (tombstone) marker means: "a key was here; keep probing." It is treated as <em>empty for inserts</em> (you can reuse the slot) but as <em>occupied for searches</em> (don't stop here).</p>
+      </div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>Too many tombstones degrade performance. Periodic <strong>rehashing</strong> cleans them out.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">14 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 15: Load Factor -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Load Factor</h2>
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea" style="font-size:1.1em;">
+        <h3>Definition</h3>
+        <p style="font-size:1.2em; text-align:center; margin:12px 0;"><strong>&alpha; = n / N</strong></p>
+        <p>n = number of entries stored<br>
+        N = number of buckets (table size)</p>
+      </div>
+      <div class="diagram small">
+  alpha = 0.0   Table is empty
+  alpha = 0.5   Half full
+  alpha = 0.75  Three-quarters full
+  alpha = 1.0   Completely full
+  alpha > 1.0   Only possible w/ chaining</div>
+      <h3 class="mt">Expected Probes (Linear Probing)</h3>
+      <table>
+        <tr><th>&alpha;</th><th>Successful</th><th>Unsuccessful</th></tr>
+        <tr><td>0.25</td><td>1.17</td><td>1.39</td></tr>
+        <tr><td>0.50</td><td>1.50</td><td>2.50</td></tr>
+        <tr><td>0.75</td><td>2.50</td><td>8.50</td></tr>
+        <tr class="highlight"><td>0.90</td><td>5.50</td><td>50.50</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="diagram">
+  Performance vs Load Factor
+
+  Probes
+  |
+  |                        *  alpha=0.9
+  |                     *
+  |                  *
+  50|                *
+  |               *
+  |              *
+  |            *
+  |          *
+  |       *
+  |    *
+  |  *
+  | *
+  |*  *  *  *
+  +--+--+--+--+---> alpha
+     .25 .5 .75 .9</div>
+      <div class="warning">
+        <h3>Recommended Thresholds</h3>
+        <ul>
+          <li><strong>Separate Chaining:</strong> rehash when &alpha; > <strong>0.75</strong></li>
+          <li><strong>Open Addressing:</strong> rehash when &alpha; > <strong>0.5</strong></li>
+        </ul>
+        <p>Open addressing needs a lower threshold because clusters form and probes increase steeply.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">15 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 16: Rehashing -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Rehashing</h2>
+  <p>When the load factor exceeds the threshold, <strong>grow the table and reinsert everything</strong>.</p>
+  <div class="diagram">
+  BEFORE REHASH (N=7, n=5, alpha = 5/7 = 0.71)
+  +------+------+------+------+------+------+------+
+  |      |  22  |  15  |  10  |  31  |   4  |      |
+  +------+------+------+------+------+------+------+
+     0      1      2      3      4      5      6
+
+  alpha > 0.5 threshold  -->  REHASH!
+
+  1. Create new array of size 2*7+1 = 15 (next prime: 17)
+  2. Recompute h(k) = k mod 17 for every key
+  3. Insert each key into new table
+
+  AFTER REHASH (N=17, n=5, alpha = 5/17 = 0.29)
+  +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+  |    |    |    |    |  4 | 22 |    |    |    |    | 10 |    |    |    | 31 | 15 |    |
+  +----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+----+
+    0    1    2    3    4    5    6    7    8    9   10   11   12   13   14   15   16
+
+  4 mod 17=4   22 mod 17=5   10 mod 17=10   31 mod 17=14   15 mod 17=15</div>
+  <div class="two-col mt">
+    <div>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Rehashing costs <strong>O(n)</strong> for that one operation, but it happens so rarely that the <strong>amortized</strong> cost per insert remains <strong>O(1)</strong>. Same idea as dynamic array doubling.</p>
+      </div>
+    </div>
+    <div>
+      <div class="warning">
+        <h3>Warning</h3>
+        <p>You must <strong>recompute</strong> all indices because the table size N has changed. Old indices are no longer valid. You cannot just copy entries to the same slots!</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">16 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 17: Time Complexity Analysis -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Time Complexity Analysis</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Average Case (good hash, low &alpha;)</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Chaining</th><th>Open Addr.</th></tr>
+        <tr><td>put(k,v)</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>get(k)</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>remove(k)</td><td>O(1)</td><td>O(1)</td></tr>
+        <tr><td>Space</td><td>O(n)</td><td>O(n)</td></tr>
+      </table>
+
+      <h3 class="mt">Worst Case (all keys collide)</h3>
+      <table style="width:100%;">
+        <tr><th>Operation</th><th>Chaining</th><th>Open Addr.</th></tr>
+        <tr class="highlight"><td>put(k,v)</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr class="highlight"><td>get(k)</td><td>O(n)</td><td>O(n)</td></tr>
+        <tr class="highlight"><td>remove(k)</td><td>O(n)</td><td>O(n)</td></tr>
+      </table>
+    </div>
+    <div>
+      <div class="diagram small">
+  BEST CASE: Uniform distribution
+  +---+
+  | 0 |-> [A]
+  | 1 |-> [B]
+  | 2 |-> [C]       Every chain
+  | 3 |-> [D]       has length ~1
+  | 4 |-> [E]
+  | 5 |-> [F]
+  +---+
+  Each get/put: O(1)
+
+  WORST CASE: All hash to same index
+  +---+
+  | 0 |-> [A]->[B]->[C]->[D]->[E]->[F]
+  | 1 |-> null
+  | 2 |-> null       One chain has
+  | 3 |-> null       ALL n entries
+  | 4 |-> null
+  | 5 |-> null
+  +---+
+  Each get/put: O(n)  -- it's a linked list!</div>
+      <div class="analogy">
+        <h3>Analogy</h3>
+        <p>A good hash function is like assigning students to exam rooms <em>evenly</em>. A bad one puts everyone in Room 1 and leaves Rooms 2-10 empty.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">17 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 18: Java's HashMap -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Java's HashMap Internals</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>Architecture</h3>
+      <div class="diagram small">
+  HashMap&lt;String, Integer&gt;
+
+  Default capacity: 16
+  Load factor: 0.75
+  Rehash threshold: 16 * 0.75 = 12
+
+  +---+
+  | 0 |-> null
+  | 1 |-> [K1:V1] -> [K2:V2] -> null
+  | 2 |-> null
+  | 3 |-> [K3:V3] -> null
+  | . |
+  | . |   When chain length >= 8:
+  | . |   LinkedList -> Red-Black Tree
+  |   |
+  |12 |-> [K4:V4] -> ... (7 more)
+  |   |       |
+  |   |       v  TREEIFY!
+  |   |     [Tree Root]
+  |   |     /         \
+  |   |  [left]     [right]
+  |   |    ...        ...
+  |13 |-> null
+  |14 |-> null
+  |15 |-> null
+  +---+</div>
+    </div>
+    <div>
+      <h3>Key Details</h3>
+      <ul>
+        <li><strong>Initial capacity:</strong> 16 (always a power of 2)</li>
+        <li><strong>Load factor:</strong> 0.75 by default</li>
+        <li><strong>Rehash:</strong> double size when entries > capacity * 0.75</li>
+        <li><strong>Bucket structure:</strong></li>
+        <ul>
+          <li>Chain length < 8 : linked list -- O(n) search within chain</li>
+          <li>Chain length >= 8 : <strong>Red-Black Tree</strong> -- O(log n) search within chain</li>
+          <li>Untreeify when chain shrinks below 6</li>
+        </ul>
+        <li><strong>Index computation:</strong> <code>(n-1) & hash</code> (bitwise AND, because n is power of 2, equivalent to mod but faster)</li>
+      </ul>
+      <div class="key-idea">
+        <h3>Key Idea</h3>
+        <p>Java's HashMap evolved: before Java 8 it was pure chaining. The tree upgrade guarantees <strong>O(log n) worst case</strong> per bucket even with many collisions, protecting against hash-flooding attacks.</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">18 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 19: Applications -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Real-World Applications</h2>
+  <div class="two-col mt">
+    <div>
+      <h3>1. Spell Checker</h3>
+      <div class="diagram small">
+  Dictionary: HashSet&lt;String&gt;
+  +---------------------------+
+  | "apple" "banana" "cherry" |
+  | "date"  "elder" "fig" ... |
+  +---------------------------+
+
+  User types: "banan"
+  dict.contains("banan")
+    -> hash("banan") -> index 5
+    -> not found -> RED UNDERLINE!</div>
+      <p>O(1) lookup per word. Even checking an entire document is fast.</p>
+
+      <h3 class="mt">2. Caching (Memoization)</h3>
+      <div class="diagram small">
+  HTTP Cache:
+  HashMap&lt;URL, Response&gt;
+
+  Request: GET /api/users/42
+  cache.get("/api/users/42")
+    -> HIT -> return cached response
+    -> MISS -> fetch from server,
+               store in cache</div>
+    </div>
+    <div>
+      <h3>3. Database Indexing</h3>
+      <div class="diagram small">
+  Table: Students
+  +----+--------+-------+
+  | id | name   | grade |
+  +----+--------+-------+
+  | 1  | Alice  | A     |
+  | 2  | Bob    | B     |
+  | 3  | Carlos | A     |
+  +----+--------+-------+
+
+  Hash index on "id":
+  h(1)=5  h(2)=2  h(3)=0
+
+  SELECT * FROM Students WHERE id=2
+  -> hash(2) = 2 -> direct lookup!
+  -> No full table scan needed.</div>
+
+      <h3 class="mt">4. More Uses</h3>
+      <ul>
+        <li><strong>Compilers:</strong> symbol tables (variable name -> type, scope)</li>
+        <li><strong>Networking:</strong> routing tables, DNS caches</li>
+        <li><strong>Deduplication:</strong> detect duplicate files by content hash</li>
+        <li><strong>Counting:</strong> word frequency, vote tallying</li>
+        <li><strong>Blockchain:</strong> transaction verification via hash chains</li>
+      </ul>
+    </div>
+  </div>
+  <div class="slide-number">19 / 20</div>
+</div>
+
+<!-- ============================================================ -->
+<!-- SLIDE 20: Summary & Cheat Sheet -->
+<!-- ============================================================ -->
+<div class="slide fade-in">
+  <h2>Summary & Cheat Sheet</h2>
+  <div class="two-col mt">
+    <div>
+      <div class="diagram small">
+  HASH TABLE AT A GLANCE
+  ==============================================
+  key --[hash func]--> index --[bucket]--> value
+  ==============================================
+
+  Average: O(1) get / put / remove
+  Worst:   O(n) if all keys collide
+
+  COLLISION STRATEGIES:
+  +------------------+------------------+
+  | Separate         | Open             |
+  | Chaining         | Addressing       |
+  +------------------+------------------+
+  | Linked list per  | Store in array   |
+  | bucket           | itself           |
+  | alpha can be > 1 | alpha must be <1 |
+  | Simpler deletes  | Needs tombstones |
+  | Extra memory     | Better cache     |
+  | (pointers)       | locality         |
+  +------------------+------------------+
+
+  OPEN ADDRESSING VARIANTS:
+  +----------+--------+-----------+
+  | Linear   | Quadr. | Double    |
+  | h+i      | h+i^2  | h+i*h2   |
+  | Clusters | Better | Best      |
+  +----------+--------+-----------+</div>
+    </div>
+    <div>
+      <div class="key-idea">
+        <h3>5 Things to Remember</h3>
+        <ol style="padding-left:20px;">
+          <li><strong>Hash function</strong>: must be deterministic, uniform, and fast</li>
+          <li><strong>Collisions</strong>: inevitable (pigeonhole principle) -- you must handle them</li>
+          <li><strong>Load factor</strong> &alpha; = n/N controls performance; rehash before it gets too high</li>
+          <li><strong>Tombstones</strong>: needed for deletion in open addressing</li>
+          <li><strong>Average O(1)</strong> for all operations -- the best we can hope for with unsorted data</li>
+        </ol>
+      </div>
+      <div class="analogy">
+        <h3>Final Analogy</h3>
+        <p>A hash table is like a <strong>well-organized filing cabinet</strong>. The hash function is the labeling system that tells you exactly which drawer to open. When two files share a drawer (collision), you either stack them in that drawer (chaining) or find the next empty drawer (open addressing). And when the cabinet gets too full, you buy a bigger one and refile everything (rehash).</p>
+      </div>
+    </div>
+  </div>
+  <div class="slide-number">20 / 20</div>
+</div>
+
+<!-- Navigation -->
+<div class="nav">
+  <button id="prevBtn" onclick="changeSlide(-1)">&#9664; Prev</button>
+  <button id="nextBtn" onclick="changeSlide(1)">Next &#9654;</button>
+</div>
+
+<script>
+let current = 0;
+const slides = document.querySelectorAll('.slide');
+const total = slides.length;
+const progress = document.getElementById('progress');
+const prevBtn = document.getElementById('prevBtn');
+const nextBtn = document.getElementById('nextBtn');
+
+function showSlide(n) {
+  slides[current].classList.remove('active');
+  current = n;
+  if (current < 0) current = 0;
+  if (current >= total) current = total - 1;
+  slides[current].classList.add('active');
+  progress.style.width = ((current + 1) / total * 100) + '%';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === total - 1;
+}
+
+function changeSlide(dir) {
+  showSlide(current + dir);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown' || e.key === ' ') {
+    e.preventDefault();
+    changeSlide(1);
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    e.preventDefault();
+    changeSlide(-1);
+  } else if (e.key === 'Home') {
+    e.preventDefault();
+    showSlide(0);
+  } else if (e.key === 'End') {
+    e.preventDefault();
+    showSlide(total - 1);
+  }
+});
+
+// Touch support for mobile
+let touchStartX = 0;
+let touchEndX = 0;
+document.addEventListener('touchstart', function(e) {
+  touchStartX = e.changedTouches[0].screenX;
+}, false);
+document.addEventListener('touchend', function(e) {
+  touchEndX = e.changedTouches[0].screenX;
+  const diff = touchStartX - touchEndX;
+  if (Math.abs(diff) > 50) {
+    if (diff > 0) changeSlide(1);
+    else changeSlide(-1);
+  }
+}, false);
+
+// Initialize
+showSlide(0);
+</script>
+</body>
+</html>
