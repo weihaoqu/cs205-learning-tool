@@ -25,17 +25,11 @@ COPY --from=builder /app/public ./public
 COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
 COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
 
-# Prisma runtime: generated client for the app, schema + config + CLI for migrations
+# Full node_modules for prisma CLI + migrate (includes .bin symlinks and all transitive deps)
+# This overrides standalone's minimal node_modules but is compatible since both come from the same build
+COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/prisma.config.ts ./prisma.config.ts
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
-COPY --from=builder /app/node_modules/dotenv ./node_modules/dotenv
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-# Install prisma CLI globally (handles all transitive deps like valibot, @prisma/dev, etc.)
-# Local prisma + @prisma kept for prisma.config.ts imports; NODE_PATH bridges module resolution
-RUN npm install -g prisma@7.4.0
-ENV NODE_PATH=/usr/local/lib/node_modules
 
 USER nextjs
 EXPOSE 3000
@@ -43,4 +37,4 @@ ENV PORT=3000
 ENV HOSTNAME="0.0.0.0"
 
 # Run migrations then start the server
-CMD ["sh", "-c", "prisma migrate deploy && node server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node server.js"]
