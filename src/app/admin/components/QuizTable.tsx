@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-interface QuizStats {
+export interface QuizStats {
   quizId: string;
   attempts: number;
   avgScore: number;

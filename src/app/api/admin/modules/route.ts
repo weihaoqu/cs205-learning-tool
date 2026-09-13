@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/adminGuard';
+import { studentWhere, studentRelWhere } from '@/lib/semester';
 
 const MODULES = [
   'arrays',
@@ -17,15 +18,16 @@ const MODULES = [
   'dynamic-programming',
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const ctx = await requireAdmin(request);
+    if (!ctx.ok) return ctx.response;
+    const sel = ctx.sel;
 
+    // Denominator MUST be cohort-scoped too, or percentages mix a scoped
+    // numerator with an all-cohort denominator.
     const totalStudents = await prisma.user.count({
-      where: { role: 'STUDENT' },
+      where: studentWhere(sel),
     });
 
     // For each module, count distinct students who visited a path starting with /modules/{moduleId}
@@ -34,7 +36,7 @@ export async function GET() {
         const visitors = await prisma.pageVisit.findMany({
           where: {
             path: { startsWith: `/modules/${moduleId}` },
-            user: { role: 'STUDENT' },
+            ...studentRelWhere(sel),
           },
           select: { userId: true },
           distinct: ['userId'],

@@ -85,9 +85,13 @@ export function Header() {
                 </Link>
               )}
 
-              <span className="text-sm text-muted-foreground hidden md:inline">
+              <Link
+                href="/account"
+                className="text-sm text-muted-foreground hover:text-foreground transition-colors hidden md:inline"
+                title="Account settings"
+              >
                 {user.name}
-              </span>
+              </Link>
 
               <Button
                 variant="ghost"

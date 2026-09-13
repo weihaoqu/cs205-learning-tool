@@ -3,7 +3,7 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Users, UserCheck, GraduationCap, Eye } from 'lucide-react';
 
-interface OverviewData {
+export interface OverviewData {
   totalStudents: number;
   activeStudents: number;
   avgQuizScore: number;

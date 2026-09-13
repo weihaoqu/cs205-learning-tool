@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { ChevronUp, ChevronDown, Search } from 'lucide-react';
 
-interface Student {
+export interface Student {
   id: string;
   name: string;
   email: string;

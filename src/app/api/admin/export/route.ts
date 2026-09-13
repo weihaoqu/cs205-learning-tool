@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/adminGuard';
+import { studentWhere } from '@/lib/semester';
 
 function escapeCsvField(value: string): string {
   if (value.includes(',') || value.includes('"') || value.includes('\n')) {
@@ -9,15 +10,14 @@ function escapeCsvField(value: string): string {
   return value;
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const ctx = await requireAdmin(request);
+    if (!ctx.ok) return ctx.response;
+    const sel = ctx.sel;
 
     const students = await prisma.user.findMany({
-      where: { role: 'STUDENT' },
+      where: studentWhere(sel),
       select: {
         name: true,
         email: true,
@@ -92,7 +92,7 @@ export async function GET() {
       status: 200,
       headers: {
         'Content-Type': 'text/csv',
-        'Content-Disposition': 'attachment; filename="cs205-analytics.csv"',
+        'Content-Disposition': `attachment; filename="cs205-analytics-${sel.kind === 'all' ? 'all' : sel.semester}.csv"`,
       },
     });
   } catch (error) {

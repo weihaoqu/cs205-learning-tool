@@ -21,8 +21,11 @@ services:
     restart: unless-stopped
     environment:
       DATABASE_URL: postgresql://cs205user:${DB_PASSWORD}@db:5432/cs205?schema=public
-      JWT_SECRET: ${JWT_SECRET}
-      ADMIN_EMAIL: ${ADMIN_EMAIL:-wqu@monmouth.edu}
+      JWT_SECRET: ${JWT_SECRET:?required}
+      # Reserved admin addresses -- public registration REFUSES these.
+      ADMIN_EMAILS: ${ADMIN_EMAILS:?required}
+      # Cohort new registrations join. Validated at container start.
+      CURRENT_SEMESTER: ${CURRENT_SEMESTER:?required}
     depends_on:
       db:
         condition: service_healthy

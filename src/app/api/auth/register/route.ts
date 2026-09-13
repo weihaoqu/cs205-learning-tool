@@ -5,8 +5,9 @@ import {
   signToken,
   setSessionCookie,
   isMonmouthEmail,
-  isAdminEmail,
+  isReservedAdminEmail,
 } from '@/lib/auth';
+import { getCurrentSemester } from '@/lib/semester';
 
 export async function POST(request: NextRequest) {
   try {
@@ -33,6 +34,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Reserved admin addresses are refused outright. This MUST precede the
+    // existing-email lookup below: once the teacher is seeded, that lookup
+    // would return 409 and this 403 would never be reached.
+    if (isReservedAdminEmail(email)) {
+      return NextResponse.json(
+        { error: 'This address is reserved. Contact your instructor.' },
+        { status: 403 }
+      );
+    }
+
     const existing = await prisma.user.findUnique({
       where: { email: email.toLowerCase() },
     });
@@ -45,14 +56,17 @@ export async function POST(request: NextRequest) {
     }
 
     const hashedPassword = await hashPassword(password);
-    const role = isAdminEmail(email) ? 'ADMIN' : 'STUDENT';
 
+    // Public registration creates STUDENT accounts only. The email is merely
+    // claimed and never verified, so it must not confer privilege.
+    // Admins are provisioned solely by scripts/create-admin.ts.
     const user = await prisma.user.create({
       data: {
         name: name.trim(),
         email: email.toLowerCase().trim(),
         password: hashedPassword,
-        role,
+        role: 'STUDENT',
+        semester: getCurrentSemester(),
       },
     });
 

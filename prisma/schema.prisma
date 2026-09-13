@@ -20,11 +20,16 @@ model User {
   createdAt   DateTime @default(now())
   lastLoginAt DateTime @default(now())
 
+  /// Cohort label, e.g. "2026-fall". NULL for staff (ADMIN), who are not
+  /// enrolled in any semester. Enforced by user_semester_role_ck.
+  semester    String?
+
   pageVisits   PageVisit[]
   quizAttempts QuizAttempt[]
   slideViews   SlideView[]
 
   @@index([email])
+  @@index([semester])
 }
 
 model PageVisit {

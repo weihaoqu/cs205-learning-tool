@@ -8,7 +8,13 @@ import { ArrowLeft } from 'lucide-react';
 const API = '/cs205';
 
 interface StudentDetailData {
-  user: { id: string; name: string; email: string; createdAt: string };
+  user: {
+    id: string;
+    name: string;
+    email: string;
+    createdAt: string;
+    semester: string | null;
+  };
   recentVisits: { path: string; duration: number | null; visitedAt: string }[];
   quizAttempts: { quizId: string; score: number; totalPoints: number; percentage: number; completedAt: string }[];
   slideViews: { slideFile: string; viewedAt: string }[];
@@ -68,6 +74,7 @@ export function StudentDetail({
           <h2 className="text-xl font-bold">{data.user.name}</h2>
           <p className="text-sm text-muted-foreground">
             {data.user.email} &middot; Registered {formatDate(data.user.createdAt)}
+            {data.user.semester && <> &middot; {data.user.semester}</>}
           </p>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/adminGuard';
+import { studentRelWhere } from '@/lib/semester';
 
 function getBucketIndex(percentage: number): number {
   if (percentage < 60) return 0;
@@ -12,16 +13,16 @@ function getBucketIndex(percentage: number): number {
 
 const BUCKET_LABELS = ['0-59%', '60-69%', '70-79%', '80-89%', '90-100%'];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const ctx = await requireAdmin(request);
+    if (!ctx.ok) return ctx.response;
+    const sel = ctx.sel;
 
     // Get aggregate stats per quiz using groupBy
     const quizGroups = await prisma.quizAttempt.groupBy({
       by: ['quizId'],
+      where: studentRelWhere(sel),
       _count: { id: true },
       _avg: { percentage: true },
       _min: { percentage: true },
@@ -29,7 +30,10 @@ export async function GET() {
     });
 
     // For distribution, we need the raw percentages per quiz
+    // Identical filter to the groupBy above -- filtering only one produces
+    // internally inconsistent stats vs. distributions.
     const allAttempts = await prisma.quizAttempt.findMany({
+      where: studentRelWhere(sel),
       select: { quizId: true, percentage: true },
     });
 

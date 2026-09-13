@@ -14,13 +14,19 @@ export async function GET(
 
     const { id } = await params;
 
-    const student = await prisma.user.findUnique({
-      where: { id },
+    // Deliberately NOT semester-scoped: this is a cross-cohort detail lookup,
+    // and both admins may legitimately view historical students. But it IS
+    // role-scoped via findFirst, so an ADMIN id is not addressable as a
+    // student (returns 404). `semester` is returned so the UI can show which
+    // cohort the record belongs to.
+    const student = await prisma.user.findFirst({
+      where: { id, role: 'STUDENT' },
       select: {
         id: true,
         name: true,
         email: true,
         createdAt: true,
+        semester: true,
       },
     });
 

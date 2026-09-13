@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:cohorts": "node scripts/test-cohorts.mjs",
+    "test:password": "node scripts/test-password.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/adminGuard';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const ctx = await requireAdmin(request);
+    if (!ctx.ok) return ctx.response;
+    const sel = ctx.sel;
 
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -22,14 +21,22 @@ export async function GET() {
     }
 
     // Query distinct users per day using raw SQL for efficient date grouping
+    // `semParam` is bound as a VALUE by the tagged template -- never
+    // interpolated. Do not switch to Prisma.raw() or $queryRawUnsafe here:
+    // this value originates in a client query parameter.
+    const semParam = sel.kind === 'all' ? 'all' : sel.semester;
+
     const results = await prisma.$queryRaw<
       { day: string; count: bigint }[]
     >`
       SELECT
-        TO_CHAR("visitedAt", 'YYYY-MM-DD') AS day,
-        COUNT(DISTINCT "userId") AS count
-      FROM "PageVisit"
-      WHERE "visitedAt" >= ${thirtyDaysAgo}
+        TO_CHAR(pv."visitedAt", 'YYYY-MM-DD') AS day,
+        COUNT(DISTINCT pv."userId") AS count
+      FROM "PageVisit" pv
+      JOIN "User" u ON u."id" = pv."userId"
+      WHERE pv."visitedAt" >= ${thirtyDaysAgo}
+        AND u."role" = 'STUDENT'
+        AND (${semParam}::text = 'all' OR u."semester" = ${semParam})
       GROUP BY day
       ORDER BY day
     `;

@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { getCurrentUser } from '@/lib/auth';
+import { requireAdmin } from '@/lib/adminGuard';
+import { studentWhere } from '@/lib/semester';
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const user = await getCurrentUser();
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
-    }
+    const ctx = await requireAdmin(request);
+    if (!ctx.ok) return ctx.response;
+    const sel = ctx.sel;
 
     const students = await prisma.user.findMany({
-      where: { role: 'STUDENT' },
+      where: studentWhere(sel),
       select: {
         id: true,
         name: true,

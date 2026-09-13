@@ -94,7 +94,28 @@ export function isMonmouthEmail(email: string): boolean {
   return email.toLowerCase().endsWith('@monmouth.edu');
 }
 
-export function isAdminEmail(email: string): boolean {
-  const adminEmail = process.env.ADMIN_EMAIL || 'wqu@monmouth.edu';
-  return email.toLowerCase() === adminEmail.toLowerCase();
+/**
+ * Reserved admin addresses. NOTE: this is registration-time *rejection*, not
+ * authorization. Authorization reads the persisted DB role (see getCurrentUser).
+ * Removing an address here does NOT revoke an existing admin, and a seeded
+ * admin can log in without being listed.
+ *
+ * `||` not `??`: an empty or whitespace-only ADMIN_EMAILS must fall through to
+ * ADMIN_EMAIL rather than silently yielding an empty allowlist.
+ */
+export function adminEmails(): string[] {
+  const raw = (process.env.ADMIN_EMAILS || process.env.ADMIN_EMAIL || '').trim();
+  return raw
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+}
+
+/**
+ * True if public registration must refuse this address. Admin accounts are
+ * provisioned solely by scripts/create-admin.ts -- registration never grants
+ * ADMIN, because the email is merely claimed and is never verified.
+ */
+export function isReservedAdminEmail(email: string): boolean {
+  return adminEmails().includes(email.toLowerCase().trim());
 }
