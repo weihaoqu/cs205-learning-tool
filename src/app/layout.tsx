@@ -33,8 +33,12 @@ export default function RootLayout({
         <TrackingProvider>
           <main className="flex-1">{children}</main>
         </TrackingProvider>
-        <footer className="border-t py-6 text-center text-sm text-muted-foreground">
+        <footer className="border-t py-6 px-4 text-center text-sm text-muted-foreground">
           <p>&copy; {new Date().getFullYear()} Designed and implemented by Dr. Weihao Qu and LearnAI team.</p>
+          <p className="mt-1">
+            Designed and used only for CS205 Data Structures at Monmouth University,
+            by Professors Kamp and Qu.
+          </p>
         </footer>
       </body>
     </html>
