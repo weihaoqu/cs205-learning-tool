@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { scoreQuiz } from '@/lib/quizScoring';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MultipleChoice } from './MultipleChoice';
@@ -54,19 +55,14 @@ export function QuizContainer({ quiz, onComplete }: QuizContainerProps) {
     } else {
       setIsComplete(true);
 
-      const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
-      const earnedPoints = answers.reduce((sum, a, i) => {
-        return sum + (a.isCorrect ? quiz.questions[i].points : 0);
-      }, 0);
-      // Add current answer points if correct
-      const lastAnswer = answers[answers.length - 1];
-      const finalScore = lastAnswer?.isCorrect
-        ? earnedPoints + currentQuestion.points
-        : earnedPoints;
+      // `answers` already includes the final question's answer, so the score is
+      // simply the sum over it. The previous code added the current question's
+      // points a second time here, scoring above totalPoints.
+      const { score, totalPoints } = scoreQuiz(quiz, answers);
 
       const result: QuizResult = {
         quizId: quiz.id,
-        score: finalScore,
+        score,
         totalPoints,
         answers: answers.map((a) => ({
           ...a,
@@ -77,17 +73,16 @@ export function QuizContainer({ quiz, onComplete }: QuizContainerProps) {
 
       onComplete?.(result);
     }
-  }, [currentIndex, totalQuestions, answers, quiz, currentQuestion.points, onComplete]);
+  }, [currentIndex, totalQuestions, answers, quiz, onComplete]);
 
   const hasAnsweredCurrent = answers.length > currentIndex;
 
-  const totalPoints = quiz.questions.reduce((sum, q) => sum + q.points, 0);
-  const earnedPoints = answers.reduce((sum, a, i) => {
-    return sum + (a.isCorrect ? quiz.questions[i].points : 0);
-  }, 0);
+  // Same function as the recorded result, so what the student sees on screen
+  // and what is stored can never disagree.
+  const { score: earnedPoints, totalPoints, percentage: scorePercentage } =
+    scoreQuiz(quiz, answers);
 
   const correctCount = answers.filter((a) => a.isCorrect).length;
-  const scorePercentage = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
   const passed = scorePercentage >= quiz.passingScore;
 
   if (isComplete) {
