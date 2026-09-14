@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "test:cohorts": "node scripts/test-cohorts.mjs",
-    "test:password": "node scripts/test-password.mjs"
+    "test:password": "node scripts/test-password.mjs",
+    "test:grading": "node --experimental-strip-types --import ./scripts/register-alias.mjs scripts/test-quiz-grading.mjs",
+    "test:scoring": "node --experimental-strip-types scripts/test-quiz-scoring.mjs"
   },
   "dependencies": {
     "@monaco-editor/react": "^4.7.0",

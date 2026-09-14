@@ -3,10 +3,11 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { findQuizById } from '@/lib/quizRegistry';
 import { scoreQuiz } from '@/lib/quizScoring';
+import { gradeAttempt } from '@/lib/quizGrading';
 
 interface SubmittedAnswer {
   questionId?: unknown;
-  isCorrect?: unknown;
+  userAnswer?: unknown;
 }
 
 /**
@@ -22,9 +23,10 @@ interface SubmittedAnswer {
  * request is a stale client or a crafted one. Either way there is no point
  * total to grade against, and guessing one is how bad data gets in.
  *
- * Remaining trust: per-question `isCorrect` still comes from the client, so a
- * crafted request can claim a correct answer. Closing that requires the server
- * to re-check userAnswer against correctAnswer for each question type.
+ * Correctness is decided here too. The client's `isCorrect` flag is ignored --
+ * it is a claim, not evidence. Each submitted `userAnswer` is re-checked
+ * against the question definition using the same comparison the UI performs,
+ * so what a student sees and what is recorded agree.
  */
 export async function POST(request: NextRequest) {
   try {
@@ -45,11 +47,12 @@ export async function POST(request: NextRequest) {
     }
 
     const submitted: SubmittedAnswer[] = Array.isArray(answers) ? answers : [];
-    const scorable = submitted
+    const raw = submitted
       .filter((a) => a && typeof a.questionId === 'string')
-      .map((a) => ({ questionId: a.questionId as string, isCorrect: a.isCorrect === true }));
+      .map((a) => ({ questionId: a.questionId as string, userAnswer: a.userAnswer }));
 
-    const { score, totalPoints, percentage } = scoreQuiz(quiz, scorable);
+    const graded = gradeAttempt(quiz, raw);
+    const { score, totalPoints, percentage } = scoreQuiz(quiz, graded);
 
     const attempt = await prisma.quizAttempt.create({
       data: {
